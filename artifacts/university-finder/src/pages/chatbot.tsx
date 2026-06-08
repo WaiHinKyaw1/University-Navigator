@@ -34,7 +34,7 @@ export default function Chatbot() {
         {
           id: Date.now(),
           role: "assistant",
-          content: "Hello! I'm your AI guide for Myanmar universities. Tell me about your interests, hobbies, or favorite subjects, and I'll help you find the right majors and universities.",
+          content: "မင်္ဂလာပါ! ကျွန်တော်က G-12 ကျောင်းသားများကို တက္ကသိုလ်ရွေးချယ်ရာတွင် ကူညီသော AI လမ်းညွှန်ဆရာဖြစ်ပါသည်။\n\nသင်ဘာဝါသနာပါသလဲ? ဒါမှမဟုတ် G-12 ရမှတ် ဘယ်လောက်ရသလဲ ပြောပြပါ — ဆေးတက္ကသိုလ်၊ နည်းပညာ၊ ကွန်ပျူတာ၊ စီးပွားရေး၊ ဥပဒေ စသည်ဖြင့် သင့်ကိုက်ညီဆုံး တက္ကသိုလ်နှင့် မေဂျာများ ညွှန်ပြပေးပါမည်။",
           createdAt: new Date().toISOString()
         }
       ]);
