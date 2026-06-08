@@ -136,7 +136,7 @@ export default function Chat() {
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Search Results
                   </div>
-                  {studentsData?.students.filter(s => s.id !== user.id).map(student => (
+                  {(studentsData as any[])?.filter(s => s.id !== user.id).map(student => (
                     <button
                       key={student.id}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
@@ -155,7 +155,7 @@ export default function Chat() {
                       <Plus className="h-4 w-4 text-muted-foreground" />
                     </button>
                   ))}
-                  {studentsData?.students.length === 0 && (
+                  {(studentsData as any[])?.length === 0 && (
                     <div className="p-4 text-center text-sm text-muted-foreground">No students found.</div>
                   )}
                 </>
