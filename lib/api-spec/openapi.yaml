@@ -3,20 +3,40 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Myanmar University Finder API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: universities
+    description: University management
+  - name: majors
+    description: Major / field of study management
+  - name: score
+    description: Score calculator
+  - name: chatbot
+    description: AI chatbot for interest-based university recommendations
+  - name: chat
+    description: Student-to-student chat
+  - name: news
+    description: News and announcements
+  - name: users
+    description: User management
+  - name: admin
+    description: Admin operations
+  - name: analytics
+    description: Dashboard analytics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +44,682 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ──────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new student account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── UNIVERSITIES ──────────────────────────────────────────────────────────
+  /universities:
+    get:
+      operationId: listUniversities
+      tags: [universities]
+      summary: List all universities with optional filters
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: majorId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of universities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UniversityListResponse"
+    post:
+      operationId: createUniversity
+      tags: [universities]
+      summary: Create a university (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UniversityInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/University"
+
+  /universities/{id}:
+    get:
+      operationId: getUniversity
+      tags: [universities]
+      summary: Get university details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: University detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/University"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateUniversity
+      tags: [universities]
+      summary: Update a university (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UniversityInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/University"
+    delete:
+      operationId: deleteUniversity
+      tags: [universities]
+      summary: Delete a university (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ── MAJORS ────────────────────────────────────────────────────────────────
+  /majors:
+    get:
+      operationId: listMajors
+      tags: [majors]
+      summary: List all majors / fields of study
+      responses:
+        "200":
+          description: List of majors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Major"
+    post:
+      operationId: createMajor
+      tags: [majors]
+      summary: Create a major (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MajorInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Major"
+
+  /majors/{id}:
+    put:
+      operationId: updateMajor
+      tags: [majors]
+      summary: Update a major (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MajorInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Major"
+    delete:
+      operationId: deleteMajor
+      tags: [majors]
+      summary: Delete a major (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ── SCORE CALCULATOR ──────────────────────────────────────────────────────
+  /score/calculate:
+    post:
+      operationId: calculateScore
+      tags: [score]
+      summary: Calculate matching universities based on G-12 scores
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoreInput"
+      responses:
+        "200":
+          description: Matching universities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScoreMatch"
+
+  # ── CHATBOT ───────────────────────────────────────────────────────────────
+  /chatbot/message:
+    post:
+      operationId: sendChatbotMessage
+      tags: [chatbot]
+      summary: Send a message to the AI chatbot for interest-based university recommendations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatbotMessageInput"
+      responses:
+        "200":
+          description: AI response with university suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatbotResponse"
+
+  /chatbot/history:
+    get:
+      operationId: getChatbotHistory
+      tags: [chatbot]
+      summary: Get chatbot conversation history for current user
+      responses:
+        "200":
+          description: Conversation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatbotMessage"
+
+  # ── STUDENT CHAT ──────────────────────────────────────────────────────────
+  /chat/rooms:
+    get:
+      operationId: listChatRooms
+      tags: [chat]
+      summary: List chat rooms / conversations
+      responses:
+        "200":
+          description: List of chat rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatRoom"
+    post:
+      operationId: createChatRoom
+      tags: [chat]
+      summary: Create or find direct message room with another user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRoomInput"
+      responses:
+        "200":
+          description: Chat room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatRoom"
+
+  /chat/rooms/{roomId}/messages:
+    get:
+      operationId: getChatMessages
+      tags: [chat]
+      summary: Get messages in a chat room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a message in a chat room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  # ── NEWS ──────────────────────────────────────────────────────────────────
+  /news:
+    get:
+      operationId: listNews
+      tags: [news]
+      summary: List news articles / announcements
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: News list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsListResponse"
+    post:
+      operationId: createNews
+      tags: [news]
+      summary: Create a news article (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+
+  /news/{id}:
+    get:
+      operationId: getNews
+      tags: [news]
+      summary: Get a news article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: News article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+    put:
+      operationId: updateNews
+      tags: [news]
+      summary: Update a news article (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+    delete:
+      operationId: deleteNews
+      tags: [news]
+      summary: Delete a news article (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ── USERS (ADMIN) ─────────────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/ban:
+    post:
+      operationId: banUser
+      tags: [users]
+      summary: Ban or unban a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BanUserInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ── ADMIN ANALYTICS ───────────────────────────────────────────────────────
+  /admin/analytics/overview:
+    get:
+      operationId: getAnalyticsOverview
+      tags: [analytics]
+      summary: Get dashboard overview stats
+      responses:
+        "200":
+          description: Overview stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverview"
+
+  /admin/analytics/major-distribution:
+    get:
+      operationId: getMajorDistribution
+      tags: [analytics]
+      summary: Get distribution of students by major interest
+      responses:
+        "200":
+          description: Major distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MajorStat"
+
+  /admin/analytics/registration-trend:
+    get:
+      operationId: getRegistrationTrend
+      tags: [analytics]
+      summary: Get user registration trend by month
+      responses:
+        "200":
+          description: Registration trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendPoint"
+
+  # ── ADMIN AUDIT LOGS ──────────────────────────────────────────────────────
+  /admin/audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [admin]
+      summary: Get system audit logs (admin only)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+  # ── STUDENTS LIST (for peer chat) ─────────────────────────────────────────
+  /students:
+    get:
+      operationId: listStudents
+      tags: [users]
+      summary: List students to start a chat with
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Student list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudentSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +730,515 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    # ── AUTH ──────────────────────────────────────────────────────────────
+    RegisterInput:
+      type: object
+      required: [name, email, password, grade]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        grade:
+          type: string
+          description: "G-10, G-11, G-12"
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    User:
+      type: object
+      required: [id, name, email, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          description: "student | admin"
+        grade:
+          type: ["string", "null"]
+        status:
+          type: string
+          description: "active | banned"
+        avatarUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── UNIVERSITY ────────────────────────────────────────────────────────
+    University:
+      type: object
+      required: [id, name, nameEn, type, state, minScore, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Myanmar name
+        nameEn:
+          type: string
+          description: English name
+        abbreviation:
+          type: ["string", "null"]
+        type:
+          type: string
+          description: "government | private | technical | medical | education"
+        state:
+          type: string
+          description: State/Region in Myanmar
+        city:
+          type: ["string", "null"]
+        minScore:
+          type: number
+          description: Minimum total score required for admission
+        description:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        majors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Major"
+        createdAt:
+          type: string
+          format: date-time
+
+    UniversityInput:
+      type: object
+      required: [name, nameEn, type, state, minScore]
+      properties:
+        name:
+          type: string
+        nameEn:
+          type: string
+        abbreviation:
+          type: ["string", "null"]
+        type:
+          type: string
+        state:
+          type: string
+        city:
+          type: ["string", "null"]
+        minScore:
+          type: number
+        description:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        majorIds:
+          type: array
+          items:
+            type: integer
+
+    UniversityListResponse:
+      type: object
+      required: [universities, total, page, limit]
+      properties:
+        universities:
+          type: array
+          items:
+            $ref: "#/components/schemas/University"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ── MAJOR ─────────────────────────────────────────────────────────────
+    Major:
+      type: object
+      required: [id, name, nameEn, category]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameEn:
+          type: string
+        category:
+          type: string
+          description: "science | arts | engineering | medical | business | education | law | other"
+        description:
+          type: ["string", "null"]
+
+    MajorInput:
+      type: object
+      required: [name, nameEn, category]
+      properties:
+        name:
+          type: string
+        nameEn:
+          type: string
+        category:
+          type: string
+        description:
+          type: ["string", "null"]
+
+    # ── SCORE ─────────────────────────────────────────────────────────────
+    ScoreInput:
+      type: object
+      required: [totalScore, subjects]
+      properties:
+        totalScore:
+          type: number
+        subjects:
+          type: object
+          properties:
+            myanmar:
+              type: ["number", "null"]
+            english:
+              type: ["number", "null"]
+            mathematics:
+              type: ["number", "null"]
+            chemistry:
+              type: ["number", "null"]
+            physics:
+              type: ["number", "null"]
+            biology:
+              type: ["number", "null"]
+            history:
+              type: ["number", "null"]
+            geography:
+              type: ["number", "null"]
+            economics:
+              type: ["number", "null"]
+        preferredMajorIds:
+          type: array
+          items:
+            type: integer
+
+    ScoreMatch:
+      type: object
+      required: [university, matchScore, eligible]
+      properties:
+        university:
+          $ref: "#/components/schemas/University"
+        matchScore:
+          type: number
+          description: How well the student's score matches (0-100)
+        eligible:
+          type: boolean
+        gap:
+          type: ["number", "null"]
+          description: Score gap if not eligible (positive means eligible, negative means gap)
+
+    # ── CHATBOT ───────────────────────────────────────────────────────────
+    ChatbotMessageInput:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: ["string", "null"]
+
+    ChatbotResponse:
+      type: object
+      required: [reply, sessionId]
+      properties:
+        reply:
+          type: string
+        sessionId:
+          type: string
+        suggestedUniversities:
+          type: array
+          items:
+            $ref: "#/components/schemas/University"
+        suggestedMajors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Major"
+
+    ChatbotMessage:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          description: "user | assistant"
+        content:
+          type: string
+        sessionId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── STUDENT CHAT ──────────────────────────────────────────────────────
+    ChatRoom:
+      type: object
+      required: [id, participants, createdAt]
+      properties:
+        id:
+          type: integer
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentSummary"
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: ["string", "null"]
+          format: date-time
+        unreadCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ChatRoomInput:
+      type: object
+      required: [participantId]
+      properties:
+        participantId:
+          type: integer
+
+    ChatMessage:
+      type: object
+      required: [id, roomId, senderId, content, createdAt]
+      properties:
+        id:
+          type: integer
+        roomId:
+          type: integer
+        senderId:
+          type: integer
+        senderName:
+          type: string
+        senderAvatar:
+          type: ["string", "null"]
+        content:
+          type: string
+        isFiltered:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ChatMessageInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    StudentSummary:
+      type: object
+      required: [id, name, grade]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        grade:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+
+    # ── NEWS ──────────────────────────────────────────────────────────────
+    NewsArticle:
+      type: object
+      required: [id, title, content, category, authorId, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+          description: "admission | announcement | scholarship | general"
+        authorId:
+          type: integer
+        authorName:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        published:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewsInput:
+      type: object
+      required: [title, content, category]
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        published:
+          type: boolean
+
+    NewsListResponse:
+      type: object
+      required: [articles, total, page, limit]
+      properties:
+        articles:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsArticle"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ── ADMIN ─────────────────────────────────────────────────────────────
+    BanUserInput:
+      type: object
+      required: [banned, reason]
+      properties:
+        banned:
+          type: boolean
+        reason:
+          type: string
+
+    UserListResponse:
+      type: object
+      required: [users, total, page, limit]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    AuditLog:
+      type: object
+      required: [id, adminId, adminName, action, targetType, createdAt]
+      properties:
+        id:
+          type: integer
+        adminId:
+          type: integer
+        adminName:
+          type: string
+        action:
+          type: string
+        targetType:
+          type: string
+        targetId:
+          type: ["integer", "null"]
+        details:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AuditLogListResponse:
+      type: object
+      required: [logs, total, page, limit]
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ── ANALYTICS ─────────────────────────────────────────────────────────
+    AnalyticsOverview:
+      type: object
+      required: [totalUsers, totalUniversities, totalMajors, totalMessages, activeUsers, bannedUsers]
+      properties:
+        totalUsers:
+          type: integer
+        totalUniversities:
+          type: integer
+        totalMajors:
+          type: integer
+        totalMessages:
+          type: integer
+        activeUsers:
+          type: integer
+        bannedUsers:
+          type: integer
+        totalNewsArticles:
+          type: integer
+
+    MajorStat:
+      type: object
+      required: [majorName, count]
+      properties:
+        majorName:
+          type: string
+        count:
+          type: integer
+
+    TrendPoint:
+      type: object
+      required: [month, count]
+      properties:
+        month:
+          type: string
+        count:
+          type: integer
