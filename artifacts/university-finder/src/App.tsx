@@ -14,8 +14,13 @@ import ScoreCalculator from "@/pages/score-calculator";
 import Chatbot from "@/pages/chatbot";
 import Chat from "@/pages/chat";
 
-// Stub pages
-const AdminDashboard = () => <div>Admin Dashboard</div>;
+import AdminDashboard from "@/pages/admin/dashboard";
+import AdminUsers from "@/pages/admin/users";
+import AdminUniversities from "@/pages/admin/universities";
+import AdminMajors from "@/pages/admin/majors";
+import AdminNews from "@/pages/admin/news";
+import AdminAudit from "@/pages/admin/audit";
+import AdminChatMonitor from "@/pages/admin/chat-monitor";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +35,15 @@ function Router() {
       <Route path="/score" component={ScoreCalculator} />
       <Route path="/chatbot" component={Chatbot} />
       <Route path="/chat" component={Chat} />
+      
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/universities" component={AdminUniversities} />
+      <Route path="/admin/majors" component={AdminMajors} />
+      <Route path="/admin/news" component={AdminNews} />
+      <Route path="/admin/audit" component={AdminAudit} />
+      <Route path="/admin/chat-monitor" component={AdminChatMonitor} />
+      
       <Route component={NotFound} />
     </Switch>
   );
