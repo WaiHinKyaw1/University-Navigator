@@ -94,15 +94,80 @@ const ADMISSION_KNOWLEDGE = `
 - Standard Score = (ဘာသာရပ်ရမှတ် × ကိုယ်ချောင်ဆ) + Bonus
 - မြန်မာနိုင်ငံ မတ်ထရစ် ၁ မှ ၁၀ ဂရိတ်: 90+ = A, 80-89 = B, 70-79 = C, 60-69 = D
 
-### နာမည်ကြီး Career Path များ
-- ဆေးပညာ → ဆရာဝန် (MB,BS) → အထူးကု/GP → ၈-၁၀ နှစ်
-- ဆေးဝါး → ဆေးဝါးမှူး (B.Pharm) → ၅ နှစ်
-- အင်ဂျင်နီယာ → B.E → ၅ နှစ် → PE License
-- ကွန်ပျူတာ → B.C.Sc → ၄ နှစ် → IT Sector
-- စီးပွားရေး → B.Econ/B.Com → ၄ နှစ် → Finance/Banking
-- ဥပဒေ → LL.B → ၄ နှစ် → Lawyer/Judge
-- ပညာရေး → B.Ed → ၄ နှစ် → Teacher
-- နိုင်ငံခြားဘာသာ → B.A → ၄ နှစ် → Translation/Diplomacy
+### ကျောင်းပြီးနောက် Career Path အသေးစိတ်
+
+**ဆေးဝါး/MB,BS ကျောင်းသား**
+- တက်ရောက်နှစ်: ၅-၇ နှစ် (MB,BS), ၅ နှစ် (B.Pharm)
+- Internship: ၁ နှစ် ဆေးရုံတွင် ပြုစု
+- အလုပ်ကိုင်: Government ဆေးရုံ ဆရာဝန်၊ Private Clinic၊ Research Institute
+- လစာ: ကနဦး ၄-၆ သိန်း/လ (Government)၊ Private 8-20 သိန်း+
+- ကမ္ဘာ့တိုင်းပြည်တွင် USMLE/PLAB ဖြေဆိုနိုင်
+
+**IT/Computer Science (B.C.Sc)**
+- တက်ရောက်နှစ်: ၄ နှစ်
+- အလုပ်ကိုင်: Software Developer၊ Data Analyst၊ Cybersecurity၊ AI/ML Engineer
+- ကုမ္ပဏီ: WaveMoney၊ KBZPay၊ Grab Myanmar၊ Overseas IT firms
+- လစာ: Junior Dev ၅-၁၅ သိန်း/လ၊ Senior 20-50+ သိန်း/လ
+- Remote Work ဖြင့် နိုင်ငံတကာ ဝင်ငွေရနိုင်
+
+**အင်ဂျင်နီယာ (B.E)**
+- တက်ရောက်နှစ်: ၅ နှစ်
+- Specializations: Civil (တံတား/လမ်း)၊ Electrical (လျှပ်စစ်)၊ Mechanical (စက်)၊ Chemical (ဓာတု)
+- အလုပ်ကိုင်: Construction Company၊ Power Plant၊ Oil & Gas Sector
+- Professional Engineer (PE) License ဖြေဆိုနိုင်
+- ASEAN Engineering ဆုရနိုင်
+
+**စီးပွားရေး (B.Econ/B.Com/B.Act)**
+- တက်ရောက်နှစ်: ၄ နှစ်
+- အလုပ်ကိုင်: Banker၊ Accountant (CPA)၊ Financial Analyst၊ Entrepreneur
+- ကုမ္ပဏီ: KBZ Bank၊ AYA Bank၊ Big 4 (KPMG, PwC, Deloitte)
+
+**ဥပဒေ (LL.B)**
+- တက်ရောက်နှစ်: ၄ နှစ်
+- Bar Exam ဖြေဆိုပြီး Advocate License ရ
+- အလုပ်ကိုင်: Lawyer၊ Judge (တရားသူကြီး)၊ Legal Consultant၊ NGO Legal Officer
+
+**ပညာရေး (B.Ed)**
+- တက်ရောက်နှစ်: ၄ နှစ်
+- တက်နိုင်သောကျောင်း: ကျောင်းအသီးသီး
+- လစာ: Government ၃-၅ သိန်း၊ Private International School ၁၀-၃၀ သိန်း+
+
+**နိုင်ငံခြားဘာသာ (YUFL)**
+- တက်ရောက်နှစ်: ၄ နှစ်
+- ဘာသာစကား: English၊ Chinese (Mandarin)၊ Japanese၊ Korean
+- အလုပ်ကိုင်: Interpreter၊ Translator၊ Diplomat၊ Tour Guide၊ Airline Cabin Crew
+
+### တက္ကသိုလ်တက်မတိုင်ခင် ကြိုပြင်ဆင်ရမည့် အကြောင်းများ
+
+**ဆေးကျောင်း (Medical) ကြိုပြင်ဆင်မှု**
+- ဘာသာ (၃) ဖြစ်သော ရူပဗေဒ၊ ဓာတုဗေဒ၊ ဇီဝဗေဒ အလွတ်ကျက်ပါ
+- Human Anatomy Basics (Gray's Anatomy ရိုးရှင်းသောဗားရှင်း) ကြိုဖတ်ပါ
+- Medical Terminology (Latin/Greek roots) လေ့ကျင့်ပါ
+- First Aid Basic Course တက်ပါ
+
+**IT/Computer ကြိုပြင်ဆင်မှု**
+- Python / C Programming ကြိုလေ့လာပါ (freeCodeCamp, YouTube)
+- Mathematics (Discrete Math, Linear Algebra) ပြန်ဆင်ပြင်ပါ
+- Git & GitHub အခြေခံ သိထားပါ
+- English Technical Reading ကျင့်ပါ (documentation ဖတ်နိုင်ဖို့)
+
+**အင်ဂျင်နီယာ ကြိုပြင်ဆင်မှု**
+- Physics (Mechanics, Thermodynamics) ပြန်မှတ်ပါ
+- Math (Calculus, Trigonometry) ချဲ့ပါ
+- AutoCAD Basic ကြိုလေ့လာပါ (YouTube)
+- Engineering Drawing (Technical Drawing) ရိုးရှင်းသောဗဟုသုတ ဆည်းပူးပါ
+
+**စီးပွားရေး ကြိုပြင်ဆင်မှု**
+- Basic Excel/Spreadsheet ကျင့်ပါ
+- Myanmar Economy, ASEAN Trade ဘောင်ကျယ် ဖတ်ပါ
+- English Business Communication ကျင့်ပါ
+- Financial News (Eleven Financial, Mizzima Business) ဖတ်ပါ
+
+**ဥပဒေ ကြိုပြင်ဆင်မှု**
+- Myanmar Constitution ၂၀၀၈ အခြေခံ ဖတ်ပါ
+- Critical Thinking & Argumentation ကျင့်ပါ
+- English Legal Terms မှတ်ပါ
+- Current Events (Myanmar Legal News) မကျော်ဘဲ ဖတ်ပါ
 `;
 
 // ─── Interest detection ───────────────────────────────────────────────────────
