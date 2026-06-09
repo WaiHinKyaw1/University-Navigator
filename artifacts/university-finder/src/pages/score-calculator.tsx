@@ -67,6 +67,7 @@ function ScoreInput({ subject, value, onChange }: {
 
 function TotalScoreSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const pct = Math.round((value / 600) * 100);
+  const PRIMARY = "hsl(161, 80%, 25%)";
   const label =
     value < 300 ? { text: "ဝင်ခွင့်ရမှတ် မရောက်သေး", color: "text-red-500" } :
     value < 380 ? { text: "ကျောင်းအချို့ ဝင်ခွင့်ရနိုင်", color: "text-orange-500" } :
@@ -99,7 +100,7 @@ function TotalScoreSlider({ value, onChange }: { value: number; onChange: (v: nu
           onChange={(e) => onChange(Number(e.target.value))}
           className="w-full h-3 rounded-full appearance-none cursor-pointer"
           style={{
-            background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${pct}%, #e5e7eb ${pct}%, #e5e7eb 100%)`,
+            background: `linear-gradient(to right, ${PRIMARY} 0%, ${PRIMARY} ${pct}%, #e5e7eb ${pct}%, #e5e7eb 100%)`,
           }}
         />
         <style>{`
@@ -107,18 +108,19 @@ function TotalScoreSlider({ value, onChange }: { value: number; onChange: (v: nu
             -webkit-appearance: none;
             width: 24px; height: 24px;
             border-radius: 50%;
-            background: var(--primary);
+            background: hsl(161, 80%, 25%);
             border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
             cursor: pointer;
           }
           input[type=range]::-moz-range-thumb {
             width: 24px; height: 24px;
             border-radius: 50%;
-            background: var(--primary);
+            background: hsl(161, 80%, 25%);
             border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
             cursor: pointer;
+            border: none;
           }
         `}</style>
         <div className="flex justify-between text-[11px] text-gray-400 mt-2">
@@ -219,7 +221,7 @@ export default function ScoreCalculator() {
   const [inputMode, setInputMode] = useState<InputMode>("subjects");
   const [stream, setStream] = useState<Stream>("science");
   const [scores, setScores] = useState<Scores>({});
-  const [sliderTotal, setSliderTotal] = useState(400);
+  const [sliderTotal, setSliderTotal] = useState(0);
   const [hasSearched, setHasSearched] = useState(false);
 
   const calculateMutation = useCalculateScore();
