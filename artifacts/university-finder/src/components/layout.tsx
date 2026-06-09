@@ -5,7 +5,7 @@ import { GraduationCap, LogOut, MessageSquare, Menu, X, User as UserIcon } from 
 import { useState } from "react";
 import { useLogout } from "@workspace/api-client-react";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children, noFooter }: { children: React.ReactNode; noFooter?: boolean }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -130,7 +130,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <footer className="border-t bg-muted/40 py-8 md:py-12 mt-auto">
+      {!noFooter && <footer className="border-t bg-muted/40 py-8 md:py-12 mt-auto">
         <div className="container flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
           <div>
             <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
@@ -144,7 +144,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/chatbot" className="hover:text-foreground transition-colors">AI Guide</Link>
           </div>
         </div>
-      </footer>
+      </footer>}
     </div>
   );
 }

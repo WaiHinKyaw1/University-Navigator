@@ -65,11 +65,17 @@ function ScoreInput({ subject, value, onChange }: {
 
 // ─── Total score slider ───────────────────────────────────────────────────────
 
+const SLIDER_MIN = 240;
+const SLIDER_MAX = 600;
+
 function TotalScoreSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const pct = Math.round((value / 600) * 100);
+  // pct for gradient fill position (240→600 range)
+  const fillPct = Math.round(((value - SLIDER_MIN) / (SLIDER_MAX - SLIDER_MIN)) * 100);
+  // pct shown in circle (actual score out of 600)
+  const scorePct = Math.round((value / 600) * 100);
   const PRIMARY = "hsl(161, 80%, 25%)";
   const label =
-    value < 300 ? { text: "ဝင်ခွင့်ရမှတ် မရောက်သေး", color: "text-red-500" } :
+    value < 320 ? { text: "ဝင်ခွင့်ရမှတ် မရောက်သေး", color: "text-red-500" } :
     value < 380 ? { text: "ကျောင်းအချို့ ဝင်ခွင့်ရနိုင်", color: "text-orange-500" } :
     value < 430 ? { text: "ကောင်းမွန်သည်", color: "text-yellow-600" } :
     value < 470 ? { text: "အလွန်ကောင်းသည်", color: "text-emerald-600" } :
@@ -87,7 +93,7 @@ function TotalScoreSlider({ value, onChange }: { value: number; onChange: (v: nu
         </div>
         <div className="text-right">
           <div className="h-16 w-16 rounded-full border-4 border-primary/20 flex items-center justify-center bg-primary/5 ml-auto">
-            <span className="text-base font-bold text-primary">{pct}%</span>
+            <span className="text-base font-bold text-primary">{scorePct}%</span>
           </div>
         </div>
       </div>
@@ -95,12 +101,12 @@ function TotalScoreSlider({ value, onChange }: { value: number; onChange: (v: nu
       {/* Slider */}
       <div className="relative pt-1">
         <input
-          type="range" min={0} max={600} step={5}
+          type="range" min={SLIDER_MIN} max={SLIDER_MAX} step={5}
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
           className="w-full h-3 rounded-full appearance-none cursor-pointer"
           style={{
-            background: `linear-gradient(to right, ${PRIMARY} 0%, ${PRIMARY} ${pct}%, #e5e7eb ${pct}%, #e5e7eb 100%)`,
+            background: `linear-gradient(to right, ${PRIMARY} 0%, ${PRIMARY} ${fillPct}%, #e5e7eb ${fillPct}%, #e5e7eb 100%)`,
           }}
         />
         <style>{`
@@ -124,7 +130,7 @@ function TotalScoreSlider({ value, onChange }: { value: number; onChange: (v: nu
           }
         `}</style>
         <div className="flex justify-between text-[11px] text-gray-400 mt-2">
-          <span>0</span><span>150</span><span>300</span><span>450</span><span>600</span>
+          <span>240</span><span>330</span><span>420</span><span>510</span><span>600</span>
         </div>
       </div>
 
@@ -221,7 +227,7 @@ export default function ScoreCalculator() {
   const [inputMode, setInputMode] = useState<InputMode>("subjects");
   const [stream, setStream] = useState<Stream>("science");
   const [scores, setScores] = useState<Scores>({});
-  const [sliderTotal, setSliderTotal] = useState(0);
+  const [sliderTotal, setSliderTotal] = useState(SLIDER_MIN);
   const [hasSearched, setHasSearched] = useState(false);
 
   const calculateMutation = useCalculateScore();
