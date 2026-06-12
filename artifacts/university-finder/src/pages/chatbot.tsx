@@ -57,7 +57,7 @@ export default function Chatbot() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: history } = useGetChatbotHistory({ query: { enabled: !!user } });
+  const { data: history } = useGetChatbotHistory(undefined, { query: { queryKey: ['chatbotHistory'], enabled: !!user } });
 
   useEffect(() => {
     if (history?.length) {

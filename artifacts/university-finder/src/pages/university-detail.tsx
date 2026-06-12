@@ -12,6 +12,7 @@ export default function UniversityDetail() {
 
   const { data: uni, isLoading, isError } = useGetUniversity(id, {
     query: {
+      queryKey: ['university', id],
       enabled: !!id
     }
   });

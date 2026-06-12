@@ -37,12 +37,14 @@ export default function Chat() {
     search: search || undefined
   }, {
     query: {
+      queryKey: ['students', search],
       enabled: !!user
     }
   });
 
-  const { data: roomsData, refetch: refetchRooms } = useListChatRooms({
+  const { data: roomsData, refetch: refetchRooms } = useListChatRooms(undefined, {
     query: {
+      queryKey: ['chatRooms'],
       enabled: !!user,
       refetchInterval: 5000 // Poll rooms
     }
@@ -50,6 +52,7 @@ export default function Chat() {
 
   const { data: messagesData } = useGetChatMessages(activeRoom || 0, {
     query: {
+      queryKey: ['chatMessages', activeRoom],
       enabled: !!activeRoom,
       refetchInterval: 3000 // Poll messages
     }
@@ -98,9 +101,8 @@ export default function Chat() {
     e.preventDefault();
     if (!message.trim() || !activeRoom || sendMessageMutation.isPending) return;
 
-    sendMessageMutation.mutate({
+    sendMessageMutation.mutate(activeRoom, {
       data: {
-        roomId: activeRoom,
         content: message
       }
     });
