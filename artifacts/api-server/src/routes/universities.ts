@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, universitiesTable, universityMajorsTable, majorsTable } from "@workspace/db";
-import { eq, ilike, or, and, sql } from "drizzle-orm";
+import { eq, ilike, or, and, sql, inArray } from "drizzle-orm";
 import { requireAdmin, optionalAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -18,8 +18,34 @@ async function getUniversityWithMajors(id: number) {
   return { ...uni, majors: uniMajors.map((r) => r.major) };
 }
 
+async function attachMajorsToUniversities(universities: Array<typeof universitiesTable.$inferSelect>) {
+  if (universities.length === 0) return [];
+
+  const universityIds = universities.map((u) => u.id);
+  const rows = await db
+    .select({
+      universityId: universityMajorsTable.universityId,
+      major: majorsTable,
+    })
+    .from(universityMajorsTable)
+    .innerJoin(majorsTable, eq(universityMajorsTable.majorId, majorsTable.id))
+    .where(inArray(universityMajorsTable.universityId, universityIds));
+
+  const majorsByUniversity = new Map<number, Array<typeof majorsTable.$inferSelect>>();
+  for (const row of rows) {
+    const majors = majorsByUniversity.get(row.universityId) ?? [];
+    majors.push(row.major);
+    majorsByUniversity.set(row.universityId, majors);
+  }
+
+  return universities.map((uni) => ({
+    ...uni,
+    majors: majorsByUniversity.get(uni.id) ?? [],
+  }));
+}
+
 router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
-  const { search, type, state, page = "1", limit = "20" } = req.query as Record<string, string>;
+  const { search, type, state, page = "1", limit = "100" } = req.query as Record<string, string>;
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.min(100, parseInt(limit, 10));
   const offset = (pageNum - 1) * limitNum;
@@ -52,7 +78,7 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
     .offset(offset)
     .orderBy(universitiesTable.name);
 
-  const withMajors = await Promise.all(unis.map((u) => getUniversityWithMajors(u.id)));
+  const withMajors = await attachMajorsToUniversities(unis);
 
   res.json({
     universities: withMajors,

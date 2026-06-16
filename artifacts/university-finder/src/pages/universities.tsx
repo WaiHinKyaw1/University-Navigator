@@ -176,7 +176,10 @@ export default function Universities() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [page, setPage] = useState(1);
 
-  const { data: response, isLoading } = useListUniversities({ search: search || undefined });
+  const { data: response, isLoading } = useListUniversities({
+    search: search || undefined,
+    limit: 100,
+  });
   const universities: any[] = (response as any)?.universities ?? [];
 
   const filtered = useMemo(() => {

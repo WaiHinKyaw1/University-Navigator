@@ -15,7 +15,8 @@ export default function AdminUniversities() {
   const queryClient = useQueryClient();
 
   const { data: response, isLoading } = useListUniversities({
-    search: search || undefined
+    search: search || undefined,
+    limit: 100,
   });
 
   const deleteMutation = useDeleteUniversity({
