@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin-layout";
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import { useListMajors, useDeleteMajor, useCreateMajor, useUpdateMajor } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,10 @@ export default function AdminMajors() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMajor, setEditingMajor] = useState<any | null>(null);
   const [form, setForm] = useState<MajorForm>(emptyForm);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const queryClient = useQueryClient();
   const { data: majors, isLoading } = useListMajors();
 
@@ -63,6 +68,7 @@ export default function AdminMajors() {
     mutation: {
       onSuccess: () => {
         toast.success("Major deleted successfully");
+        setDeleteTarget(null);
         refresh();
       },
       onError: (err) => {
@@ -108,10 +114,9 @@ export default function AdminMajors() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this major?")) {
-      deleteMutation.mutate({ id });
-    }
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate({ id: deleteTarget.id });
   };
 
   return (
@@ -163,7 +168,12 @@ export default function AdminMajors() {
                           variant="ghost" 
                           size="sm" 
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(major.id)}
+                          onClick={() =>
+                            setDeleteTarget({
+                              id: major.id,
+                              name: major.nameEn || major.name,
+                            })
+                          }
                           disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -217,6 +227,19 @@ export default function AdminMajors() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DeleteConfirmDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          title="Delete Major"
+          description={
+            deleteTarget
+              ? `Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.`
+              : ""
+          }
+          onConfirm={confirmDelete}
+          isPending={deleteMutation.isPending}
+        />
       </div>
     </AdminLayout>
   );

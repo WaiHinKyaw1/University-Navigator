@@ -15,6 +15,10 @@ export const pool = new Pool({
   ssl: process.env.DATABASE_URL.includes("supabase.com")
     ? { rejectUnauthorized: false }
     : undefined,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 10_000,
+  keepAlive: true,
 });
 export const db = drizzle(pool, { schema });
 

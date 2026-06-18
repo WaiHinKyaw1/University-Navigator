@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/layout";
 import { useEffect } from "react";
-import { GraduationCap, Users, Building2, BookOpen, FileText, Activity, MessageSquare } from "lucide-react";
+import { GraduationCap, Users, Building2, BookOpen, FileText, Activity, MessageSquare, FileUp } from "lucide-react";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -58,6 +58,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <NavItem href="/admin/universities" icon={Building2} label="Universities" />
             <NavItem href="/admin/majors" icon={BookOpen} label="Majors" />
             <NavItem href="/admin/news" icon={FileText} label="News" />
+            <NavItem href="/admin/admission-guide" icon={FileUp} label="Admission PDF" />
             
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">Monitoring</div>
             <NavItem href="/admin/chat-monitor" icon={MessageSquare} label="Chat Monitor" />

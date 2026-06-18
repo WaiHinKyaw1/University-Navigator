@@ -50,19 +50,23 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
-  if (!user) {
-    res.status(401).json({ error: "User not found" });
-    return;
-  }
+  try {
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
+    if (!user) {
+      res.status(401).json({ error: "User not found" });
+      return;
+    }
 
-  if (user.status === "banned") {
-    res.status(403).json({ error: "Account banned" });
-    return;
-  }
+    if (user.status === "banned") {
+      res.status(403).json({ error: "Account banned" });
+      return;
+    }
 
-  req.user = { id: user.id, role: user.role, name: user.name, email: user.email, status: user.status };
-  next();
+    req.user = { id: user.id, role: user.role, name: user.name, email: user.email, status: user.status };
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -81,9 +85,14 @@ export async function optionalAuth(req: Request, res: Response, next: NextFuncti
     const token = authHeader.slice(7);
     const payload = verifyToken(token);
     if (payload) {
-      const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
-      if (user && user.status !== "banned") {
-        req.user = { id: user.id, role: user.role, name: user.name, email: user.email, status: user.status };
+      try {
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
+        if (user && user.status !== "banned") {
+          req.user = { id: user.id, role: user.role, name: user.name, email: user.email, status: user.status };
+        }
+      } catch (error) {
+        next(error);
+        return;
       }
     }
   }

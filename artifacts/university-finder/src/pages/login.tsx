@@ -35,13 +35,28 @@ export default function Login() {
   const loginMutation = useLogin({
     mutation: {
       onSuccess: (data) => {
-        login(data.token);
+        login(data.token, data.user);
         toast.success("Welcome back!");
         setLocation("/");
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to log in. Please check your credentials.");
-      }
+        if (error.status === 401) {
+          toast.error("Invalid email or password.");
+          return;
+        }
+        if (error.status === 403) {
+          toast.error("This account has been banned.");
+          return;
+        }
+        if (error.status === 503) {
+          toast.error(
+            error.message ||
+              "Database connection failed. Please try again in a moment.",
+          );
+          return;
+        }
+        toast.error(error.message || "Failed to log in. Please try again.");
+      },
     }
   });
 

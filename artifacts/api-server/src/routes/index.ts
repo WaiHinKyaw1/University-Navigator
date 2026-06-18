@@ -8,6 +8,7 @@ import chatRouter from "./chat";
 import newsRouter from "./news";
 import usersRouter from "./users";
 import chatbotRouter from "./chatbot";
+import admissionGuidesRouter from "./admission-guides";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(chatRouter);
 router.use(newsRouter);
 router.use(usersRouter);
 router.use(chatbotRouter);
+router.use(admissionGuidesRouter);
 
 export default router;

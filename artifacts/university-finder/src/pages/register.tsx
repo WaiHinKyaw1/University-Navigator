@@ -39,7 +39,7 @@ export default function Register() {
   const registerMutation = useRegister({
     mutation: {
       onSuccess: (data) => {
-        login(data.token);
+        login(data.token, data.user);
         toast.success("Account created successfully!");
         setLocation("/");
       },

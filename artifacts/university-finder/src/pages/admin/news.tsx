@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin-layout";
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import { useListNews, useDeleteNews, useCreateNews, useUpdateNews } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,10 @@ export default function AdminNews() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<any | null>(null);
   const [form, setForm] = useState<NewsForm>(emptyForm);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const queryClient = useQueryClient();
   const { data: response, isLoading } = useListNews({ limit: 50 });
 
@@ -66,6 +71,7 @@ export default function AdminNews() {
     mutation: {
       onSuccess: () => {
         toast.success("News article deleted successfully");
+        setDeleteTarget(null);
         refresh();
       },
       onError: (err) => {
@@ -113,10 +119,9 @@ export default function AdminNews() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this article?")) {
-      deleteMutation.mutate({ id });
-    }
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate({ id: deleteTarget.id });
   };
 
   return (
@@ -178,7 +183,12 @@ export default function AdminNews() {
                           variant="ghost" 
                           size="sm" 
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(article.id)}
+                          onClick={() =>
+                            setDeleteTarget({
+                              id: article.id,
+                              name: article.title,
+                            })
+                          }
                           disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -236,6 +246,19 @@ export default function AdminNews() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DeleteConfirmDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          title="Delete Article"
+          description={
+            deleteTarget
+              ? `Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.`
+              : ""
+          }
+          onConfirm={confirmDelete}
+          isPending={deleteMutation.isPending}
+        />
       </div>
     </AdminLayout>
   );

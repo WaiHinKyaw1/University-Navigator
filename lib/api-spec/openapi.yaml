@@ -30,6 +30,8 @@ tags:
     description: Admin operations
   - name: analytics
     description: Dashboard analytics
+  - name: admission-guide
+    description: Myanmar university admission PDF guide
 
 paths:
   /healthz:
@@ -543,6 +545,117 @@ paths:
       operationId: deleteNews
       tags: [news]
       summary: Delete a news article (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ── ADMISSION GUIDE ───────────────────────────────────────────────────────
+  /admission-guide:
+    get:
+      operationId: getActiveAdmissionGuide
+      tags: [admission-guide]
+      summary: Get the current active Myanmar university admission PDF metadata
+      responses:
+        "200":
+          description: Active admission guide
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdmissionGuide"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admission-guide/download:
+    get:
+      operationId: downloadActiveAdmissionGuide
+      tags: [admission-guide]
+      summary: Download the current active admission PDF
+      responses:
+        "200":
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/admission-guides:
+    get:
+      operationId: listAdmissionGuides
+      tags: [admission-guide, admin]
+      summary: List all admission guide uploads (admin only)
+      responses:
+        "200":
+          description: Admission guide list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdmissionGuideListResponse"
+
+  /admin/admission-guides/{id}/activate:
+    put:
+      operationId: activateAdmissionGuide
+      tags: [admission-guide, admin]
+      summary: Set an admission guide as active (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdmissionGuide"
+
+  /admin/admission-guides/{id}/download:
+    get:
+      operationId: downloadAdmissionGuide
+      tags: [admission-guide, admin]
+      summary: Download a specific admission guide PDF (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /admin/admission-guides/{id}:
+    delete:
+      operationId: deleteAdmissionGuide
+      tags: [admission-guide, admin]
+      summary: Delete an admission guide (admin only)
       parameters:
         - name: id
           in: path
@@ -1142,6 +1255,48 @@ components:
           type: integer
         limit:
           type: integer
+
+    # ── ADMISSION GUIDE ───────────────────────────────────────────────────
+    AdmissionGuide:
+      type: object
+      required:
+        [id, title, fileName, fileSize, mimeType, isActive, uploadedById, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        academicYear:
+          type: ["string", "null"]
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+        mimeType:
+          type: string
+        isActive:
+          type: boolean
+        uploadedById:
+          type: integer
+        uploadedByName:
+          type: string
+        downloadUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdmissionGuideListResponse:
+      type: object
+      required: [guides]
+      properties:
+        guides:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdmissionGuide"
 
     # ── ADMIN ─────────────────────────────────────────────────────────────
     BanUserInput:

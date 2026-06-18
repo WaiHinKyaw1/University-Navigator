@@ -5,8 +5,8 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
+import type { AdmissionGuide } from './admissionGuide';
 
-export interface BanUserInput {
-  banned: boolean;
-  reason: string;
+export interface AdmissionGuideListResponse {
+  guides: AdmissionGuide[];
 }

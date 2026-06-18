@@ -6,17 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface NewsArticle {
+export interface AdmissionGuide {
   id: number;
   title: string;
-  content: string;
-  /** admission | announcement | scholarship | general */
-  category: string;
-  authorId: number;
-  authorName?: string;
   /** @nullable */
-  imageUrl?: string | null;
-  published?: boolean;
+  academicYear?: string | null;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  isActive: boolean;
+  uploadedById: number;
+  uploadedByName?: string;
+  downloadUrl?: string;
   createdAt: Date;
   updatedAt?: Date;
 }
