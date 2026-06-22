@@ -165,6 +165,10 @@ export interface ChatbotMessageInput {
   message: string;
   /** @nullable */
   sessionId?: string | null;
+  /** @nullable */
+  totalScore?: number | null;
+  /** @nullable */
+  combination?: "science" | "arts" | "both" | null;
 }
 
 export interface ChatbotResponse {

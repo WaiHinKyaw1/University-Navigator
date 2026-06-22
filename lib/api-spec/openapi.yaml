@@ -1091,6 +1091,13 @@ components:
           type: string
         sessionId:
           type: ["string", "null"]
+        totalScore:
+          type: ["number", "null"]
+          description: G-12 total marks (optional, used for DB matching)
+        combination:
+          type: ["string", "null"]
+          enum: [science, arts, both, null]
+          description: Subject combination for admission matching
 
     ChatbotResponse:
       type: object
