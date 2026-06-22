@@ -132,7 +132,7 @@ export default function AdminNews() {
             <h1 className="text-3xl font-bold tracking-tight">News</h1>
             <p className="text-muted-foreground">Manage announcements and admission news.</p>
           </div>
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} className="cursor-pointer">
             <Plus className="h-4 w-4 mr-2" /> Compose Article
           </Button>
         </div>
@@ -179,9 +179,9 @@ export default function AdminNews() {
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(article)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                           onClick={() =>
                             setDeleteTarget({

@@ -14,39 +14,39 @@ const PAGE_SIZE = 9;
 const ACADEMIC_YEAR = "ပညာသင်နှစ် ၂၀၂၅-၂၀၂၆";
 
 const CATEGORIES = [
-  { value: "all",        label: "ကျောင်းအားလုံး",    emoji: "🏛️" },
-  { value: "medical",    label: "ဆေးပညာ",            emoji: "🏥" },
-  { value: "technical",  label: "နည်းပညာ/ကွန်ပျူတာ", emoji: "⚙️" },
-  { value: "government", label: "ဝိဇ္ဇာ/သိပ္ပံ",       emoji: "📚" },
-  { value: "education",  label: "ပညာရေး",             emoji: "🎓" },
+  { value: "all", label: "ကျောင်းအားလုံး", emoji: "🏛️" },
+  { value: "medical", label: "ဆေးပညာ", emoji: "🏥" },
+  { value: "technical", label: "နည်းပညာ/ကွန်ပျူတာ", emoji: "⚙️" },
+  { value: "government", label: "ဝိဇ္ဇာ/သိပ္ပံ", emoji: "📚" },
+  { value: "education", label: "ပညာရေး", emoji: "🎓" },
 ];
 
 const TYPE_LABEL: Record<string, string> = {
-  medical:    "ဆေးပညာ",
-  technical:  "နည်းပညာ",
+  medical: "ဆေးပညာ",
+  technical: "နည်းပညာ",
   government: "ဝိဇ္ဇာ/သိပ္ပံ",
-  education:  "ပညာရေး",
+  education: "ပညာရေး",
 };
 
 const TYPE_STRIP: Record<string, string> = {
-  medical:    "bg-gradient-to-r from-rose-400 to-pink-500",
-  technical:  "bg-gradient-to-r from-blue-400 to-indigo-500",
-  education:  "bg-gradient-to-r from-amber-400 to-orange-400",
+  medical: "bg-gradient-to-r from-rose-400 to-pink-500",
+  technical: "bg-gradient-to-r from-blue-400 to-indigo-500",
+  education: "bg-gradient-to-r from-amber-400 to-orange-400",
   government: "bg-gradient-to-r from-violet-400 to-purple-500",
 };
 
 const TYPE_BADGE: Record<string, string> = {
-  medical:    "bg-rose-50 text-rose-700 border-rose-200",
-  technical:  "bg-blue-50 text-blue-700 border-blue-200",
+  medical: "bg-rose-50 text-rose-700 border-rose-200",
+  technical: "bg-blue-50 text-blue-700 border-blue-200",
   government: "bg-violet-50 text-violet-700 border-violet-200",
-  education:  "bg-amber-50 text-amber-700 border-amber-200",
+  education: "bg-amber-50 text-amber-700 border-amber-200",
 };
 
 const SCORE_COLOR = (s: number) =>
   s >= 450 ? "bg-rose-50 text-rose-700" :
-  s >= 400 ? "bg-orange-50 text-orange-700" :
-  s >= 360 ? "bg-yellow-50 text-yellow-700" :
-             "bg-emerald-50 text-emerald-700";
+    s >= 400 ? "bg-orange-50 text-orange-700" :
+      s >= 360 ? "bg-yellow-50 text-yellow-700" :
+        "bg-emerald-50 text-emerald-700";
 
 // ─── University card ──────────────────────────────────────────────────────────
 
@@ -147,11 +147,10 @@ function Pagination({ page, total, pageSize, onChange }: {
           {i > 0 && arr[i - 1] !== p - 1 && <span className="text-gray-400 text-sm px-1">…</span>}
           <button
             onClick={() => onChange(p)}
-            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
-              p === page
-                ? "bg-primary text-white shadow-sm"
-                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
-            }`}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${p === page
+              ? "bg-primary text-white shadow-sm"
+              : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+              }`}
           >
             {p}
           </button>
@@ -202,8 +201,8 @@ export default function Universities() {
 
           {/* Header */}
           <div className="text-center space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">တက္ကသိုလ်များ</h1>
-            <p className="text-gray-500 text-sm">မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း {universities.length}+ — {ACADEMIC_YEAR}</p>
+            <h1 className="text-2xl sm:text-2xl font-bold text-gray-900 mb-2">တက္ကသိုလ်များ</h1>
+            <p className="text-gray-500 text-sm">မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({universities.length}) — {ACADEMIC_YEAR}</p>
           </div>
 
           {/* Search */}
@@ -226,17 +225,15 @@ export default function Universities() {
                 <button
                   key={cat.value}
                   onClick={() => handleCategoryChange(cat.value)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
-                    activeCategory === cat.value
-                      ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
-                  }`}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${activeCategory === cat.value
+                    ? "bg-primary text-white border-primary shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
+                    }`}
                 >
                   <span>{cat.emoji}</span>
                   {cat.label}
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    activeCategory === cat.value ? "bg-white/25 text-white" : "bg-gray-100 text-gray-500"
-                  }`}>{count}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeCategory === cat.value ? "bg-white/25 text-white" : "bg-gray-100 text-gray-500"
+                    }`}>{count}</span>
                 </button>
               );
             })}
@@ -252,7 +249,7 @@ export default function Universities() {
           {/* Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1,2,3,4,5,6].map((i) => (
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <Card key={i} className="overflow-hidden rounded-2xl border-gray-100">
                   <div className="h-32 bg-gray-100 animate-pulse" />
                   <div className="p-4 space-y-3">

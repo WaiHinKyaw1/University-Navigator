@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/layout";
 import { useEffect } from "react";
-import { GraduationCap, Users, Building2, BookOpen, FileText, Activity, MessageSquare, FileUp } from "lucide-react";
+import { GraduationCap, Users, Building2, BookOpen, FileText, Activity, MessageSquare, FileUp, ArrowBigLeft } from "lucide-react";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -21,9 +21,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const NavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => {
     const isActive = location === href || (href !== "/admin" && location.startsWith(href));
     return (
-      <Link href={href} className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-        isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-      }`}>
+      <Link href={href} className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+        }`}>
         <Icon className="h-5 w-5" />
         <span>{label}</span>
       </Link>
@@ -42,7 +41,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">{user.name}</span>
-            <Link href="/" className="text-sm text-primary hover:underline">Back to App</Link>
+            <Link href="/" className="text-sm text-black font-bold">Back to App</Link>
           </div>
         </div>
       </header>
@@ -52,20 +51,20 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="p-4 space-y-1">
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Overview</div>
             <NavItem href="/admin" icon={Activity} label="Dashboard" />
-            
+
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">Management</div>
             <NavItem href="/admin/users" icon={Users} label="Users" />
             <NavItem href="/admin/universities" icon={Building2} label="Universities" />
             <NavItem href="/admin/majors" icon={BookOpen} label="Majors" />
             <NavItem href="/admin/news" icon={FileText} label="News" />
             <NavItem href="/admin/admission-guide" icon={FileUp} label="Admission PDF" />
-            
+
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">Monitoring</div>
             <NavItem href="/admin/chat-monitor" icon={MessageSquare} label="Chat Monitor" />
             <NavItem href="/admin/audit" icon={Activity} label="Audit Logs" />
           </div>
         </aside>
-        
+
         <main className="flex-1 overflow-y-auto bg-muted/10 p-4 md:p-6 lg:p-8">
           {children}
         </main>

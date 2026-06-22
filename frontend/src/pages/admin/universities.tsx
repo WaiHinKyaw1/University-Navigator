@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,6 +50,7 @@ import {
   MYANMAR_STATE_DIVISIONS,
   MYANMAR_UNION_TERRITORIES,
 } from "@/lib/myanmar-locations";
+import Universities from "../universities";
 
 type UniversityForm = {
   name: string;
@@ -86,6 +87,52 @@ const UNIVERSITY_TYPES = [
   "medical",
   "education",
 ];
+const pageSize = 10;
+
+function Pagination({ page, total, pageSize, onChange }: {
+  page: number; total: number; pageSize: number; onChange: (p: number) => void;
+}) {
+  const totalPages = Math.ceil(total / pageSize);
+  if (totalPages <= 1) return null;
+
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const visible = pages.filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1);
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 pt-4">
+      <button
+        onClick={() => onChange(page - 1)}
+        disabled={page === 1}
+        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+
+      {visible.map((p, i, arr) => (
+        <span key={p} className="flex items-center gap-1.5">
+          {i > 0 && arr[i - 1] !== p - 1 && <span className="text-gray-400 text-sm px-1">…</span>}
+          <button
+            onClick={() => onChange(p)}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${p === page
+              ? "bg-primary text-white shadow-sm"
+              : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+              }`}
+          >
+            {p}
+          </button>
+        </span>
+      ))}
+
+      <button
+        onClick={() => onChange(page + 1)}
+        disabled={page === totalPages}
+        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
 
 export default function AdminUniversities() {
   const [search, setSearch] = useState("");
@@ -94,6 +141,7 @@ export default function AdminUniversities() {
     null,
   );
   const [form, setForm] = useState<UniversityForm>(emptyForm);
+  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
     name: string;
@@ -237,6 +285,10 @@ export default function AdminUniversities() {
     if (!deleteTarget) return;
     deleteMutation.mutate({ id: deleteTarget.id });
   };
+  const paginated = useMemo(
+    () => response?.universities.splice((page - 1) * pageSize, page * pageSize),
+    [Universities, page]
+  );
 
   return (
     <AdminLayout>
@@ -258,7 +310,7 @@ export default function AdminUniversities() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button onClick={openCreate}>
+            <Button onClick={openCreate} className="cursor-pointer">
               <Plus className="h-4 w-4 mr-2" /> Add New
             </Button>
           </div>
@@ -341,6 +393,9 @@ export default function AdminUniversities() {
                 )}
               </TableBody>
             </Table>
+
+            <Pagination page={page} total={Universities.length} pageSize={pageSize} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+
           </CardContent>
         </Card>
 

@@ -49,7 +49,7 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between mx-auto">
+        <div className="container flex h-16 items-center justify-between p-5">
           <div className="flex items-center gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
               <div className="bg-primary p-1.5 rounded-lg">
@@ -130,8 +130,8 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
         {children}
       </main>
 
-      {!noFooter && <footer className="border-t bg-muted/40 py-8 md:py-12 mt-auto">
-        <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
+      {!noFooter && <footer className="border-t bg-muted/40 py-5 md:py-8 mt-auto">
+        <div className="container p-5 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
           <div>
             <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
               <GraduationCap className="h-4 w-4" /> MM Uni Finder
