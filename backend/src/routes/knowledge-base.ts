@@ -59,7 +59,8 @@ router.post("/admin/knowledge-base", requireAdmin, async (req, res): Promise<voi
 // ─── Admin: update a section ──────────────────────────────────────────────────
 
 router.put("/admin/knowledge-base/:id", requireAdmin, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(rawId ?? "", 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const { title, content, category, academicYear, isActive, sortOrder } = req.body;
@@ -84,7 +85,8 @@ router.put("/admin/knowledge-base/:id", requireAdmin, async (req, res): Promise<
 // ─── Admin: delete a section ──────────────────────────────────────────────────
 
 router.delete("/admin/knowledge-base/:id", requireAdmin, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(rawId ?? "", 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const [deleted] = await db

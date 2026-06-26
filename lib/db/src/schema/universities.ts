@@ -1,6 +1,7 @@
 import { pgTable, text, serial, real, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { admissionGuidesTable } from "./admission-guides";
 
 export const universitiesTable = pgTable("universities", {
   id: serial("id").primaryKey(),
@@ -12,8 +13,13 @@ export const universitiesTable = pgTable("universities", {
   city: text("city"),
   minScore: real("min_score").notNull(),
   description: text("description"),
+  admissionRequirements: text("admission_requirements"),
+  applicationProcess: text("application_process"),
+  duration: text("duration"),
+  careerOutcomes: text("career_outcomes"),
   website: text("website"),
   imageUrl: text("image_url"),
+  sourceGuideId: integer("source_guide_id").references(() => admissionGuidesTable.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

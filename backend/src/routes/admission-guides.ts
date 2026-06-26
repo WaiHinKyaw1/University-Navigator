@@ -16,6 +16,8 @@ import {
   getAdmissionGuideFilePath,
   extractPdfText,
 } from "../lib/uploads";
+import { importAdmissionDataFromPdfText } from "../lib/pdf-structured-import";
+import { logger } from "../lib/logger";
 
 // ─── PDF → Knowledge Base sections auto-extractor ────────────────────────────
 
@@ -231,7 +233,7 @@ router.post(
           .returning();
       });
 
-      // ── Auto-extract PDF sections ──────────────────────────────────────────
+      // ── Auto-extract PDF sections and university data ────────────────────
       try {
         const rawText = await extractPdfText(file.filename);
         if (rawText.trim()) {
@@ -253,6 +255,20 @@ router.post(
                 sourceGuideId: guide.id,
               })),
             );
+          }
+
+          try {
+            const importResult = await importAdmissionDataFromPdfText(rawText, guide.id);
+            logger.info(
+              {
+                guideId: guide.id,
+                universitiesImported: importResult.universitiesImported,
+                majorsImported: importResult.majorsImported,
+              },
+              "Imported admission data from uploaded PDF",
+            );
+          } catch (importError) {
+            logger.warn({ err: importError, guideId: guide.id }, "PDF university import failed");
           }
         }
       } catch {

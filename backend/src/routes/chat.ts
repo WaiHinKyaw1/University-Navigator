@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, chatRoomsTable, chatRoomParticipantsTable, chatMessagesTable, usersTable } from "@workspace/db";
-import { eq, and, or, desc, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, isNull, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -17,6 +17,82 @@ function filterContent(content: string): { filtered: string; isFiltered: boolean
     }
   }
   return { filtered, isFiltered };
+}
+
+type PeerChatMessage = {
+  id: number;
+  parentId: number | null;
+  senderId: number;
+  senderName: string;
+  senderAvatar: string | null;
+  title: string | null;
+  content: string;
+  isFiltered: boolean;
+  answerCount: number;
+  createdAt: Date;
+  replies: PeerChatMessage[];
+};
+
+function buildMessageTree(rows: Array<Omit<PeerChatMessage, "replies">>): PeerChatMessage[] {
+  const byId = new Map<number, PeerChatMessage>();
+  const roots: PeerChatMessage[] = [];
+
+  for (const row of rows) {
+    byId.set(row.id, { ...row, replies: [] });
+  }
+
+  for (const message of byId.values()) {
+    if (message.parentId && byId.has(message.parentId)) {
+      byId.get(message.parentId)!.replies.push(message);
+    } else {
+      roots.push(message);
+    }
+  }
+
+  return roots;
+}
+
+async function getPeerChatTree(): Promise<PeerChatMessage[]> {
+  const rows = await db
+    .select({
+      id: chatMessagesTable.id,
+      parentId: chatMessagesTable.parentId,
+      senderId: chatMessagesTable.senderId,
+      senderName: usersTable.name,
+      senderAvatar: usersTable.avatarUrl,
+      title: chatMessagesTable.title,
+      content: chatMessagesTable.content,
+      isFiltered: chatMessagesTable.isFiltered,
+      createdAt: chatMessagesTable.createdAt,
+    })
+    .from(chatMessagesTable)
+    .leftJoin(usersTable, eq(chatMessagesTable.senderId, usersTable.id))
+    .where(isNull(chatMessagesTable.roomId))
+    .orderBy(desc(chatMessagesTable.createdAt));
+
+  const directAnswerCounts = await db
+    .select({
+      parentId: chatMessagesTable.parentId,
+      count: sql<number>`count(*)`,
+    })
+    .from(chatMessagesTable)
+    .where(isNull(chatMessagesTable.roomId))
+    .groupBy(chatMessagesTable.parentId);
+
+  const countByParentId = new Map(
+    directAnswerCounts
+      .filter((row) => row.parentId !== null)
+      .map((row) => [row.parentId!, Number(row.count)]),
+  );
+
+  return buildMessageTree(
+    rows.map((row) => ({
+      ...row,
+      senderName: row.senderName || "Unknown",
+      senderAvatar: row.senderAvatar || null,
+      answerCount: countByParentId.get(row.id) || 0,
+    })),
+  );
 }
 
 router.get("/students", requireAuth, async (req, res): Promise<void> => {
@@ -43,6 +119,103 @@ router.get("/students", requireAuth, async (req, res): Promise<void> => {
   }
 
   res.json(students);
+});
+
+router.get("/chat/questions", requireAuth, async (_req, res): Promise<void> => {
+  const tree = await getPeerChatTree();
+  res.json(tree.filter((message) => message.parentId === null));
+});
+
+router.post("/chat/questions", requireAuth, async (req, res): Promise<void> => {
+  const { title, content } = req.body as { title?: unknown; content?: unknown };
+
+  if (typeof title !== "string" || title.trim().length < 3) {
+    res.status(400).json({ error: "Question title is required" });
+    return;
+  }
+
+  if (typeof content !== "string" || content.trim().length < 3) {
+    res.status(400).json({ error: "Question details are required" });
+    return;
+  }
+
+  const titleResult = filterContent(title.trim());
+  const contentResult = filterContent(content.trim());
+
+  const [question] = await db
+    .insert(chatMessagesTable)
+    .values({
+      senderId: req.user!.id,
+      title: titleResult.filtered,
+      content: contentResult.filtered,
+      isFiltered: titleResult.isFiltered || contentResult.isFiltered,
+    })
+    .returning();
+
+  res.status(201).json({
+    id: question.id,
+    parentId: question.parentId,
+    senderId: question.senderId,
+    senderName: req.user!.name,
+    senderAvatar: null,
+    title: question.title,
+    content: question.content,
+    isFiltered: question.isFiltered,
+    answerCount: 0,
+    createdAt: question.createdAt,
+    replies: [],
+  });
+});
+
+router.post("/chat/messages/:messageId/replies", requireAuth, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.messageId) ? req.params.messageId[0] : req.params.messageId;
+  const messageId = parseInt(raw, 10);
+  if (isNaN(messageId)) {
+    res.status(400).json({ error: "Invalid message id" });
+    return;
+  }
+
+  const { content } = req.body as { content?: unknown };
+  if (typeof content !== "string" || content.trim().length < 3) {
+    res.status(400).json({ error: "Answer content is required" });
+    return;
+  }
+
+  const [parent] = await db
+    .select()
+    .from(chatMessagesTable)
+    .where(and(eq(chatMessagesTable.id, messageId), isNull(chatMessagesTable.roomId)));
+
+  if (!parent) {
+    res.status(404).json({ error: "Question or answer not found" });
+    return;
+  }
+
+  const { filtered, isFiltered } = filterContent(content.trim());
+
+  const [reply] = await db
+    .insert(chatMessagesTable)
+    .values({
+      parentId: messageId,
+      senderId: req.user!.id,
+      content: filtered,
+      isFiltered,
+    })
+    .returning();
+
+  res.status(201).json({
+    id: reply.id,
+    parentId: reply.parentId,
+    senderId: reply.senderId,
+    senderName: req.user!.name,
+    senderAvatar: null,
+    title: reply.title,
+    content: reply.content,
+    isFiltered: reply.isFiltered,
+    answerCount: 0,
+    createdAt: reply.createdAt,
+    replies: [],
+  });
 });
 
 router.get("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
@@ -79,7 +252,10 @@ router.get("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
         .where(eq(chatRoomParticipantsTable.roomId, room.id));
 
       const [lastMsg] = await db
-        .select()
+        .select({
+          content: chatMessagesTable.content,
+          createdAt: chatMessagesTable.createdAt,
+        })
         .from(chatMessagesTable)
         .where(eq(chatMessagesTable.roomId, room.id))
         .orderBy(desc(chatMessagesTable.createdAt))
@@ -189,7 +365,12 @@ router.get("/chat/rooms/:roomId/messages", requireAuth, async (req, res): Promis
 
   const messages = await db
     .select({
-      msg: chatMessagesTable,
+      id: chatMessagesTable.id,
+      roomId: chatMessagesTable.roomId,
+      senderId: chatMessagesTable.senderId,
+      content: chatMessagesTable.content,
+      isFiltered: chatMessagesTable.isFiltered,
+      createdAt: chatMessagesTable.createdAt,
       senderName: usersTable.name,
       senderAvatar: usersTable.avatarUrl,
     })
@@ -201,14 +382,14 @@ router.get("/chat/rooms/:roomId/messages", requireAuth, async (req, res): Promis
 
   res.json(
     messages.map((r) => ({
-      id: r.msg.id,
-      roomId: r.msg.roomId,
-      senderId: r.msg.senderId,
+      id: r.id,
+      roomId: r.roomId,
+      senderId: r.senderId,
       senderName: r.senderName || "Unknown",
       senderAvatar: r.senderAvatar || null,
-      content: r.msg.content,
-      isFiltered: r.msg.isFiltered,
-      createdAt: r.msg.createdAt,
+      content: r.content,
+      isFiltered: r.isFiltered,
+      createdAt: r.createdAt,
     })),
   );
 });

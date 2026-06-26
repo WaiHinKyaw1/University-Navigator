@@ -1,292 +1,391 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
-import { 
-  useListStudents, 
-  useListChatRooms, 
-  useCreateChatRoom, 
-  useGetChatMessages, 
-  useSendChatMessage,
-  StudentSummary,
-  ChatRoom
-} from "@workspace/api-client-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Send, User, MessageSquare, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { MessageCircleQuestion, MessageSquareReply, Search, Send, Users } from "lucide-react";
 import { useLocation } from "wouter";
+
+type PeerMessage = {
+  id: number;
+  parentId: number | null;
+  senderId: number;
+  senderName: string;
+  senderAvatar: string | null;
+  title: string | null;
+  content: string;
+  isFiltered: boolean;
+  answerCount: number;
+  createdAt: string;
+  replies: PeerMessage[];
+};
+
+const questionsQueryKey = ["peer-chat-questions"];
+
+async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
+  const token = localStorage.getItem("token");
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.error || `Request failed with ${response.status}`);
+  }
+
+  return response.json();
+}
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function countReplies(message: PeerMessage): number {
+  return message.replies.reduce((total, reply) => total + 1 + countReplies(reply), 0);
+}
+
+function ReplyThread({
+  replies,
+  onReply,
+  replyingTo,
+  replyText,
+  setReplyingTo,
+  setReplyText,
+  isSubmitting,
+  depth = 0,
+}: {
+  replies: PeerMessage[];
+  onReply: (messageId: number) => void;
+  replyingTo: number | null;
+  replyText: string;
+  setReplyingTo: (id: number | null) => void;
+  setReplyText: (value: string) => void;
+  isSubmitting: boolean;
+  depth?: number;
+}) {
+  return (
+    <div className="space-y-3">
+      {replies.map((reply) => (
+        <div key={reply.id} className={cn("border-l pl-4", depth > 1 && "pl-3")}>
+          <div className="flex gap-3 rounded-md bg-muted/30 p-3">
+            <Avatar className="h-8 w-8 border">
+              <AvatarImage src={reply.senderAvatar || ""} />
+              <AvatarFallback className="bg-background text-xs text-primary">
+                {initials(reply.senderName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium">{reply.senderName}</span>
+                <span className="text-xs text-muted-foreground">{formatDate(reply.createdAt)}</span>
+                {reply.isFiltered && (
+                  <Badge variant="outline" className="text-[10px]">
+                    Filtered
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{reply.content}</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-2 h-8 px-2 text-xs"
+                onClick={() => {
+                  setReplyingTo(reply.id);
+                  setReplyText("");
+                }}
+              >
+                <MessageSquareReply className="mr-1 h-3.5 w-3.5" />
+                Reply
+              </Button>
+
+              {replyingTo === reply.id && (
+                <div className="mt-3 space-y-2">
+                  <Textarea
+                    value={replyText}
+                    onChange={(event) => setReplyText(event.target.value)}
+                    placeholder="Write a reply..."
+                    className="min-h-20 bg-background"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setReplyingTo(null)}>
+                      Cancel
+                    </Button>
+                    <Button type="button" size="sm" disabled={!replyText.trim() || isSubmitting} onClick={() => onReply(reply.id)}>
+                      <Send className="mr-1.5 h-3.5 w-3.5" />
+                      Post
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {reply.replies.length > 0 && (
+                <div className="mt-3">
+                  <ReplyThread
+                    replies={reply.replies}
+                    onReply={onReply}
+                    replyingTo={replyingTo}
+                    replyText={replyText}
+                    setReplyingTo={setReplyingTo}
+                    setReplyText={setReplyText}
+                    isSubmitting={isSubmitting}
+                    depth={depth + 1}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Chat() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [activeRoom, setActiveRoom] = useState<number | null>(null);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [message, setMessage] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
 
-  // Redirect if not logged in
   useEffect(() => {
     if (user === null) {
       setLocation("/login");
     }
   }, [user, setLocation]);
 
-  const { data: studentsData } = useListStudents({
-    search: search || undefined
-  }, {
-    query: {
-      enabled: !!user
-    }
+  const { data: questions = [], isLoading, error } = useQuery({
+    queryKey: questionsQueryKey,
+    queryFn: () => apiRequest<PeerMessage[]>("/api/chat/questions"),
+    enabled: !!user,
+    refetchInterval: 5000,
   });
 
-  const { data: roomsData, refetch: refetchRooms } = useListChatRooms({
-    query: {
-      enabled: !!user,
-      refetchInterval: 5000 // Poll rooms
-    }
+  const createQuestion = useMutation({
+    mutationFn: () =>
+      apiRequest<PeerMessage>("/api/chat/questions", {
+        method: "POST",
+        body: JSON.stringify({ title, content }),
+      }),
+    onSuccess: (question) => {
+      setTitle("");
+      setContent("");
+      setActiveQuestionId(question.id);
+      queryClient.invalidateQueries({ queryKey: questionsQueryKey });
+    },
   });
 
-  const { data: messagesData } = useGetChatMessages(activeRoom || 0, {
-    query: {
-      enabled: !!activeRoom,
-      refetchInterval: 3000 // Poll messages
-    }
+  const createReply = useMutation({
+    mutationFn: (messageId: number) =>
+      apiRequest<PeerMessage>(`/api/chat/messages/${messageId}/replies`, {
+        method: "POST",
+        body: JSON.stringify({ content: replyText }),
+      }),
+    onSuccess: () => {
+      setReplyText("");
+      setReplyingTo(null);
+      queryClient.invalidateQueries({ queryKey: questionsQueryKey });
+    },
   });
 
-  const createRoomMutation = useCreateChatRoom({
-    mutation: {
-      onSuccess: (room) => {
-        setActiveRoom(room.id);
-        refetchRooms();
-      }
-    }
-  });
+  const filteredQuestions = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return questions;
 
-  const sendMessageMutation = useSendChatMessage({
-    mutation: {
-      onSuccess: () => {
-        setMessage("");
-      }
-    }
-  });
-
-  // Auto scroll to bottom of messages
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messagesData]);
-
-  const handleCreateRoom = (studentId: number) => {
-    // Check if room already exists
-    const existingRoom = roomsData?.find(r => 
-      r.participants.some(p => p.id === studentId)
+    return questions.filter((question) =>
+      [question.title, question.content, question.senderName]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(keyword)),
     );
+  }, [questions, search]);
 
-    if (existingRoom) {
-      setActiveRoom(existingRoom.id);
-    } else {
-      createRoomMutation.mutate({
-        data: { participantId: studentId }
-      });
+  const activeQuestion = filteredQuestions.find((question) => question.id === activeQuestionId) || filteredQuestions[0];
+
+  useEffect(() => {
+    if (!activeQuestionId && filteredQuestions.length > 0) {
+      setActiveQuestionId(filteredQuestions[0].id);
     }
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || !activeRoom || sendMessageMutation.isPending) return;
-
-    sendMessageMutation.mutate({
-      data: {
-        roomId: activeRoom,
-        content: message
-      }
-    });
-  };
+  }, [activeQuestionId, filteredQuestions]);
 
   if (!user) return null;
 
   return (
     <Layout>
-      <div className="container py-6 h-[calc(100vh-4rem)] max-w-6xl mx-auto flex flex-col md:flex-row gap-6">
-        
-        {/* Left Sidebar - Contacts/Rooms */}
-        <Card className="w-full md:w-80 flex flex-col h-[400px] md:h-full shrink-0 border-border/50">
-          <div className="p-4 border-b">
-            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" /> Peer Chat
-            </h2>
-            <div className="relative">
+      <div className="container mx-auto flex h-[calc(100vh-4rem)] max-w-6xl flex-col gap-6 py-6 lg:flex-row">
+        <Card className="flex h-[520px] w-full shrink-0 flex-col border-border/60 lg:h-full lg:w-[360px]">
+          <div className="border-b p-4">
+            <h1 className="flex items-center gap-2 text-lg font-bold">
+              <Users className="h-5 w-5 text-primary" />
+              Peer Q&A Room
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              ကျောင်းသားအချင်းချင်း မေးခွန်းမေးပြီး အဖြေများ ပြန်လည်ဆွေးနွေးရန်
+            </p>
+            <div className="relative mt-4">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Find students..." 
-                className="pl-9 bg-muted/50"
+              <Input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search questions..."
+                className="bg-muted/40 pl-9"
               />
             </div>
           </div>
-          
+
+          <div className="space-y-3 border-b p-4">
+            <Input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Question title"
+              className="bg-background"
+            />
+            <Textarea
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              placeholder="Ask about admission, university choice, or major selection..."
+              className="min-h-24 bg-background"
+            />
+            <Button
+              className="w-full"
+              disabled={!title.trim() || !content.trim() || createQuestion.isPending}
+              onClick={() => createQuestion.mutate()}
+            >
+              <MessageCircleQuestion className="mr-2 h-4 w-4" />
+              Ask Question
+            </Button>
+          </div>
+
           <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {search ? (
-                <>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Search Results
-                  </div>
-                  {(studentsData as any[])?.filter(s => s.id !== user.id).map(student => (
-                    <button
-                      key={student.id}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
-                      onClick={() => handleCreateRoom(student.id)}
-                    >
-                      <Avatar className="h-10 w-10 border border-border">
-                        <AvatarImage src={student.avatarUrl || ''} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {student.name.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 overflow-hidden">
-                        <p className="font-medium text-sm truncate">{student.name}</p>
-                        {student.grade && <p className="text-xs text-muted-foreground truncate">{student.grade}</p>}
-                      </div>
-                      <Plus className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                  ))}
-                  {(studentsData as any[])?.length === 0 && (
-                    <div className="p-4 text-center text-sm text-muted-foreground">No students found.</div>
+            <div className="space-y-2 p-2">
+              {isLoading && <div className="p-4 text-center text-sm text-muted-foreground">Loading questions...</div>}
+              {error && <div className="p-4 text-sm text-destructive">{(error as Error).message}</div>}
+              {filteredQuestions.map((question) => (
+                <button
+                  key={question.id}
+                  type="button"
+                  className={cn(
+                    "w-full rounded-md p-3 text-left transition-colors hover:bg-muted",
+                    activeQuestion?.id === question.id && "bg-primary/10",
                   )}
-                </>
-              ) : (
-                <>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-2">
-                    Recent Conversations
+                  onClick={() => setActiveQuestionId(question.id)}
+                >
+                  <div className="line-clamp-2 text-sm font-medium">{question.title}</div>
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span className="truncate">{question.senderName}</span>
+                    <span>{countReplies(question)} answers</span>
                   </div>
-                  {roomsData?.map(room => {
-                    const otherParticipant = room.participants.find(p => p.id !== user.id);
-                    if (!otherParticipant) return null;
-                    
-                    return (
-                      <button
-                        key={room.id}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                          activeRoom === room.id ? 'bg-primary/10' : 'hover:bg-muted'
-                        }`}
-                        onClick={() => setActiveRoom(room.id)}
-                      >
-                        <Avatar className="h-10 w-10 border border-border">
-                          <AvatarImage src={otherParticipant.avatarUrl || ''} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {otherParticipant.name.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 overflow-hidden">
-                          <div className="flex justify-between items-center">
-                            <p className="font-medium text-sm truncate">{otherParticipant.name}</p>
-                            {room.unreadCount ? (
-                              <span className="bg-primary text-primary-foreground text-[10px] h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center font-bold">
-                                {room.unreadCount}
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className={`text-xs truncate ${room.unreadCount ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                            {room.lastMessage || "No messages yet"}
-                          </p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                  {!roomsData?.length && (
-                    <div className="p-8 text-center flex flex-col items-center">
-                      <User className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                      <p className="text-sm text-muted-foreground">No conversations yet.</p>
-                      <p className="text-xs text-muted-foreground mt-1">Search for students to start chatting.</p>
-                    </div>
-                  )}
-                </>
+                </button>
+              ))}
+              {!isLoading && filteredQuestions.length === 0 && (
+                <div className="p-6 text-center text-sm text-muted-foreground">No questions yet.</div>
               )}
             </div>
           </ScrollArea>
         </Card>
 
-        {/* Right Area - Active Chat */}
-        <Card className="flex-1 flex flex-col h-[400px] md:h-full border-border/50 overflow-hidden">
-          {activeRoom ? (
+        <Card className="flex min-h-[520px] flex-1 flex-col overflow-hidden border-border/60 lg:h-full">
+          {activeQuestion ? (
             <>
-              {/* Chat Header */}
-              <div className="p-4 border-b bg-card flex items-center gap-3">
-                {(() => {
-                  const room = roomsData?.find(r => r.id === activeRoom);
-                  const otherParticipant = room?.participants.find(p => p.id !== user.id);
-                  return otherParticipant ? (
-                    <>
-                      <Avatar className="h-10 w-10 border border-border">
-                        <AvatarImage src={otherParticipant.avatarUrl || ''} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {otherParticipant.name.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold">{otherParticipant.name}</h3>
-                        {otherParticipant.grade && <p className="text-xs text-muted-foreground">{otherParticipant.grade}</p>}
-                      </div>
-                    </>
-                  ) : <div className="h-10"></div>
-                })()}
+              <div className="border-b p-5">
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-10 w-10 border">
+                    <AvatarImage src={activeQuestion.senderAvatar || ""} />
+                    <AvatarFallback className="bg-primary/10 text-primary">{initials(activeQuestion.senderName)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{activeQuestion.senderName}</span>
+                      <span>{formatDate(activeQuestion.createdAt)}</span>
+                      {activeQuestion.isFiltered && <Badge variant="outline">Filtered</Badge>}
+                    </div>
+                    <h2 className="mt-2 text-xl font-semibold leading-7">{activeQuestion.title}</h2>
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{activeQuestion.content}</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Chat Messages */}
-              <ScrollArea className="flex-1 p-4 bg-muted/20" ref={scrollRef}>
+              <ScrollArea className="flex-1 bg-muted/10 p-5">
                 <div className="space-y-4">
-                  {messagesData?.map(msg => {
-                    const isMe = msg.senderId === user.id;
-                    return (
-                      <div key={msg.id} className={`flex flex-col max-w-[75%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                        <div className={`p-3 rounded-2xl ${
-                          isMe 
-                            ? 'bg-primary text-primary-foreground rounded-tr-sm' 
-                            : 'bg-card border shadow-sm text-foreground rounded-tl-sm'
-                        }`}>
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground mt-1 px-1">
-                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {!messagesData?.length && (
-                    <div className="h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                      <MessageSquare className="h-12 w-12 text-muted-foreground/20 mb-4" />
-                      <p>Send a message to start the conversation.</p>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Answers</h3>
+                    <Badge variant="secondary">{countReplies(activeQuestion)}</Badge>
+                  </div>
+
+                  {activeQuestion.replies.length > 0 ? (
+                    <ReplyThread
+                      replies={activeQuestion.replies}
+                      onReply={(messageId) => createReply.mutate(messageId)}
+                      replyingTo={replyingTo}
+                      replyText={replyText}
+                      setReplyingTo={setReplyingTo}
+                      setReplyText={setReplyText}
+                      isSubmitting={createReply.isPending}
+                    />
+                  ) : (
+                    <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+                      Be the first student to answer this question.
                     </div>
                   )}
                 </div>
               </ScrollArea>
 
-              {/* Chat Input */}
-              <div className="p-4 bg-card border-t">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Input 
-                    placeholder="Type a message..." 
-                    className="flex-1 bg-muted/50 border-transparent focus-visible:bg-background"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    disabled={sendMessageMutation.isPending}
-                  />
-                  <Button type="submit" size="icon" disabled={!message.trim() || sendMessageMutation.isPending} className="shrink-0">
-                    <Send className="h-4 w-4" />
+              <div className="border-t bg-card p-4">
+                <Textarea
+                  value={replyingTo === activeQuestion.id || replyingTo === null ? replyText : ""}
+                  onChange={(event) => {
+                    setReplyingTo(activeQuestion.id);
+                    setReplyText(event.target.value);
+                  }}
+                  placeholder="Write an answer..."
+                  className="min-h-20 bg-muted/30"
+                />
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    disabled={!replyText.trim() || createReply.isPending}
+                    onClick={() => createReply.mutate(replyingTo || activeQuestion.id)}
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    Post Answer
                   </Button>
-                </form>
+                </div>
               </div>
             </>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-muted-foreground bg-muted/10">
-              <MessageSquare className="h-16 w-16 text-muted-foreground/20 mb-4" />
-              <p className="text-lg font-medium text-foreground">Your Messages</p>
-              <p className="text-sm">Select a conversation or find a student to chat with.</p>
+            <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
+              <MessageCircleQuestion className="mb-4 h-14 w-14 text-muted-foreground/30" />
+              <p className="text-lg font-medium text-foreground">No question selected</p>
+              <p className="text-sm">Ask a new question to begin the peer discussion.</p>
             </div>
           )}
         </Card>

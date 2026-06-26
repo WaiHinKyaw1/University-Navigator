@@ -2,6 +2,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@keyframes newsTicker {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -103,9 +113,9 @@
   --input: 161 20% 88%;
   --ring: 161 80% 25%;
 
-  --app-font-sans: 'Outfit', 'Noto Sans Myanmar', sans-serif;
+  --app-font-sans: 'Noto Sans Myanmar', 'Myanmar Text', 'Segoe UI', 'Arial', sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
+  --app-font-mono: 'Cascadia Code', 'Consolas', monospace;
   
   --radius: 0.75rem;
 
@@ -160,8 +170,24 @@
   * {
     @apply border-border;
   }
+
+  html {
+    font-family: var(--app-font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-family: var(--app-font-sans);
+    font-feature-settings: "kern" 1, "liga" 1;
+    font-variant-ligatures: common-ligatures;
+  }
+
+  :lang(my) {
+    font-family: 'Noto Sans Myanmar', 'Myanmar Text', 'Segoe UI', sans-serif;
+    line-height: 1.7;
   }
 }
 

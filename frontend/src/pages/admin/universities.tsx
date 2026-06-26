@@ -286,8 +286,8 @@ export default function AdminUniversities() {
     deleteMutation.mutate({ id: deleteTarget.id });
   };
   const paginated = useMemo(
-    () => response?.universities.splice((page - 1) * pageSize, page * pageSize),
-    [Universities, page]
+    () => response?.universities.slice((page - 1) * pageSize, page * pageSize) ?? [],
+    [response, page],
   );
 
   return (
@@ -348,7 +348,7 @@ export default function AdminUniversities() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  response?.universities.map((uni) => (
+                  paginated.map((uni) => (
                     <TableRow key={uni.id}>
                       <TableCell>
                         <div className="font-medium">{uni.name}</div>
@@ -393,11 +393,9 @@ export default function AdminUniversities() {
                 )}
               </TableBody>
             </Table>
-
-            <Pagination page={page} total={Universities.length} pageSize={pageSize} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
-
           </CardContent>
         </Card>
+        <Pagination page={page} total={response?.universities.length ?? 0} pageSize={pageSize} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
 
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogContent className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden p-0">

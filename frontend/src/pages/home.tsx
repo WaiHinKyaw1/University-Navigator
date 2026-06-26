@@ -1,10 +1,14 @@
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ArrowRight, Calculator, Sparkles, BookOpen, Search } from "lucide-react";
+import { ArrowRight, Calculator, Sparkles, BookOpen, Search, Newspaper } from "lucide-react";
 import { motion } from "framer-motion";
+import { useListNews } from "@workspace/api-client-react";
 
 export default function Home() {
+  const { data: newsData } = useListNews({ page: 1, limit: 5 });
+  const latestNews = newsData?.articles ?? [];
+
   return (
     <Layout>
       <div className="flex flex-col items-center">
@@ -39,8 +43,41 @@ export default function Home() {
           </div>
         </section>
 
+        {latestNews.length > 0 && (
+          <section className="w-full border-b bg-muted/40">
+            <div className="container mx-auto flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:px-6">
+              <Link
+                href="/news"
+                className="flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:underline"
+              >
+                <Newspaper className="h-4 w-4" />
+                Latest News
+              </Link>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="flex w-max animate-[newsTicker_28s_linear_infinite] items-center gap-8 hover:[animation-play-state:paused]">
+                  {[...latestNews, ...latestNews].map((article, index) => (
+                    <Link
+                      key={`${article.id}-${index}`}
+                      href="/news"
+                      className="flex max-w-[360px] items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span className="truncate">{article.title}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" asChild className="shrink-0">
+                <Link href="/news">
+                  View All <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </section>
+        )}
+
         {/* Features Section */}
-        <section className="w-full py-20 md:py-24 bg-background">
+        <section className="w-full py-10 md:py-24 bg-background flex flex-col items-center">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold text-foreground mb-4">Everything you need to decide</h2>

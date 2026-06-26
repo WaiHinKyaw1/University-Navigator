@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, chatbotMessagesTable } from "@workspace/db";
+import { db, chatbotMessagesTable, knowledgeBaseSectionsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { optionalAuth } from "../middlewares/auth";
 import { randomUUID } from "crypto";
@@ -24,6 +24,14 @@ type ProviderConfig = {
   model: string;
 };
 
+function getChatModel(): string {
+  return process.env.OPENROUTER_CHAT_MODEL?.trim() || process.env.OPENROUTER_MODEL?.trim() || "zsi-org/glm-4.6v-falsh";
+}
+
+function getEmbeddingModel(): string {
+  return process.env.OPENROUTER_EMBEDDING_MODEL?.trim() || "text-embedding-nomic-embed-text-v1.5";
+}
+
 function buildProviders(): ProviderConfig[] {
   const providers: ProviderConfig[] = [];
 
@@ -39,7 +47,7 @@ function buildProviders(): ProviderConfig[] {
           "X-Title": "Myanmar University Admission",
         },
       }),
-      model: process.env.OPENROUTER_MODEL?.trim() || "openai/gpt-4o-mini",
+      model: getChatModel(),
     });
   }
 
@@ -53,6 +61,91 @@ function buildProviders(): ProviderConfig[] {
   }
 
   return providers;
+}
+
+function cosineSimilarity(left: number[], right: number[]): number {
+  if (!left.length || !right.length || left.length !== right.length) return 0;
+
+  let dot = 0;
+  let leftMagnitude = 0;
+  let rightMagnitude = 0;
+
+  for (let index = 0; index < left.length; index += 1) {
+    const leftValue = left[index] ?? 0;
+    const rightValue = right[index] ?? 0;
+    dot += leftValue * rightValue;
+    leftMagnitude += leftValue * leftValue;
+    rightMagnitude += rightValue * rightValue;
+  }
+
+  if (!leftMagnitude || !rightMagnitude) return 0;
+  return dot / (Math.sqrt(leftMagnitude) * Math.sqrt(rightMagnitude));
+}
+
+async function embedText(text: string): Promise<number[] | null> {
+  const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+  if (!openRouterKey) return null;
+
+  try {
+    const client = new OpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: openRouterKey,
+      defaultHeaders: {
+        "HTTP-Referer": process.env.APP_URL || "http://localhost:5173",
+        "X-Title": "Myanmar University Admission",
+      },
+    });
+
+    const response = await client.embeddings.create({
+      model: getEmbeddingModel(),
+      input: text,
+    });
+
+    return response.data[0]?.embedding as number[] | undefined ?? null;
+  } catch (error) {
+    logger.warn({ err: error }, "Embedding request failed");
+    return null;
+  }
+}
+
+async function retrieveRelevantKnowledge(message: string): Promise<Array<{ title: string; content: string; score: number }>> {
+  const docs = await db
+    .select({
+      id: knowledgeBaseSectionsTable.id,
+      title: knowledgeBaseSectionsTable.title,
+      content: knowledgeBaseSectionsTable.content,
+      category: knowledgeBaseSectionsTable.category,
+    })
+    .from(knowledgeBaseSectionsTable)
+    .where(eq(knowledgeBaseSectionsTable.isActive, true))
+    .limit(12);
+
+  if (!docs.length) return [];
+
+  const queryEmbedding = await embedText(message);
+  if (!queryEmbedding) {
+    return docs.slice(0, 4).map((doc) => ({
+      title: doc.title,
+      content: doc.content.slice(0, 900),
+      score: 0,
+    }));
+  }
+
+  const scored = await Promise.all(
+    docs.map(async (doc) => {
+      const docEmbedding = await embedText(`${doc.title}\n\n${doc.content}`);
+      return {
+        title: doc.title,
+        content: doc.content.slice(0, 900),
+        score: docEmbedding ? cosineSimilarity(queryEmbedding, docEmbedding) : 0,
+      };
+    }),
+  );
+
+  return scored
+    .filter((item) => item.score > 0.1 || item.content.length > 0)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 4);
 }
 
 function isProviderFallbackError(error: unknown): boolean {
@@ -160,10 +253,21 @@ router.post("/chatbot/message", optionalAuth, async (req, res): Promise<void> =>
       content: m.content,
     }));
 
+  const retrievedKnowledge = await retrieveRelevantKnowledge(message);
+  const knowledgeContext = retrievedKnowledge.length
+    ? `Relevant knowledge context:\n${retrievedKnowledge
+        .map((doc) => `- ${doc.title}: ${doc.content}`)
+        .join("\n\n")}`
+    : null;
+
   let reply: string;
   try {
     reply = await completeChat([
-      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "system",
+        content: `${SYSTEM_PROMPT}\n\nUse the provided knowledge context when it is relevant. If the context is not relevant, answer from general knowledge and be clear that it is based on your training.`,
+      },
+      ...(knowledgeContext ? [{ role: "system" as const, content: knowledgeContext }] : []),
       ...historyMessages.slice(-10),
       { role: "user", content: message },
     ]);
@@ -183,6 +287,7 @@ router.post("/chatbot/message", optionalAuth, async (req, res): Promise<void> =>
     sessionId: session,
     suggestedUniversities: [],
     suggestedMajors: [],
+    retrievalUsed: retrievedKnowledge.length > 0,
   });
 });
 

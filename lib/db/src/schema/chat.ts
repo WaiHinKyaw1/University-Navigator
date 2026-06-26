@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -16,8 +16,10 @@ export const chatRoomParticipantsTable = pgTable("chat_room_participants", {
 
 export const chatMessagesTable = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
-  roomId: integer("room_id").notNull().references(() => chatRoomsTable.id, { onDelete: "cascade" }),
+  roomId: integer("room_id").references(() => chatRoomsTable.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id").references((): AnyPgColumn => chatMessagesTable.id, { onDelete: "cascade" }),
   senderId: integer("sender_id").notNull().references(() => usersTable.id),
+  title: text("title"),
   content: text("content").notNull(),
   isFiltered: boolean("is_filtered").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

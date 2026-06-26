@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, MessageSquare, Menu, X, User as UserIcon } from "lucide-react";
+import { GraduationCap, LogOut, Menu, X, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import { useLogout } from "@workspace/api-client-react";
 
@@ -30,6 +30,9 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
       <Link href="/score" className={`text-sm font-medium transition-colors hover:text-primary ${location === '/score' ? 'text-primary' : 'text-muted-foreground'}`}>
         Score Calculator
       </Link>
+      <Link href="/news" className={`text-sm font-medium transition-colors hover:text-primary ${location === '/news' ? 'text-primary' : 'text-muted-foreground'}`}>
+        News
+      </Link>
       <Link href="/chatbot" className={`text-sm font-medium transition-colors hover:text-primary ${location === '/chatbot' ? 'text-primary' : 'text-muted-foreground'}`}>
         AI Guide
       </Link>
@@ -49,7 +52,7 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between p-5">
+        <div className="container flex h-16 items-center justify-between mx-auto">
           <div className="flex items-center gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
               <div className="bg-primary p-1.5 rounded-lg">
@@ -131,7 +134,7 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
       </main>
 
       {!noFooter && <footer className="border-t bg-muted/40 py-5 md:py-8 mt-auto">
-        <div className="container p-5 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
+        <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
           <div>
             <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
               <GraduationCap className="h-4 w-4" /> MM Uni Finder
@@ -141,6 +144,7 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
           <div className="flex gap-4">
             <Link href="/universities" className="hover:text-foreground transition-colors">Universities</Link>
             <Link href="/score" className="hover:text-foreground transition-colors">Calculator</Link>
+            <Link href="/news" className="hover:text-foreground transition-colors">News</Link>
             <Link href="/chatbot" className="hover:text-foreground transition-colors">AI Guide</Link>
           </div>
         </div>

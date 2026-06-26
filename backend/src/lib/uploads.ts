@@ -1,10 +1,12 @@
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import multer from "multer";
 
 const apiServerRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
+  "..",
   "..",
 );
 
@@ -64,11 +66,31 @@ export async function extractPdfText(storedFileName: string): Promise<string> {
   try {
     const filePath = getAdmissionGuideFilePath(storedFileName);
     if (!fs.existsSync(filePath)) return "";
-    // Dynamic import so the module is tree-shaken if pdf-parse is absent
-    const pdfParse = (await import("pdf-parse")).default;
+
+    const pdfModule = await import("pdf-parse");
+    const pdfParse = (pdfModule as any).default ?? (pdfModule as any);
     const buffer = fs.readFileSync(filePath);
     const data = await pdfParse(buffer);
-    return data.text ?? "";
+    if (typeof data?.text === "string" && data.text.trim()) {
+      return data.text;
+    }
+  } catch {
+    // fall through to python fallback
+  }
+
+  try {
+    const filePath = getAdmissionGuideFilePath(storedFileName);
+    if (!fs.existsSync(filePath)) return "";
+
+    const pythonCommands = process.platform === "win32"
+      ? ["py", "-3", "-c", "from pypdf import PdfReader; import sys; reader = PdfReader(sys.argv[1]); text = ''.join((p.extract_text() or '') for p in reader.pages); print(text)"]
+      : ["python3", "-c", "from pypdf import PdfReader; import sys; reader = PdfReader(sys.argv[1]); text = ''.join((p.extract_text() or '') for p in reader.pages); print(text)"];
+
+    const stdout = execFileSync(pythonCommands[0], pythonCommands.slice(1).concat(filePath), {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return stdout ?? "";
   } catch {
     return "";
   }
