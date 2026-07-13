@@ -60,6 +60,10 @@ export interface Major {
   category: string;
   /** @nullable */
   description?: string | null;
+  /** @nullable */
+  duration?: string | null;
+  /** @nullable */
+  careerPaths?: string | null;
 }
 
 export interface University {
@@ -120,6 +124,34 @@ export interface MajorInput {
   category: string;
   /** @nullable */
   description?: string | null;
+  /** @nullable */
+  duration?: string | null;
+  /** @nullable */
+  careerPaths?: string | null;
+}
+
+export interface Category {
+  id: number;
+  /** Display name, e.g. Engineering */
+  name: string;
+  /** Slug used as value in majors.category, e.g. engineering */
+  nameEn: string;
+  /**
+     * Optional badge color hex, e.g. \"#3b82f6\"
+     * @nullable
+     */
+  color?: string | null;
+  /** @nullable */
+  description?: string | null;
+}
+
+export interface CategoryInput {
+  name: string;
+  nameEn: string;
+  /** @nullable */
+  color?: string | null;
+  /** @nullable */
+  description?: string | null;
 }
 
 export type ScoreInputSubjects = {
@@ -161,14 +193,33 @@ export interface ScoreMatch {
   gap?: number | null;
 }
 
+/**
+ * Subject combination for admission matching
+ * @nullable
+ */
+export type ChatbotMessageInputCombination = typeof ChatbotMessageInputCombination[keyof typeof ChatbotMessageInputCombination] | null;
+
+
+export const ChatbotMessageInputCombination = {
+  science: 'science',
+  arts: 'arts',
+  both: 'both',
+} as const;
+
 export interface ChatbotMessageInput {
   message: string;
   /** @nullable */
   sessionId?: string | null;
-  /** @nullable */
+  /**
+     * G-12 total marks (optional, used for DB matching)
+     * @nullable
+     */
   totalScore?: number | null;
-  /** @nullable */
-  combination?: "science" | "arts" | "both" | null;
+  /**
+     * Subject combination for admission matching
+     * @nullable
+     */
+  combination?: ChatbotMessageInputCombination;
 }
 
 export interface ChatbotResponse {
@@ -224,6 +275,35 @@ export interface ChatMessage {
 }
 
 export interface ChatMessageInput {
+  content: string;
+}
+
+export interface PeerChatMessage {
+  id: number;
+  /** @nullable */
+  parentId: number | null;
+  senderId: number;
+  senderName: string;
+  /** @nullable */
+  senderAvatar?: string | null;
+  /** @nullable */
+  title?: string | null;
+  content: string;
+  isFiltered: boolean;
+  answerCount: number;
+  createdAt: string;
+  replies: PeerChatMessage[];
+}
+
+export interface PeerQuestionInput {
+  /** @minLength 3 */
+  title: string;
+  /** @minLength 3 */
+  content: string;
+}
+
+export interface PeerReplyInput {
+  /** @minLength 3 */
   content: string;
 }
 

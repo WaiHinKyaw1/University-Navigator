@@ -6,16 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Major {
+export interface Category {
   id: number;
+  /** Display name, e.g. Engineering */
   name: string;
+  /** Slug used as value in majors.category, e.g. engineering */
   nameEn: string;
-  /** science | arts | engineering | medical | business | education | law | other */
-  category: string;
+  /**
+     * Optional badge color hex, e.g. \"#3b82f6\"
+     * @nullable
+     */
+  color?: string | null;
   /** @nullable */
   description?: string | null;
-  /** @nullable */
-  duration?: string | null;
-  /** @nullable */
-  careerPaths?: string | null;
 }

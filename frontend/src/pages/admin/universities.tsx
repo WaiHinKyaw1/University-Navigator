@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,6 +50,7 @@ import {
   MYANMAR_STATE_DIVISIONS,
   MYANMAR_UNION_TERRITORIES,
 } from "@/lib/myanmar-locations";
+import { uploadImage } from "@/lib/upload-image-api";
 import Universities from "../universities";
 
 type UniversityForm = {
@@ -146,6 +147,7 @@ export default function AdminUniversities() {
     id: number;
     name: string;
   } | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: response, isLoading } = useListUniversities({
@@ -234,6 +236,22 @@ export default function AdminUniversities() {
     return cities;
   }, [form.state, form.city]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+      const url = await uploadImage(file);
+      setForm((prev) => ({ ...prev, imageUrl: url }));
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleSubmit = () => {
     if (
       !form.name.trim() ||
@@ -311,7 +329,8 @@ export default function AdminUniversities() {
               />
             </div>
             <Button onClick={openCreate} className="cursor-pointer">
-              <Plus className="h-4 w-4 mr-2" /> Add New
+              <Plus className="h-4 w-4 mr-2" />Add University
+
             </Button>
           </div>
         </div>
@@ -357,7 +376,7 @@ export default function AdminUniversities() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{uni.type}</Badge>
+                        <Badge variant="outline" className="capitalize">{uni.type}</Badge>
                       </TableCell>
                       <TableCell>
                         {uni.city ? `${uni.city}, ` : ""}
@@ -442,7 +461,7 @@ export default function AdminUniversities() {
                   </SelectTrigger>
                   <SelectContent>
                     {UNIVERSITY_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
+                      <SelectItem key={type} value={type} className="capitalize">
                         {type}
                       </SelectItem>
                     ))}
@@ -504,7 +523,7 @@ export default function AdminUniversities() {
                         }
                       />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px] overflow-y-auto">
                       {availableCities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
@@ -530,6 +549,7 @@ export default function AdminUniversities() {
                 <Textarea
                   id="uni-description"
                   value={form.description}
+                  className="h-36"
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
@@ -546,19 +566,37 @@ export default function AdminUniversities() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="uni-image-url">Image URL</Label>
-                <Input
-                  id="uni-image-url"
-                  value={form.imageUrl}
-                  onChange={(e) =>
-                    setForm({ ...form, imageUrl: e.target.value })
-                  }
-                />
+                <Label>University Image</Label>
+                <div className="flex flex-col gap-4">
+                  {form.imageUrl && (
+                    <div className="relative w-full h-40 rounded-md overflow-hidden border">
+                      <img src={form.imageUrl} alt="University" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="relative overflow-hidden shrink-0"
+                      disabled={isUploadingImage}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {isUploadingImage ? "Uploading..." : "Upload Photo"}
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploadingImage}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </Button>
+                  </div>
+                </div>
               </div>
               {majors && majors.length > 0 && (
-                <div className="grid gap-2">
+                <div className="grid gap-2 mb-5">
                   <Label>Majors</Label>
-                  <div className="grid gap-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                  <div className="grid gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
                     {majors.map((major) => (
                       <label
                         key={major.id}

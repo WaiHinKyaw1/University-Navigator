@@ -5,9 +5,20 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChatbotMessageInputCombination } from './chatbotMessageInputCombination';
 
 export interface ChatbotMessageInput {
   message: string;
   /** @nullable */
   sessionId?: string | null;
+  /**
+     * G-12 total marks (optional, used for DB matching)
+     * @nullable
+     */
+  totalScore?: number | null;
+  /**
+     * Subject combination for admission matching
+     * @nullable
+     */
+  combination?: ChatbotMessageInputCombination;
 }

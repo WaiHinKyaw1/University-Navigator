@@ -53,7 +53,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size }),
+          "inline-flex items-center justify-center gap-2",
+          className
+        )}
         ref={ref}
         {...props}
       />

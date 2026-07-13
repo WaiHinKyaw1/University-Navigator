@@ -30,6 +30,7 @@ node_modules
 
 # misc
 /uploads
+backend/uploads/
 /.sass-cache
 /connect.lock
 /coverage

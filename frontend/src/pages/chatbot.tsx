@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSendChatbotMessage, useGetChatbotHistory, ChatbotMessage } from "@workspace/api-client-react";
+import { useSendChatbotMessage, useGetChatbotHistory, getGetChatbotHistoryQueryKey, ChatbotMessage } from "@workspace/api-client-react";
 import { Send, Bot, User as UserIcon, Sparkles, RefreshCw } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,7 +58,12 @@ export default function Chatbot() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: history } = useGetChatbotHistory({ query: { enabled: !!user } });
+  const { data: history } = useGetChatbotHistory({
+    query: {
+      enabled: !!user,
+      queryKey: getGetChatbotHistoryQueryKey(),
+    },
+  });
 
   useEffect(() => {
     if (history?.length) {

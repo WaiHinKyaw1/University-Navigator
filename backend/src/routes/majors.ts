@@ -11,13 +11,16 @@ router.get("/majors", async (_req, res): Promise<void> => {
 });
 
 router.post("/majors", requireAdmin, async (req, res): Promise<void> => {
-  const { name, nameEn, category, description } = req.body;
+  const { name, nameEn, category, description, duration, careerPaths } = req.body;
   if (!name || !nameEn || !category) {
     res.status(400).json({ error: "Missing required fields" });
     return;
   }
 
-  const [major] = await db.insert(majorsTable).values({ name, nameEn, category, description }).returning();
+  const [major] = await db
+    .insert(majorsTable)
+    .values({ name, nameEn, category, description, duration, careerPaths })
+    .returning();
   res.status(201).json(major);
 });
 
@@ -29,10 +32,10 @@ router.put("/majors/:id", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
 
-  const { name, nameEn, category, description } = req.body;
+  const { name, nameEn, category, description, duration, careerPaths } = req.body;
   const [updated] = await db
     .update(majorsTable)
-    .set({ name, nameEn, category, description })
+    .set({ name, nameEn, category, description, duration, careerPaths })
     .where(eq(majorsTable.id, id))
     .returning();
 

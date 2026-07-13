@@ -79,12 +79,12 @@
 }
 
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
+  --button-outline: rgba(0, 0, 0, .10);
+  --badge-outline: rgba(0, 0, 0, .05);
 
   --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(0, 0, 0, .03);
+  --elevate-2: rgba(0, 0, 0, .08);
 
   /* Deep Myanmar Jade Green & Warm Gold */
   --background: 60 30% 98%;
@@ -93,19 +93,19 @@
   --card-foreground: 161 90% 10%;
   --popover: 0 0% 100%;
   --popover-foreground: 161 90% 10%;
-  
+
   --primary: 161 80% 25%;
   --primary-foreground: 60 30% 98%;
-  
+
   --secondary: 45 93% 47%;
   --secondary-foreground: 161 90% 10%;
-  
+
   --muted: 161 10% 92%;
   --muted-foreground: 161 20% 40%;
-  
+
   --accent: 45 93% 47%;
   --accent-foreground: 161 90% 10%;
-  
+
   --destructive: 0 84% 60%;
   --destructive-foreground: 60 30% 98%;
 
@@ -113,10 +113,10 @@
   --input: 161 20% 88%;
   --ring: 161 80% 25%;
 
-  --app-font-sans: 'Noto Sans Myanmar', 'Myanmar Text', 'Segoe UI', 'Arial', sans-serif;
+  --app-font-sans: 'Noto Sans Myanmar', 'Myanmar Text', 'Segoe UI', 'Arial', 'Pyidaungsu', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'Cascadia Code', 'Consolas', monospace;
-  
+
   --radius: 0.75rem;
 
   --sidebar: 60 30% 98%;
@@ -136,19 +136,19 @@
   --card-foreground: 60 30% 98%;
   --popover: 161 50% 7%;
   --popover-foreground: 60 30% 98%;
-  
+
   --primary: 161 80% 40%;
   --primary-foreground: 161 90% 10%;
-  
+
   --secondary: 45 93% 50%;
   --secondary-foreground: 161 90% 10%;
-  
+
   --muted: 161 20% 15%;
   --muted-foreground: 161 20% 70%;
-  
+
   --accent: 45 93% 50%;
   --accent-foreground: 161 90% 10%;
-  
+
   --destructive: 0 62% 30%;
   --destructive-foreground: 60 30% 98%;
 
@@ -186,7 +186,7 @@
   }
 
   :lang(my) {
-    font-family: 'Noto Sans Myanmar', 'Myanmar Text', 'Segoe UI', sans-serif;
+    font-family: 'Noto Sans Myanmar', 'Myanmar Text', 'Segoe UI', 'Pyidaungsu', sans-serif;
     line-height: 1.7;
   }
 }

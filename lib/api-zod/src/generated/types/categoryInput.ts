@@ -6,14 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface MajorInput {
+export interface CategoryInput {
   name: string;
   nameEn: string;
-  category: string;
+  /** @nullable */
+  color?: string | null;
   /** @nullable */
   description?: string | null;
-  /** @nullable */
-  duration?: string | null;
-  /** @nullable */
-  careerPaths?: string | null;
 }

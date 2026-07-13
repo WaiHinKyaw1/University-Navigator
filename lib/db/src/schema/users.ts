@@ -8,7 +8,6 @@ export const usersTable = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("student"), // student | admin
-  grade: text("grade"), // G-10 | G-11 | G-12
   status: text("status").notNull().default("active"), // active | banned
   banReason: text("ban_reason"),
   avatarUrl: text("avatar_url"),

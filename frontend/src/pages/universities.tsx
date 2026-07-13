@@ -4,7 +4,20 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useListUniversities } from "@workspace/api-client-react";
+import {
+  MYANMAR_REGIONS,
+  MYANMAR_STATE_DIVISIONS,
+  MYANMAR_UNION_TERRITORIES,
+} from "@/lib/myanmar-locations";
 import { Search, MapPin, BookOpen, Building2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 
@@ -173,6 +186,7 @@ function Pagination({ page, total, pageSize, onChange }: {
 export default function Universities() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [activeState, setActiveState] = useState("all");
   const [page, setPage] = useState(1);
 
   const { data: response, isLoading } = useListUniversities({
@@ -182,9 +196,12 @@ export default function Universities() {
   const universities: any[] = (response as any)?.universities ?? [];
 
   const filtered = useMemo(() => {
-    const base = activeCategory === "all" ? universities : universities.filter((u) => u.type === activeCategory);
+    let base = activeCategory === "all" ? universities : universities.filter((u) => u.type === activeCategory);
+   
+   console.log(base)
+    if (activeState !== "all") base = base.filter((u) => u.state === activeState);
     return base;
-  }, [universities, activeCategory]);
+  }, [universities, activeCategory, activeState]);
 
   const paginated = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -193,6 +210,7 @@ export default function Universities() {
 
   const handleCategoryChange = (cat: string) => { setActiveCategory(cat); setPage(1); };
   const handleSearchChange = (val: string) => { setSearch(val); setPage(1); };
+  const handleStateChange = (state: string) => { setActiveState(state); setPage(1); };
 
   return (
     <Layout>
@@ -205,16 +223,41 @@ export default function Universities() {
             <p className="text-gray-500 text-sm">မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({universities.length}) — {ACADEMIC_YEAR}</p>
           </div>
 
-          {/* Search */}
-          <div className="relative max-w-lg mx-auto">
-            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="တက္ကသိုလ်နာမည် ရှာပါ..."
-              className="pl-10 h-12 bg-white rounded-2xl border-gray-100 shadow-sm"
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
+          {/* Search + state filter */}
+          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
+              <Input
+                type="search"
+                placeholder="တက္ကသိုလ်နာမည် ရှာပါ..."
+                className="pl-10 h-12 bg-white rounded-2xl border-gray-100 shadow-sm"
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+            </div>
+            <Select value={activeState} onValueChange={handleStateChange}>
+              <SelectTrigger className="h-12 w-full sm:w-[220px] bg-white rounded-2xl border-gray-100 shadow-sm shrink-0">
+                <SelectValue placeholder="တိုင်းဒေသကြီး / ပြည်နယ်" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px] overflow-y-auto">
+                <SelectItem value="all">ပြည်နယ်/တိုင်းအားလုံး</SelectItem>
+                <SelectGroup>
+                  {MYANMAR_REGIONS.map((state) => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  {MYANMAR_STATE_DIVISIONS.map((state) => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  {MYANMAR_UNION_TERRITORIES.map((state) => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Category filter chips */}

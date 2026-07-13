@@ -2,36 +2,55 @@ import { Layout } from "@/components/layout";
 import { useCalculateScore, useListUniversities } from "@workspace/api-client-react";
 import { CheckCircle2, XCircle, ChevronRight, GraduationCap, BookOpen, FlaskConical, SlidersHorizontal, PenLine } from "lucide-react";
 import { Link } from "wouter";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 
 // ─── Subject definitions ──────────────────────────────────────────────────────
 
-const SCIENCE_SUBJECTS = [
-  { id: "myanmar",     label: "မြန်မာ",     labelEn: "Myanmar",     color: "bg-emerald-500", accent: "#10b981" },
-  { id: "english",     label: "အင်္ဂလိပ်",  labelEn: "English",     color: "bg-blue-500",    accent: "#3b82f6" },
-  { id: "mathematics", label: "သင်္ချာ",     labelEn: "Mathematics", color: "bg-violet-500",  accent: "#8b5cf6" },
-  { id: "physics",     label: "ရူပဗေဒ",     labelEn: "Physics",     color: "bg-orange-500",  accent: "#f97316" },
-  { id: "chemistry",   label: "ဓာတုဗေဒ",   labelEn: "Chemistry",   color: "bg-pink-500",    accent: "#ec4899" },
-  { id: "biology",     label: "ဇီဝဗေဒ",    labelEn: "Biology",     color: "bg-teal-500",    accent: "#14b8a6" },
+const BASE_SUBJECT = {
+  myanmar:     { id: "myanmar",     label: "မြန်မာ",     labelEn: "Myanmar",     color: "bg-emerald-500", accent: "#10b981" },
+  english:     { id: "english",     label: "အင်္ဂလိပ်",  labelEn: "English",     color: "bg-blue-500",    accent: "#3b82f6" },
+  mathematics: { id: "mathematics", label: "သင်္ချာ",     labelEn: "Mathematics", color: "bg-violet-500",  accent: "#8b5cf6" },
+  physics:     { id: "physics",     label: "ရူပဗေဒ",     labelEn: "Physics",     color: "bg-orange-500",  accent: "#f97316" },
+  chemistry:   { id: "chemistry",   label: "ဓာတုဗေဒ",   labelEn: "Chemistry",   color: "bg-pink-500",    accent: "#ec4899" },
+  biology:     { id: "biology",     label: "ဇီဝဗေဒ",    labelEn: "Biology",     color: "bg-teal-500",    accent: "#14b8a6" },
+  economics:   { id: "economics",   label: "ဘောဂဗေဒ",       labelEn: "Economics",   color: "bg-rose-500",    accent: "#f43f5e" },
+  history:     { id: "history",     label: "သမိုင်း",     labelEn: "History",     color: "bg-amber-500",   accent: "#f59e0b" },
+  geography:   { id: "geography",   label: "ဘူမိဗေဒ",   labelEn: "Geography",   color: "bg-cyan-500",    accent: "#06b6d4" },
+} as const;
+
+type SubjectDef = (typeof BASE_SUBJECT)[keyof typeof BASE_SUBJECT];
+
+const SCIENCE_BASE_SUBJECTS: SubjectDef[] = [
+  BASE_SUBJECT.myanmar,
+  BASE_SUBJECT.english,
+  BASE_SUBJECT.mathematics,
+  BASE_SUBJECT.physics,
+  BASE_SUBJECT.chemistry,
 ];
 
-const ARTS_SUBJECTS = [
-  { id: "myanmar",     label: "မြန်မာ",     labelEn: "Myanmar",     color: "bg-emerald-500", accent: "#10b981" },
-  { id: "english",     label: "အင်္ဂလိပ်",  labelEn: "English",     color: "bg-blue-500",    accent: "#3b82f6" },
-  { id: "mathematics", label: "သင်္ချာ",     labelEn: "Mathematics", color: "bg-violet-500",  accent: "#8b5cf6" },
-  { id: "history",     label: "သမိုင်း",     labelEn: "History",     color: "bg-amber-500",   accent: "#f59e0b" },
-  { id: "geography",   label: "ဘူမိဗေဒ",   labelEn: "Geography",   color: "bg-cyan-500",    accent: "#06b6d4" },
-  { id: "economics",   label: "စီးပွားရေး", labelEn: "Economics",   color: "bg-rose-500",    accent: "#f43f5e" },
+const SCIENCE_SIXTH_SUBJECTS = {
+  biology: BASE_SUBJECT.biology,
+  economics: BASE_SUBJECT.economics,
+} as const;
+
+const ARTS_SUBJECTS: SubjectDef[] = [
+  BASE_SUBJECT.myanmar,
+  BASE_SUBJECT.english,
+  BASE_SUBJECT.mathematics,
+  BASE_SUBJECT.history,
+  BASE_SUBJECT.geography,
+  BASE_SUBJECT.economics,
 ];
 
 type Stream = "science" | "arts";
+type ScienceSixth = keyof typeof SCIENCE_SIXTH_SUBJECTS;
 type InputMode = "subjects" | "slider";
 type Scores = Record<string, string>;
 
 // ─── Subject score input card ─────────────────────────────────────────────────
 
 function ScoreInput({ subject, value, onChange }: {
-  subject: typeof SCIENCE_SUBJECTS[number];
+  subject: SubjectDef;
   value: string;
   onChange: (val: string) => void;
 }) {
@@ -226,6 +245,7 @@ function ResultCard({ uni, userTotal, eligible }: { uni: any; userTotal: number;
 export default function ScoreCalculator() {
   const [inputMode, setInputMode] = useState<InputMode>("subjects");
   const [stream, setStream] = useState<Stream>("science");
+  const [scienceSixth, setScienceSixth] = useState<ScienceSixth>("biology");
   const [scores, setScores] = useState<Scores>({});
   const [sliderTotal, setSliderTotal] = useState(SLIDER_MIN);
   const [hasSearched, setHasSearched] = useState(false);
@@ -236,7 +256,12 @@ export default function ScoreCalculator() {
   const { data: allUnisResponse } = useListUniversities({});
   const allUniversities: any[] = (allUnisResponse as any)?.universities ?? [];
 
-  const subjects = stream === "science" ? SCIENCE_SUBJECTS : ARTS_SUBJECTS;
+  const subjects = useMemo(() => {
+    if (stream === "science") {
+      return [...SCIENCE_BASE_SUBJECTS, SCIENCE_SIXTH_SUBJECTS[scienceSixth]];
+    }
+    return ARTS_SUBJECTS;
+  }, [stream, scienceSixth]);
 
   const subjectTotal = useMemo(
     () => subjects.reduce((sum, s) => sum + (Number(scores[s.id]) || 0), 0),
@@ -247,7 +272,23 @@ export default function ScoreCalculator() {
   const subjectPct = maxPossible > 0 ? Math.round((subjectTotal / maxPossible) * 100) : 0;
 
   const handleStreamChange = (s: Stream) => {
-    setStream(s); setScores({}); setHasSearched(false); calculateMutation.reset();
+    setStream(s);
+    setScores({});
+    setScienceSixth("biology");
+    setHasSearched(false);
+    calculateMutation.reset();
+  };
+
+  const handleScienceSixthChange = (sixth: ScienceSixth) => {
+    setScienceSixth(sixth);
+    setScores((prev) => {
+      const next = { ...prev };
+      const other = sixth === "biology" ? "economics" : "biology";
+      delete next[other];
+      return next;
+    });
+    setHasSearched(false);
+    calculateMutation.reset();
   };
 
   const handleSubjectSearch = () => {
@@ -272,8 +313,17 @@ export default function ScoreCalculator() {
   }, [sliderTotal, allUniversities, inputMode]);
 
   const subjectResults = calculateMutation.data;
-  const subjectEligible = subjectResults?.filter((r: any) => r.eligible) ?? [];
-  const subjectNotEligible = subjectResults?.filter((r: any) => !r.eligible) ?? [];
+  const filteredSubjectResults = useMemo(() => {
+    const list = (subjectResults as any[]) ?? [];
+    if (stream === "science" && scienceSixth === "economics") {
+      // Myanmar rules: economics (science option) students are not eligible for medical universities
+      return list.filter((r) => r?.university?.type !== "medical");
+    }
+    return list;
+  }, [subjectResults, stream, scienceSixth]);
+
+  const subjectEligible = filteredSubjectResults.filter((r: any) => r.eligible) ?? [];
+  const subjectNotEligible = filteredSubjectResults.filter((r: any) => !r.eligible) ?? [];
 
   const sliderEligibleCount = sliderResults.filter((r) => r.eligible).length;
 
@@ -332,6 +382,35 @@ export default function ScoreCalculator() {
                   <BookOpen className="h-4 w-4" /> ဝိဇ္ဇာ (Arts)
                 </button>
               </div>
+
+              {/* Science 6th subject choice */}
+              {stream === "science" && (
+                <div className="space-y-2">
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
+                    <button
+                      onClick={() => handleScienceSixthChange("biology")}
+                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${
+                        scienceSixth === "biology" ? "bg-teal-50 text-teal-700 border border-teal-200" : "text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      ဇီဝဗေဒ (Biology)
+                    </button>
+                    <button
+                      onClick={() => handleScienceSixthChange("economics")}
+                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${
+                        scienceSixth === "economics" ? "bg-rose-50 text-rose-700 border border-rose-200" : "text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      ဘောဂ (Economics)
+                    </button>
+                  </div>
+                  {scienceSixth === "economics" && (
+                    <p className="text-[12px] text-gray-500 px-1">
+                      မှတ်ချက်: ဘောဂ ရွေးထားပါက <b>ဆေးတက္ကသိုလ်</b> များကို ရလဒ်တွင် မပြပါ။
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Subject input grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

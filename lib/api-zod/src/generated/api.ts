@@ -123,7 +123,9 @@ export const ListUniversitiesResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })).optional(),
   "createdAt": zod.coerce.date()
 })),
@@ -167,7 +169,9 @@ export const CreateUniversityResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })).optional(),
   "createdAt": zod.coerce.date()
 })
@@ -197,7 +201,9 @@ export const GetUniversityResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })).optional(),
   "createdAt": zod.coerce.date()
 })
@@ -241,7 +247,9 @@ export const UpdateUniversityResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })).optional(),
   "createdAt": zod.coerce.date()
 })
@@ -267,7 +275,9 @@ export const ListMajorsResponseItem = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })
 export const ListMajorsResponse = zod.array(ListMajorsResponseItem)
 
@@ -279,7 +289,9 @@ export const CreateMajorBody = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string(),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })
 
 export const CreateMajorResponse = zod.object({
@@ -287,7 +299,9 @@ export const CreateMajorResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })
 
 
@@ -302,7 +316,9 @@ export const UpdateMajorBody = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string(),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })
 
 export const UpdateMajorResponse = zod.object({
@@ -310,7 +326,9 @@ export const UpdateMajorResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })
 
 
@@ -322,6 +340,73 @@ export const DeleteMajorParams = zod.object({
 })
 
 export const DeleteMajorResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary List all major categories
+ */
+export const ListCategoriesResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Display name, e.g. Engineering'),
+  "nameEn": zod.string().describe('Slug used as value in majors.category, e.g. engineering'),
+  "color": zod.string().nullish().describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
+  "description": zod.string().nullish()
+})
+export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem)
+
+
+/**
+ * @summary Create a category (admin only)
+ */
+export const CreateCategoryBody = zod.object({
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "color": zod.string().nullish(),
+  "description": zod.string().nullish()
+})
+
+export const CreateCategoryResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Display name, e.g. Engineering'),
+  "nameEn": zod.string().describe('Slug used as value in majors.category, e.g. engineering'),
+  "color": zod.string().nullish().describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
+  "description": zod.string().nullish()
+})
+
+
+/**
+ * @summary Update a category (admin only)
+ */
+export const UpdateCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateCategoryBody = zod.object({
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "color": zod.string().nullish(),
+  "description": zod.string().nullish()
+})
+
+export const UpdateCategoryResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Display name, e.g. Engineering'),
+  "nameEn": zod.string().describe('Slug used as value in majors.category, e.g. engineering'),
+  "color": zod.string().nullish().describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
+  "description": zod.string().nullish()
+})
+
+
+/**
+ * @summary Delete a category (admin only)
+ */
+export const DeleteCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteCategoryResponse = zod.object({
   "message": zod.string()
 })
 
@@ -363,7 +448,9 @@ export const CalculateScoreResponseItem = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })).optional(),
   "createdAt": zod.coerce.date()
 }),
@@ -379,7 +466,9 @@ export const CalculateScoreResponse = zod.array(CalculateScoreResponseItem)
  */
 export const SendChatbotMessageBody = zod.object({
   "message": zod.string(),
-  "sessionId": zod.string().nullish()
+  "sessionId": zod.string().nullish(),
+  "totalScore": zod.number().nullish().describe('G-12 total marks (optional, used for DB matching)'),
+  "combination": zod.union([zod.literal('science'),zod.literal('arts'),zod.literal('both'),zod.literal(null)]).nullish().describe('Subject combination for admission matching')
 })
 
 export const SendChatbotMessageResponse = zod.object({
@@ -402,7 +491,9 @@ export const SendChatbotMessageResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })).optional(),
   "createdAt": zod.coerce.date()
 })).optional(),
@@ -411,7 +502,9 @@ export const SendChatbotMessageResponse = zod.object({
   "name": zod.string(),
   "nameEn": zod.string(),
   "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
 })).optional()
 })
 
@@ -510,6 +603,84 @@ export const SendChatMessageResponse = zod.object({
   "content": zod.string(),
   "isFiltered": zod.boolean().optional(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List peer chat questions with recursive answers
+ */
+export const ListPeerQuestionsResponseItem = zod.object({
+  "id": zod.number(),
+  "parentId": zod.number().nullable(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderAvatar": zod.string().nullish(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean(),
+  "answerCount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "replies": zod.array(zod.unknown())
+})
+export const ListPeerQuestionsResponse = zod.array(ListPeerQuestionsResponseItem)
+
+
+/**
+ * @summary Ask a public peer chat question
+ */
+export const createPeerQuestionBodyTitleMin = 3;
+
+export const createPeerQuestionBodyContentMin = 3;
+
+
+
+export const CreatePeerQuestionBody = zod.object({
+  "title": zod.string().min(createPeerQuestionBodyTitleMin),
+  "content": zod.string().min(createPeerQuestionBodyContentMin)
+})
+
+export const CreatePeerQuestionResponse = zod.object({
+  "id": zod.number(),
+  "parentId": zod.number().nullable(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderAvatar": zod.string().nullish(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean(),
+  "answerCount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "replies": zod.array(zod.unknown())
+})
+
+
+/**
+ * @summary Reply to a peer question or answer
+ */
+export const CreatePeerReplyParams = zod.object({
+  "messageId": zod.coerce.number()
+})
+
+export const createPeerReplyBodyContentMin = 3;
+
+
+
+export const CreatePeerReplyBody = zod.object({
+  "content": zod.string().min(createPeerReplyBodyContentMin)
+})
+
+export const CreatePeerReplyResponse = zod.object({
+  "id": zod.number(),
+  "parentId": zod.number().nullable(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderAvatar": zod.string().nullish(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean(),
+  "answerCount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "replies": zod.array(zod.unknown())
 })
 
 

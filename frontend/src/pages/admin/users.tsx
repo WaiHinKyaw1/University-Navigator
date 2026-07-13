@@ -16,9 +16,9 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function AdminUsers() {
   const [search, setSearch] = useState("");
   const [banModalOpen, setBanModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{id: number, name: string, isBanned: boolean} | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{ id: number, name: string, isBanned: boolean } | null>(null);
   const [banReason, setBanReason] = useState("");
-  
+
   const queryClient = useQueryClient();
 
   const { data: usersData, isLoading } = useListUsers({
@@ -50,7 +50,7 @@ export default function AdminUsers() {
     });
   };
 
-  const openBanModal = (user: {id: number, name: string, status: string}) => {
+  const openBanModal = (user: { id: number, name: string, status: string }) => {
     setSelectedUser({ id: user.id, name: user.name, isBanned: user.status === "banned" });
     setBanReason("");
     setBanModalOpen(true);
@@ -103,12 +103,12 @@ export default function AdminUsers() {
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={user.role === 'admin' ? 'border-primary text-primary' : ''}>
+                        <Badge variant="outline" className={user.role === 'admin' ? 'border-primary text-primary capitalize' : 'capitalize'}>
                           {user.role}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.status === 'active' ? 'secondary' : 'destructive'} className={user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}>
+                        <Badge variant={user.status === 'active' ? 'secondary' : 'destructive'} className={user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 capitalize' : 'capitalize'}>
                           {user.status}
                         </Badge>
                       </TableCell>
@@ -117,9 +117,9 @@ export default function AdminUsers() {
                       </TableCell>
                       <TableCell className="text-right">
                         {user.role !== 'admin' && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => openBanModal(user)}
                             className={user.status === 'active' ? 'text-destructive hover:text-destructive hover:bg-destructive/10' : 'text-primary hover:text-primary hover:bg-primary/10'}
                           >
@@ -143,16 +143,16 @@ export default function AdminUsers() {
                 {selectedUser?.isBanned ? 'Unban User' : 'Ban User'}
               </DialogTitle>
               <DialogDescription>
-                {selectedUser?.isBanned 
-                  ? `Are you sure you want to restore access for ${selectedUser?.name}?` 
+                {selectedUser?.isBanned
+                  ? `Are you sure you want to restore access for ${selectedUser?.name}?`
                   : `Are you sure you want to ban ${selectedUser?.name}? They will lose access to the platform.`}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="reason">Reason (Optional)</Label>
-                <Textarea 
-                  id="reason" 
+                <Textarea
+                  id="reason"
                   placeholder={selectedUser?.isBanned ? "Reason for unbanning..." : "Reason for banning..."}
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
@@ -161,8 +161,8 @@ export default function AdminUsers() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setBanModalOpen(false)}>Cancel</Button>
-              <Button 
-                variant={selectedUser?.isBanned ? "default" : "destructive"} 
+              <Button
+                variant={selectedUser?.isBanned ? "default" : "destructive"}
                 onClick={handleBanSubmit}
                 disabled={banMutation.isPending}
               >

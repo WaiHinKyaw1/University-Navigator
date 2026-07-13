@@ -6,6 +6,7 @@ import {
   useDeleteMajor,
   useCreateMajor,
   useUpdateMajor,
+  useListCategories,
 } from "@workspace/api-client-react";
 import {
   Table,
@@ -44,13 +45,17 @@ type MajorForm = {
   nameEn: string;
   category: string;
   description: string;
+  duration: string;
+  careerPaths: string;
 };
 
 const emptyForm: MajorForm = {
   name: "",
   nameEn: "",
-  category: "science",
+  category: "",
   description: "",
+  duration: "",
+  careerPaths: "[]",
 };
 const pageSize = 10;
 function Pagination({
@@ -89,11 +94,10 @@ function Pagination({
           )}
           <button
             onClick={() => onChange(p)}
-            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
-              p === page
-                ? "bg-primary text-white shadow-sm"
-                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
-            }`}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${p === page
+              ? "bg-primary text-white shadow-sm"
+              : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+              }`}
           >
             {p}
           </button>
@@ -116,12 +120,19 @@ export default function AdminMajors() {
   const [page, setPage] = useState(1);
   const [editingMajor, setEditingMajor] = useState<any | null>(null);
   const [form, setForm] = useState<MajorForm>(emptyForm);
+  const [careerPathsList, setCareerPathsList] = useState<Array<{
+    title: string;
+    description: string;
+    skills: string;
+    outlook: string;
+  }>>([]);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
     name: string;
   } | null>(null);
   const queryClient = useQueryClient();
   const { data: majors, isLoading } = useListMajors();
+  const { data: categories } = useListCategories();
 
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["/api/majors"] });
@@ -164,6 +175,7 @@ export default function AdminMajors() {
   const openCreate = () => {
     setEditingMajor(null);
     setForm(emptyForm);
+    setCareerPathsList([]);
     setModalOpen(true);
   };
 
@@ -172,10 +184,42 @@ export default function AdminMajors() {
     setForm({
       name: major.name || "",
       nameEn: major.nameEn || "",
-      category: major.category || "science",
+      category: major.category || "",
       description: major.description || "",
+      duration: major.duration || "",
+      careerPaths: major.careerPaths || "[]",
     });
+    try {
+      const parsed = JSON.parse(major.careerPaths || "[]");
+      setCareerPathsList(
+        parsed.map((p: any) => ({
+          title: p.title || "",
+          description: p.description || "",
+          skills: Array.isArray(p.skills) ? p.skills.join(", ") : (p.skills || ""),
+          outlook: p.outlook || "",
+        }))
+      );
+    } catch {
+      setCareerPathsList([]);
+    }
     setModalOpen(true);
+  };
+
+  const handleAddCareerPath = () => {
+    setCareerPathsList([
+      ...careerPathsList,
+      { title: "", description: "", skills: "", outlook: "" },
+    ]);
+  };
+
+  const handleRemoveCareerPath = (index: number) => {
+    setCareerPathsList(careerPathsList.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateCareerPath = (index: number, field: string, value: string) => {
+    setCareerPathsList(
+      careerPathsList.map((cp, i) => (i === index ? { ...cp, [field]: value } : cp))
+    );
   };
 
   const handleSubmit = () => {
@@ -184,11 +228,22 @@ export default function AdminMajors() {
       return;
     }
 
+    const formattedCareerPaths = careerPathsList
+      .filter((cp) => cp.title.trim())
+      .map((cp) => ({
+        title: cp.title.trim(),
+        description: cp.description.trim(),
+        skills: cp.skills.split(",").map((s) => s.trim()).filter(Boolean),
+        outlook: cp.outlook.trim(),
+      }));
+
     const data = {
       name: form.name.trim(),
       nameEn: form.nameEn.trim(),
       category: form.category,
       description: form.description.trim() || undefined,
+      duration: form.duration.trim() || undefined,
+      careerPaths: JSON.stringify(formattedCareerPaths),
     };
 
     if (editingMajor) {
@@ -217,7 +272,7 @@ export default function AdminMajors() {
               Manage academic fields of study.
             </p>
           </div>
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} className="flex items-center justify-center">
             <Plus className="h-4 w-4 mr-2" /> Add Major
           </Button>
         </div>
@@ -260,7 +315,7 @@ export default function AdminMajors() {
                       </TableCell>
                       <TableCell>{major.nameEn}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{major.category}</Badge>
+                        <Badge variant="secondary" className="capitalize">{major.category}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -304,56 +359,84 @@ export default function AdminMajors() {
         />
 
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingMajor ? "Edit Major" : "Add Major"}
               </DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-2">
-              <div className="grid gap-2">
-                <Label htmlFor="major-name">Name</Label>
-                <Input
-                  id="major-name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="major-name">Name</Label>
+                  <Input
+                    id="major-name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="major-name-en">English Name</Label>
+                  <Input
+                    id="major-name-en"
+                    value={form.nameEn}
+                    onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
+                  />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="major-name-en">English Name</Label>
-                <Input
-                  id="major-name-en"
-                  value={form.nameEn}
-                  onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
-                />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Category</Label>
+                  <Select
+                    value={form.category}
+                    onValueChange={(category) => setForm({ ...form, category })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories && categories.length > 0 ? (
+                        categories.map((cat) => (
+                          <SelectItem key={cat.nameEn} value={cat.nameEn}>
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: cat.color ?? "#6b7280" }}
+                              />
+                              {cat.name}
+                            </span>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Loading categories…
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="major-duration">Duration of Study (ဘယ်နှစ်နှစ်တက်ရမလဲ)</Label>
+                  <Select
+                    value={form.duration}
+                    onValueChange={(value) => setForm({ ...form, duration: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Duration" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7].map((year) => (
+                        <SelectItem key={year} value={`${year} Years`}>
+                          {year} {year === 1 ? "Year" : "Years"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label>Category</Label>
-                <Select
-                  value={form.category}
-                  onValueChange={(category) => setForm({ ...form, category })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[
-                      "science",
-                      "arts",
-                      "engineering",
-                      "medical",
-                      "business",
-                      "education",
-                      "law",
-                      "other",
-                    ].map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="major-description">Description</Label>
                 <Textarea
@@ -364,8 +447,74 @@ export default function AdminMajors() {
                   }
                 />
               </div>
+
+              <div className="space-y-4 border-t pt-4 mt-2">
+                <div className="flex justify-between items-center">
+                  <Label className="font-semibold text-base">Career Paths & Opportunities</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddCareerPath}>
+                    <Plus className="h-4 w-4 mr-1" /> Add Career Path
+                  </Button>
+                </div>
+
+                {careerPathsList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic text-center py-4 bg-muted/20 rounded-xl border border-dashed">
+                    No career paths added yet. Click "Add Career Path" to define career outlook and required skills.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {careerPathsList.map((cp, idx) => (
+                      <div key={idx} className="p-4 border rounded-2xl bg-muted/30 space-y-3 relative border-border/80">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-2 right-2 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                          onClick={() => handleRemoveCareerPath(idx)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Career Title</Label>
+                            <Input
+                              value={cp.title}
+                              onChange={(e) => handleUpdateCareerPath(idx, "title", e.target.value)}
+                              placeholder="e.g. Software Engineer"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Job Outlook / Opportunities</Label>
+                            <Input
+                              value={cp.outlook}
+                              onChange={(e) => handleUpdateCareerPath(idx, "outlook", e.target.value)}
+                              placeholder="e.g. High Demand - ဆရာဝန်များ အမြဲလိုအပ်သည်"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Skills (comma-separated)</Label>
+                          <Input
+                            value={cp.skills}
+                            onChange={(e) => handleUpdateCareerPath(idx, "skills", e.target.value)}
+                            placeholder="e.g. Clinical diagnosis, Patient care"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Brief Description</Label>
+                          <Textarea
+                            value={cp.description}
+                            onChange={(e) => handleUpdateCareerPath(idx, "description", e.target.value)}
+                            placeholder="Describe what they do in this career..."
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-4 pt-4 border-t">
               <Button variant="outline" onClick={() => setModalOpen(false)}>
                 Cancel
               </Button>

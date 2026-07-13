@@ -1,14 +1,10 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import multer from "multer";
 
-const apiServerRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-);
+// Use process.cwd() which always points to the backend/ directory when running `npm run dev`
+const apiServerRoot = process.cwd();
 
 export const ADMISSION_GUIDE_UPLOAD_DIR = path.join(
   apiServerRoot,
@@ -16,8 +12,15 @@ export const ADMISSION_GUIDE_UPLOAD_DIR = path.join(
   "admission-guides",
 );
 
+export const IMAGE_UPLOAD_DIR = path.join(
+  apiServerRoot,
+  "uploads",
+  "images",
+);
+
 export function ensureUploadDirs(): void {
   fs.mkdirSync(ADMISSION_GUIDE_UPLOAD_DIR, { recursive: true });
+  fs.mkdirSync(IMAGE_UPLOAD_DIR, { recursive: true });
 }
 
 function sanitizeFileName(name: string): string {
@@ -41,6 +44,29 @@ export const admissionGuideUpload = multer({
   fileFilter: (_req, file, cb) => {
     if (file.mimetype !== "application/pdf") {
       cb(new Error("Only PDF files are allowed"));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
+const imageStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    ensureUploadDirs();
+    cb(null, IMAGE_UPLOAD_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const safeName = sanitizeFileName(file.originalname || "image.png");
+    cb(null, `${Date.now()}-${safeName}`);
+  },
+});
+
+export const imageUpload = multer({
+  storage: imageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      cb(new Error("Only image files are allowed"));
       return;
     }
     cb(null, true);

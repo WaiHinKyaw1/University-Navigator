@@ -5,6 +5,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { ensureUploadDirs } from "./lib/uploads";
 import { errorHandler } from "./middlewares/error-handler";
+import path from "node:path";
 
 const app: Express = express();
 
@@ -32,6 +33,11 @@ app.use(
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Use process.cwd() which always resolves to backend/ when running `npm run dev`
+const uploadsDir = path.join(process.cwd(), "uploads");
+app.use("/uploads", express.static(uploadsDir));
+app.use("/api/uploads", express.static(uploadsDir));
 
 app.use("/api", router);
 app.use(errorHandler);

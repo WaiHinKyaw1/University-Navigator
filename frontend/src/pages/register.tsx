@@ -6,7 +6,6 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRegister } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,7 +16,6 @@ const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  grade: z.string().min(1, "Please select your grade"),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -32,7 +30,6 @@ export default function Register() {
       name: "",
       email: "",
       password: "",
-      grade: "",
     },
   });
 
@@ -100,22 +97,6 @@ export default function Register() {
                 />
                 {form.formState.errors.password && (
                   <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="grade">Grade Level</Label>
-                <Select onValueChange={(val) => form.setValue("grade", val)} defaultValue={form.getValues("grade")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="G-10">Grade 10</SelectItem>
-                    <SelectItem value="G-11">Grade 11</SelectItem>
-                    <SelectItem value="G-12">Grade 12</SelectItem>
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.grade && (
-                  <p className="text-sm text-destructive">{form.formState.errors.grade.message}</p>
                 )}
               </div>
               <Button 

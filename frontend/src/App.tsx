@@ -19,6 +19,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminUniversities from "@/pages/admin/universities";
 import AdminMajors from "@/pages/admin/majors";
+import AdminCategories from "@/pages/admin/categories";
 import AdminNews from "@/pages/admin/news";
 import AdminAdmissionGuide from "@/pages/admin/admission-guide";
 import AdminAudit from "@/pages/admin/audit";
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/universities" component={AdminUniversities} />
       <Route path="/admin/majors" component={AdminMajors} />
+      <Route path="/admin/categories" component={AdminCategories} />
       <Route path="/admin/news" component={AdminNews} />
       <Route path="/admin/admission-guide" component={AdminAdmissionGuide} />
       <Route path="/admin/audit" component={AdminAudit} />

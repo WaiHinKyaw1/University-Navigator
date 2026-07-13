@@ -35,7 +35,7 @@ function handleAuthDatabaseError(
 }
 
 router.post("/auth/register", async (req, res): Promise<void> => {
-  const { name, email, password, grade } = req.body;
+  const { name, email, password } = req.body;
   if (!name || !email || !password) {
     res.status(400).json({ error: "Missing required fields" });
     return;
@@ -58,7 +58,6 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         name,
         email,
         passwordHash,
-        grade: grade || null,
         role: "student",
         status: "active",
       })
@@ -71,7 +70,6 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         name: user.name,
         email: user.email,
         role: user.role,
-        grade: user.grade,
         status: user.status,
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
@@ -118,7 +116,6 @@ router.post("/auth/login", async (req, res): Promise<void> => {
         name: user.name,
         email: user.email,
         role: user.role,
-        grade: user.grade,
         status: user.status,
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
@@ -149,7 +146,6 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
       name: user.name,
       email: user.email,
       role: user.role,
-      grade: user.grade,
       status: user.status,
       avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,

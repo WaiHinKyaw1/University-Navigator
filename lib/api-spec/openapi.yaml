@@ -16,6 +16,8 @@ tags:
     description: University management
   - name: majors
     description: Major / field of study management
+  - name: categories
+    description: Major category management
   - name: score
     description: Score calculator
   - name: chatbot
@@ -312,6 +314,81 @@ paths:
       operationId: deleteMajor
       tags: [majors]
       summary: Delete a major (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ── CATEGORIES ────────────────────────────────────────────
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all major categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a category (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    put:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a category (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category (admin only)
       parameters:
         - name: id
           in: path
@@ -1077,6 +1154,10 @@ components:
           description: "science | arts | engineering | medical | business | education | law | other"
         description:
           type: ["string", "null"]
+        duration:
+          type: ["string", "null"]
+        careerPaths:
+          type: ["string", "null"]
 
     MajorInput:
       type: object
@@ -1088,6 +1169,42 @@ components:
           type: string
         category:
           type: string
+        description:
+          type: ["string", "null"]
+        duration:
+          type: ["string", "null"]
+        careerPaths:
+          type: ["string", "null"]
+
+    # ── CATEGORY ──────────────────────────────────────────
+    Category:
+      type: object
+      required: [id, name, nameEn]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Display name, e.g. Engineering
+        nameEn:
+          type: string
+          description: Slug used as value in majors.category, e.g. engineering
+        color:
+          type: ["string", "null"]
+          description: Optional badge color hex, e.g. \"#3b82f6\"
+        description:
+          type: ["string", "null"]
+
+    CategoryInput:
+      type: object
+      required: [name, nameEn]
+      properties:
+        name:
+          type: string
+        nameEn:
+          type: string
+        color:
+          type: ["string", "null"]
         description:
           type: ["string", "null"]
 

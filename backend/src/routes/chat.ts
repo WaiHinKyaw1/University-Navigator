@@ -103,7 +103,6 @@ router.get("/students", requireAuth, async (req, res): Promise<void> => {
     .select({
       id: usersTable.id,
       name: usersTable.name,
-      grade: usersTable.grade,
       avatarUrl: usersTable.avatarUrl,
     })
     .from(usersTable)
