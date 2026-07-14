@@ -32,7 +32,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b bg-card">
-        <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex h-16 items-center justify-between px-6">
           <Link href="/" className="flex items-center space-x-2">
             <div className="bg-primary p-1.5 rounded-md">
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
@@ -41,7 +41,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">{user.name}</span>
-            <Link href="/" className="text-sm text-black font-bold">Back to App</Link>
+            <Link href="/" className="text-sm text-black font-bold">
+              Back to App
+            </Link>
           </div>
         </div>
       </header>

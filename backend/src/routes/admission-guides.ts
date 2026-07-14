@@ -5,8 +5,6 @@ import {
   db,
   admissionGuidesTable,
   usersTable,
-  knowledgeBaseSectionsTable,
-  KNOWLEDGE_CATEGORIES,
 } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
@@ -18,74 +16,6 @@ import {
 } from "../lib/uploads";
 import { importAdmissionDataFromPdfText } from "../lib/pdf-structured-import";
 import { logger } from "../lib/logger";
-
-// ─── PDF → Knowledge Base sections auto-extractor ────────────────────────────
-
-type KnowledgeCat = (typeof KNOWLEDGE_CATEGORIES)[number];
-
-const CATEGORY_KEYWORDS: Record<KnowledgeCat, string[]> = {
-  admission_requirements: ["requirement", "required", "subject", "ဘာသာ", "လိုအပ်", "G-12", "ဝင်ခွင့်", "သင်ရိုး"],
-  score_cutoffs: ["score", "mark", "cut", "မှတ်", "ရမှတ်", "ကတ်ဆော်", "အနည်းဆုံး"],
-  programs: ["program", "degree", "major", "course", "ဘွဲ့", "မေဂျာ", "ကောင်စီ", "B.Sc", "B.A", "B.E", "M.B,B.S", "B.C"],
-  career_paths: ["career", "job", "salary", "profession", "work", "လုပ်ငန်း", "အလုပ်", "လစာ", "ဘွဲ့ပြီး"],
-  preparation_tips: ["prepare", "study", "learn", "ကြိုပြင်", "လေ့လာ", "သင်ကြား", "tip", "advice"],
-  general: [],
-};
-
-function detectCategory(text: string): KnowledgeCat {
-  const lower = text.toLowerCase();
-  for (const [cat, kws] of Object.entries(CATEGORY_KEYWORDS) as [KnowledgeCat, string[]][]) {
-    if (cat === "general") continue;
-    if (kws.some((k) => lower.includes(k.toLowerCase()))) return cat;
-  }
-  return "general";
-}
-
-/**
- * Split raw PDF text into sections. Uses blank-line heuristic and
- * heading detection (all-caps lines / lines ending with ─).
- */
-function splitIntoSections(rawText: string): { title: string; content: string; category: KnowledgeCat }[] {
-  if (!rawText.trim()) return [];
-
-  const lines = rawText.split(/\r?\n/);
-  const sections: { title: string; content: string; category: KnowledgeCat }[] = [];
-  let currentTitle = "General Information";
-  let currentLines: string[] = [];
-
-  function flush() {
-    const content = currentLines.join("\n").trim();
-    if (content.length > 30) {
-      sections.push({ title: currentTitle, content, category: detectCategory(currentTitle + " " + content) });
-    }
-    currentLines = [];
-  }
-
-  for (const raw of lines) {
-    const line = raw.trim();
-    // Detect heading: short line (<= 80 chars), ends with no period, mostly uppercase or Myanmar + digit
-    const isHeading =
-      line.length > 2 &&
-      line.length <= 80 &&
-      !line.endsWith(".") &&
-      (
-        /^[A-Z\d\s\-\/]+$/.test(line) ||           // all-caps English
-        /^[#*•►▶]+\s/.test(line) ||                  // markdown-style
-        /^\d+[\.\)]\s/.test(line) ||                  // numbered
-        /^[က-ဿ\s\d\-\/]+$/.test(line.replace(/[\u1000-\u109f]/g, "X"))  // Myanmar heading
-      );
-
-    if (isHeading && currentLines.length > 5) {
-      flush();
-      currentTitle = line.replace(/^[#*•►▶\d\.\)]+\s*/, "").trim() || currentTitle;
-    } else {
-      if (line) currentLines.push(line);
-    }
-  }
-  flush();
-
-  return sections;
-}
 
 const router: IRouter = Router();
 
@@ -233,30 +163,9 @@ router.post(
           .returning();
       });
 
-      // ── Auto-extract PDF sections and university data ────────────────────
       try {
         const rawText = await extractPdfText(file.filename);
         if (rawText.trim()) {
-          const parsedSections = splitIntoSections(rawText);
-          if (parsedSections.length > 0) {
-            // Deactivate sections from previous guides
-            await db
-              .update(knowledgeBaseSectionsTable)
-              .set({ isActive: false });
-
-            await db.insert(knowledgeBaseSectionsTable).values(
-              parsedSections.map((s, i) => ({
-                title: s.title,
-                content: s.content,
-                category: s.category,
-                academicYear: academicYear ?? null,
-                isActive: true,
-                sortOrder: i,
-                sourceGuideId: guide.id,
-              })),
-            );
-          }
-
           try {
             const importResult = await importAdmissionDataFromPdfText(rawText, guide.id);
             logger.info(

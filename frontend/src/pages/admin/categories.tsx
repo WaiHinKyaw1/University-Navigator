@@ -152,7 +152,6 @@ export default function AdminCategories() {
     if (!deleteTarget) return;
     deleteMutation.mutate({ id: deleteTarget.id });
   };
-
   return (
     <AdminLayout>
       <div className="space-y-6">

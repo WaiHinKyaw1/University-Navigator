@@ -193,49 +193,30 @@ export interface ScoreMatch {
   gap?: number | null;
 }
 
-/**
- * Subject combination for admission matching
- * @nullable
- */
-export type ChatbotMessageInputCombination = typeof ChatbotMessageInputCombination[keyof typeof ChatbotMessageInputCombination] | null;
+export type ChatbotHistoryMessageRole = typeof ChatbotHistoryMessageRole[keyof typeof ChatbotHistoryMessageRole];
 
 
-export const ChatbotMessageInputCombination = {
-  science: 'science',
-  arts: 'arts',
-  both: 'both',
+export const ChatbotHistoryMessageRole = {
+  user: 'user',
+  assistant: 'assistant',
 } as const;
+
+export interface ChatbotHistoryMessage {
+  role: ChatbotHistoryMessageRole;
+  content: string;
+}
 
 export interface ChatbotMessageInput {
   message: string;
   /** @nullable */
   sessionId?: string | null;
-  /**
-     * G-12 total marks (optional, used for DB matching)
-     * @nullable
-     */
-  totalScore?: number | null;
-  /**
-     * Subject combination for admission matching
-     * @nullable
-     */
-  combination?: ChatbotMessageInputCombination;
+  /** Recent conversation turns (client-managed, not stored in DB) */
+  history?: ChatbotHistoryMessage[];
 }
 
 export interface ChatbotResponse {
   reply: string;
   sessionId: string;
-  suggestedUniversities?: University[];
-  suggestedMajors?: Major[];
-}
-
-export interface ChatbotMessage {
-  id: number;
-  /** user | assistant */
-  role: string;
-  content: string;
-  sessionId?: string;
-  createdAt: string;
 }
 
 export interface StudentSummary {

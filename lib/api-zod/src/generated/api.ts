@@ -462,64 +462,21 @@ export const CalculateScoreResponse = zod.array(CalculateScoreResponseItem)
 
 
 /**
- * @summary Send a message to the AI chatbot for interest-based university recommendations
+ * @summary Send a message to the AI university admission guide
  */
 export const SendChatbotMessageBody = zod.object({
   "message": zod.string(),
   "sessionId": zod.string().nullish(),
-  "totalScore": zod.number().nullish().describe('G-12 total marks (optional, used for DB matching)'),
-  "combination": zod.union([zod.literal('science'),zod.literal('arts'),zod.literal('both'),zod.literal(null)]).nullish().describe('Subject combination for admission matching')
+  "history": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string()
+})).optional().describe('Recent conversation turns (client-managed, not stored in DB)')
 })
 
 export const SendChatbotMessageResponse = zod.object({
   "reply": zod.string(),
-  "sessionId": zod.string(),
-  "suggestedUniversities": zod.array(zod.object({
-  "id": zod.number(),
-  "name": zod.string().describe('Myanmar name'),
-  "nameEn": zod.string().describe('English name'),
-  "abbreviation": zod.string().nullish(),
-  "type": zod.string().describe('government | private | technical | medical | education'),
-  "state": zod.string().describe('State\/Region in Myanmar'),
-  "city": zod.string().nullish(),
-  "minScore": zod.number().describe('Minimum total score required for admission'),
-  "description": zod.string().nullish(),
-  "website": zod.string().nullish(),
-  "imageUrl": zod.string().nullish(),
-  "majors": zod.array(zod.object({
-  "id": zod.number(),
-  "name": zod.string(),
-  "nameEn": zod.string(),
-  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish(),
-  "duration": zod.string().nullish(),
-  "careerPaths": zod.string().nullish()
-})).optional(),
-  "createdAt": zod.coerce.date()
-})).optional(),
-  "suggestedMajors": zod.array(zod.object({
-  "id": zod.number(),
-  "name": zod.string(),
-  "nameEn": zod.string(),
-  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
-  "description": zod.string().nullish(),
-  "duration": zod.string().nullish(),
-  "careerPaths": zod.string().nullish()
-})).optional()
+  "sessionId": zod.string()
 })
-
-
-/**
- * @summary Get chatbot conversation history for current user
- */
-export const GetChatbotHistoryResponseItem = zod.object({
-  "id": zod.number(),
-  "role": zod.string().describe('user | assistant'),
-  "content": zod.string(),
-  "sessionId": zod.string().optional(),
-  "createdAt": zod.coerce.date()
-})
-export const GetChatbotHistoryResponse = zod.array(GetChatbotHistoryResponseItem)
 
 
 /**

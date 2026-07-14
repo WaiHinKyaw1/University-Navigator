@@ -21,7 +21,7 @@ tags:
   - name: score
     description: Score calculator
   - name: chatbot
-    description: AI chatbot for interest-based university recommendations
+    description: AI university admission guide (Gemini / ChatGPT)
   - name: chat
     description: Student-to-student chat
   - name: news
@@ -430,7 +430,7 @@ paths:
     post:
       operationId: sendChatbotMessage
       tags: [chatbot]
-      summary: Send a message to the AI chatbot for interest-based university recommendations
+      summary: Send a message to the AI university admission guide
       requestBody:
         required: true
         content:
@@ -439,26 +439,11 @@ paths:
               $ref: "#/components/schemas/ChatbotMessageInput"
       responses:
         "200":
-          description: AI response with university suggestions
+          description: AI response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChatbotResponse"
-
-  /chatbot/history:
-    get:
-      operationId: getChatbotHistory
-      tags: [chatbot]
-      summary: Get chatbot conversation history for current user
-      responses:
-        "200":
-          description: Conversation history
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ChatbotMessage"
 
   # ── STUDENT CHAT ──────────────────────────────────────────────────────────
   /chat/rooms:
@@ -1265,13 +1250,21 @@ components:
           type: string
         sessionId:
           type: ["string", "null"]
-        totalScore:
-          type: ["number", "null"]
-          description: G-12 total marks (optional, used for DB matching)
-        combination:
-          type: ["string", "null"]
-          enum: [science, arts, both, null]
-          description: Subject combination for admission matching
+        history:
+          type: array
+          description: Recent conversation turns (client-managed, not stored in DB)
+          items:
+            $ref: "#/components/schemas/ChatbotHistoryMessage"
+
+    ChatbotHistoryMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
 
     ChatbotResponse:
       type: object
@@ -1281,31 +1274,6 @@ components:
           type: string
         sessionId:
           type: string
-        suggestedUniversities:
-          type: array
-          items:
-            $ref: "#/components/schemas/University"
-        suggestedMajors:
-          type: array
-          items:
-            $ref: "#/components/schemas/Major"
-
-    ChatbotMessage:
-      type: object
-      required: [id, role, content, createdAt]
-      properties:
-        id:
-          type: integer
-        role:
-          type: string
-          description: "user | assistant"
-        content:
-          type: string
-        sessionId:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
 
     # ── STUDENT CHAT ──────────────────────────────────────────────────────
     ChatRoom:

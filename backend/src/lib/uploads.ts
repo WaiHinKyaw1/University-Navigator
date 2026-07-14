@@ -84,10 +84,6 @@ export function deleteAdmissionGuideFile(storedFileName: string): void {
   }
 }
 
-/**
- * Extract raw text from a PDF stored on disk.
- * Returns empty string if extraction fails (e.g. scanned / Myanmar font issues).
- */
 export async function extractPdfText(storedFileName: string): Promise<string> {
   try {
     const filePath = getAdmissionGuideFilePath(storedFileName);

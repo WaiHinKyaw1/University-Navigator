@@ -19,6 +19,12 @@ function filterContent(content: string): { filtered: string; isFiltered: boolean
   return { filtered, isFiltered };
 }
 
+function parseId(value: string | string[] | undefined): number | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const id = raw ? parseInt(raw, 10) : NaN;
+  return Number.isNaN(id) ? null : id;
+}
+
 type PeerChatMessage = {
   id: number;
   parentId: number | null;
@@ -167,9 +173,8 @@ router.post("/chat/questions", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.post("/chat/messages/:messageId/replies", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.messageId) ? req.params.messageId[0] : req.params.messageId;
-  const messageId = parseInt(raw, 10);
-  if (isNaN(messageId)) {
+  const messageId = parseId(req.params.messageId);
+  if (messageId === null) {
     res.status(400).json({ error: "Invalid message id" });
     return;
   }
@@ -217,25 +222,113 @@ router.post("/chat/messages/:messageId/replies", requireAuth, async (req, res): 
   });
 });
 
-router.get("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
-
-  const userRooms = await db
-    .select({ roomId: chatRoomParticipantsTable.roomId })
-    .from(chatRoomParticipantsTable)
-    .where(eq(chatRoomParticipantsTable.userId, userId));
-
-  const roomIds = userRooms.map((r) => r.roomId);
-  if (roomIds.length === 0) {
-    res.json([]);
+router.patch("/chat/messages/:messageId", requireAuth, async (req, res): Promise<void> => {
+  const messageId = parseId(req.params.messageId);
+  if (messageId === null) {
+    res.status(400).json({ error: "Invalid message id" });
     return;
   }
 
-  const rooms = await db
+  const { title, content } = req.body as { title?: unknown; content?: unknown };
+  if (typeof content !== "string" || content.trim().length < 3) {
+    res.status(400).json({ error: "Content is required" });
+    return;
+  }
+
+  const [message] = await db
     .select()
-    .from(chatRoomsTable)
-    .where(inArray(chatRoomsTable.id, roomIds))
-    .orderBy(desc(chatRoomsTable.createdAt));
+    .from(chatMessagesTable)
+    .where(eq(chatMessagesTable.id, messageId));
+
+  if (!message) {
+    res.status(404).json({ error: "Message not found" });
+    return;
+  }
+
+  if (message.senderId !== req.user!.id) {
+    res.status(403).json({ error: "You can only update your own comment" });
+    return;
+  }
+
+  const contentResult = filterContent(content.trim());
+  const updateValues: Partial<typeof chatMessagesTable.$inferInsert> = {
+    content: contentResult.filtered,
+    isFiltered: contentResult.isFiltered,
+  };
+
+  if (message.roomId === null && message.parentId === null) {
+    if (typeof title !== "string" || title.trim().length < 3) {
+      res.status(400).json({ error: "Question title is required" });
+      return;
+    }
+
+    const titleResult = filterContent(title.trim());
+    updateValues.title = titleResult.filtered;
+    updateValues.isFiltered = titleResult.isFiltered || contentResult.isFiltered;
+  }
+
+  const [updated] = await db
+    .update(chatMessagesTable)
+    .set(updateValues)
+    .where(eq(chatMessagesTable.id, messageId))
+    .returning();
+
+  res.json({
+    id: updated.id,
+    parentId: updated.parentId,
+    senderId: updated.senderId,
+    senderName: req.user!.name,
+    senderAvatar: null,
+    title: updated.title,
+    content: updated.content,
+    isFiltered: updated.isFiltered,
+    answerCount: 0,
+    createdAt: updated.createdAt,
+    replies: [],
+  });
+});
+
+router.delete("/chat/messages/:messageId", requireAuth, async (req, res): Promise<void> => {
+  const messageId = parseId(req.params.messageId);
+  if (messageId === null) {
+    res.status(400).json({ error: "Invalid message id" });
+    return;
+  }
+
+  const [message] = await db.select().from(chatMessagesTable).where(eq(chatMessagesTable.id, messageId));
+  if (!message) {
+    res.status(404).json({ error: "Message not found" });
+    return;
+  }
+
+  const isOwner = message.senderId === req.user!.id;
+  const isAdmin = req.user!.role === "admin";
+  if (!isOwner && !isAdmin) {
+    res.status(403).json({ error: "You can only delete your own comment" });
+    return;
+  }
+
+  await db.delete(chatMessagesTable).where(eq(chatMessagesTable.id, messageId));
+  res.json({ message: "Message deleted" });
+});
+
+router.get("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  const isAdmin = req.user!.role === "admin";
+
+  const rooms = isAdmin
+    ? await db.select().from(chatRoomsTable).orderBy(desc(chatRoomsTable.createdAt))
+    : await (async () => {
+        const userRooms = await db
+          .select({ roomId: chatRoomParticipantsTable.roomId })
+          .from(chatRoomParticipantsTable)
+          .where(eq(chatRoomParticipantsTable.userId, userId));
+
+        const roomIds = userRooms.map((r) => r.roomId);
+        if (roomIds.length === 0) return [];
+
+        return db.select().from(chatRoomsTable).where(inArray(chatRoomsTable.id, roomIds)).orderBy(desc(chatRoomsTable.createdAt));
+      })();
 
   const result = await Promise.all(
     rooms.map(async (room) => {
@@ -243,7 +336,7 @@ router.get("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
         .select({
           id: usersTable.id,
           name: usersTable.name,
-          grade: usersTable.grade,
+          // grade: usersTable.grade,
           avatarUrl: usersTable.avatarUrl,
         })
         .from(chatRoomParticipantsTable)
@@ -292,7 +385,6 @@ router.post("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  // Check if room already exists between these two users
   const userRooms = await db
     .select({ roomId: chatRoomParticipantsTable.roomId })
     .from(chatRoomParticipantsTable)
@@ -312,7 +404,7 @@ router.post("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
       .select({
         id: usersTable.id,
         name: usersTable.name,
-        grade: usersTable.grade,
+        // grade: usersTable.grade,
         avatarUrl: usersTable.avatarUrl,
       })
       .from(chatRoomParticipantsTable)
@@ -333,7 +425,7 @@ router.post("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
     .select({
       id: usersTable.id,
       name: usersTable.name,
-      grade: usersTable.grade,
+      // grade: usersTable.grade,
       avatarUrl: usersTable.avatarUrl,
     })
     .from(chatRoomParticipantsTable)
@@ -344,9 +436,8 @@ router.post("/chat/rooms", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get("/chat/rooms/:roomId/messages", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.roomId) ? req.params.roomId[0] : req.params.roomId;
-  const roomId = parseInt(raw, 10);
-  if (isNaN(roomId)) {
+  const roomId = parseId(req.params.roomId);
+  if (roomId === null) {
     res.status(400).json({ error: "Invalid room id" });
     return;
   }
@@ -394,9 +485,8 @@ router.get("/chat/rooms/:roomId/messages", requireAuth, async (req, res): Promis
 });
 
 router.post("/chat/rooms/:roomId/messages", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.roomId) ? req.params.roomId[0] : req.params.roomId;
-  const roomId = parseInt(raw, 10);
-  if (isNaN(roomId)) {
+  const roomId = parseId(req.params.roomId);
+  if (roomId === null) {
     res.status(400).json({ error: "Invalid room id" });
     return;
   }

@@ -5,8 +5,6 @@ import { requireAdmin } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-// ── GET /categories ─────────────────────────────────────────────────────────
-// Public — the major-creation form and student views need this list
 router.get("/categories", async (_req, res): Promise<void> => {
   const categories = await db
     .select()
@@ -15,7 +13,6 @@ router.get("/categories", async (_req, res): Promise<void> => {
   res.json(categories);
 });
 
-// ── POST /categories ─────────────────────────────────────────────────────────
 router.post("/categories", requireAdmin, async (req, res): Promise<void> => {
   const { name, nameEn, color, description } = req.body;
   if (!name || !nameEn) {
@@ -30,7 +27,6 @@ router.post("/categories", requireAdmin, async (req, res): Promise<void> => {
   res.status(201).json(category);
 });
 
-// ── PUT /categories/:id ──────────────────────────────────────────────────────
 router.put("/categories/:id", requireAdmin, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
@@ -54,7 +50,6 @@ router.put("/categories/:id", requireAdmin, async (req, res): Promise<void> => {
   res.json(updated);
 });
 
-// ── DELETE /categories/:id ───────────────────────────────────────────────────
 router.delete("/categories/:id", requireAdmin, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);

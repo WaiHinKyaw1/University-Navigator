@@ -32,7 +32,6 @@ import type {
   ChatMessageInput,
   ChatRoom,
   ChatRoomInput,
-  ChatbotMessage,
   ChatbotMessageInput,
   ChatbotResponse,
   ErrorResponse,
@@ -1468,7 +1467,7 @@ export const getSendChatbotMessageUrl = () => {
 }
 
 /**
- * @summary Send a message to the AI chatbot for interest-based university recommendations
+ * @summary Send a message to the AI university admission guide
  */
 export const sendChatbotMessage = async (chatbotMessageInput: ChatbotMessageInput, options?: RequestInit): Promise<ChatbotResponse> => {
 
@@ -1516,7 +1515,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SendChatbotMessageMutationError = ErrorType<unknown>
 
     /**
- * @summary Send a message to the AI chatbot for interest-based university recommendations
+ * @summary Send a message to the AI university admission guide
  */
 export const useSendChatbotMessage = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendChatbotMessage>>, TError,{data: BodyType<ChatbotMessageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -1528,83 +1527,6 @@ export const useSendChatbotMessage = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getSendChatbotMessageMutationOptions(options));
     }
-
-export const getGetChatbotHistoryUrl = () => {
-
-
-
-
-  return `/api/chatbot/history`
-}
-
-/**
- * @summary Get chatbot conversation history for current user
- */
-export const getChatbotHistory = async ( options?: RequestInit): Promise<ChatbotMessage[]> => {
-
-  return customFetch<ChatbotMessage[]>(getGetChatbotHistoryUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetChatbotHistoryQueryKey = () => {
-    return [
-    `/api/chatbot/history`
-    ] as const;
-    }
-
-
-export const getGetChatbotHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getChatbotHistory>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getChatbotHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetChatbotHistoryQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatbotHistory>>> = ({ signal }) => getChatbotHistory({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChatbotHistory>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetChatbotHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getChatbotHistory>>>
-export type GetChatbotHistoryQueryError = ErrorType<unknown>
-
-
-/**
- * @summary Get chatbot conversation history for current user
- */
-
-export function useGetChatbotHistory<TData = Awaited<ReturnType<typeof getChatbotHistory>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getChatbotHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetChatbotHistoryQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
 
 export const getListChatRoomsUrl = () => {
 

@@ -10,7 +10,6 @@ import newsRouter from "./news";
 import usersRouter from "./users";
 import chatbotRouter from "./chatbot";
 import admissionGuidesRouter from "./admission-guides";
-import knowledgeBaseRouter from "./knowledge-base";
 import uploadRouter from "./upload";
 
 const router: IRouter = Router();
@@ -26,7 +25,6 @@ router.use(newsRouter);
 router.use(usersRouter);
 router.use(chatbotRouter);
 router.use(admissionGuidesRouter);
-router.use(knowledgeBaseRouter);
 router.use(uploadRouter);
 
 export default router;

@@ -1,5 +1,14 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, auditLogsTable, chatMessagesTable, newsTable, universitiesTable, majorsTable } from "@workspace/db";
+import {
+  db,
+  usersTable,
+  auditLogsTable,
+  chatMessagesTable,
+  newsTable,
+  universitiesTable,
+  universityMajorsTable,
+  majorsTable,
+} from "@workspace/db";
 import { eq, ilike, or, sql, desc } from "drizzle-orm";
 import { requireAdmin, requireAuth } from "../middlewares/auth";
 
@@ -114,7 +123,7 @@ router.get("/admin/analytics/overview", requireAdmin, async (req, res): Promise<
   const [totalUsers] = await db.select({ count: sql<number>`count(*)` }).from(usersTable);
   const [totalUnis] = await db.select({ count: sql<number>`count(*)` }).from(universitiesTable);
   const [totalMajors] = await db.select({ count: sql<number>`count(*)` }).from(majorsTable);
-  const [totalMsgs] = await db.select({ count: sql<number>`count(*)` }).from(chatMessagesTable);
+  const [totalChatMsgs] = await db.select({ count: sql<number>`count(*)` }).from(chatMessagesTable);
   const [activeUsers] = await db.select({ count: sql<number>`count(*)` }).from(usersTable).where(eq(usersTable.status, "active"));
   const [bannedUsers] = await db.select({ count: sql<number>`count(*)` }).from(usersTable).where(eq(usersTable.status, "banned"));
   const [totalNews] = await db.select({ count: sql<number>`count(*)` }).from(newsTable);
@@ -123,7 +132,7 @@ router.get("/admin/analytics/overview", requireAdmin, async (req, res): Promise<
     totalUsers: Number(totalUsers.count),
     totalUniversities: Number(totalUnis.count),
     totalMajors: Number(totalMajors.count),
-    totalMessages: Number(totalMsgs.count),
+    totalMessages: Number(totalChatMsgs.count),
     activeUsers: Number(activeUsers.count),
     bannedUsers: Number(bannedUsers.count),
     totalNewsArticles: Number(totalNews.count),
@@ -134,11 +143,12 @@ router.get("/admin/analytics/major-distribution", requireAdmin, async (req, res)
   const majors = await db
     .select({
       majorName: majorsTable.nameEn,
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(${universityMajorsTable.id})`,
     })
-    .from(majorsTable)
+    .from(universityMajorsTable)
+    .innerJoin(majorsTable, eq(universityMajorsTable.majorId, majorsTable.id))
     .groupBy(majorsTable.id, majorsTable.nameEn)
-    .orderBy(desc(sql`count(*)`))
+    .orderBy(desc(sql`count(${universityMajorsTable.id})`))
     .limit(10);
 
   res.json(majors.map((m) => ({ majorName: m.majorName, count: Number(m.count) })));

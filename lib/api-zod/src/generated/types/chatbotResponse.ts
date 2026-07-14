@@ -5,12 +5,8 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
-import type { Major } from './major';
-import type { University } from './university';
 
 export interface ChatbotResponse {
   reply: string;
   sessionId: string;
-  suggestedUniversities?: University[];
-  suggestedMajors?: Major[];
 }

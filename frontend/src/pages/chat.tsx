@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +20,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { MessageCircleQuestion, MessageSquareReply, Search, Send, Users } from "lucide-react";
+import { Check, MessageCircleQuestion, MessageSquareReply, Pencil, Search, Send, Trash2, Users, X } from "lucide-react";
+import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 type PeerMessage = {
@@ -74,20 +85,38 @@ function countReplies(message: PeerMessage): number {
 function ReplyThread({
   replies,
   onReply,
+  onEdit,
+  onDelete,
+  currentUserId,
   replyingTo,
   replyText,
   setReplyingTo,
   setReplyText,
   isSubmitting,
+  editingMessageId,
+  editContent,
+  setEditingMessageId,
+  setEditContent,
+  isUpdating,
+  isDeleting,
   depth = 0,
 }: {
   replies: PeerMessage[];
   onReply: (messageId: number) => void;
+  onEdit: (messageId: number, content: string) => void;
+  onDelete: (messageId: number) => void;
+  currentUserId: number;
   replyingTo: number | null;
   replyText: string;
   setReplyingTo: (id: number | null) => void;
   setReplyText: (value: string) => void;
   isSubmitting: boolean;
+  editingMessageId: number | null;
+  editContent: string;
+  setEditingMessageId: (id: number | null) => void;
+  setEditContent: (value: string) => void;
+  isUpdating: boolean;
+  isDeleting: boolean;
   depth?: number;
 }) {
   return (
@@ -111,20 +140,76 @@ function ReplyThread({
                   </Badge>
                 )}
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{reply.content}</p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="mt-2 h-8 px-2 text-xs"
-                onClick={() => {
-                  setReplyingTo(reply.id);
-                  setReplyText("");
-                }}
-              >
-                <MessageSquareReply className="mr-1 h-3.5 w-3.5" />
-                Reply
-              </Button>
+              {editingMessageId === reply.id ? (
+                <div className="mt-3 space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(event) => setEditContent(event.target.value)}
+                    className="min-h-20 bg-background"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setEditingMessageId(null)}>
+                      <X className="h-3.5 w-3.5" />
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={!editContent.trim() || isUpdating}
+                      onClick={() => onEdit(reply.id, editContent)}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{reply.content}</p>
+              )}
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={() => {
+                    setReplyingTo(reply.id);
+                    setReplyText("");
+                  }}
+                >
+                  <MessageSquareReply className="mr-1 h-3.5 w-3.5" />
+                  Reply
+                </Button>
+                {reply.senderId === currentUserId && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => {
+                        setEditingMessageId(reply.id);
+                        setEditContent(reply.content);
+                      }}
+                    >
+                      <Pencil className="mr-1 h-3.5 w-3.5" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs text-destructive"
+                      disabled={isDeleting}
+                      onClick={() => onDelete(reply.id)}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </div>
 
               {replyingTo === reply.id && (
                 <div className="mt-3 space-y-2">
@@ -151,11 +236,20 @@ function ReplyThread({
                   <ReplyThread
                     replies={reply.replies}
                     onReply={onReply}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    currentUserId={currentUserId}
                     replyingTo={replyingTo}
                     replyText={replyText}
                     setReplyingTo={setReplyingTo}
                     setReplyText={setReplyText}
                     isSubmitting={isSubmitting}
+                    editingMessageId={editingMessageId}
+                    editContent={editContent}
+                    setEditingMessageId={setEditingMessageId}
+                    setEditContent={setEditContent}
+                    isUpdating={isUpdating}
+                    isDeleting={isDeleting}
                     depth={depth + 1}
                   />
                 </div>
@@ -178,6 +272,10 @@ export default function Chat() {
   const [content, setContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [deleteMessageId, setDeleteMessageId] = useState<number | null>(null);
 
   useEffect(() => {
     if (user === null) {
@@ -219,6 +317,42 @@ export default function Chat() {
     },
   });
 
+  const updateMessage = useMutation({
+    mutationFn: ({ messageId, nextTitle, nextContent }: { messageId: number; nextTitle?: string; nextContent: string }) =>
+      apiRequest<PeerMessage>(`/api/chat/messages/${messageId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title: nextTitle, content: nextContent }),
+      }),
+    onSuccess: () => {
+      setEditingMessageId(null);
+      setEditTitle("");
+      setEditContent("");
+      queryClient.invalidateQueries({ queryKey: questionsQueryKey });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update comment");
+    },
+  });
+
+  const deleteMessage = useMutation({
+    mutationFn: (messageId: number) =>
+      apiRequest<{ message: string }>(`/api/chat/messages/${messageId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: (_data, messageId) => {
+      if (messageId === activeQuestionId) {
+        setActiveQuestionId(null);
+      }
+      setReplyingTo(null);
+      setEditingMessageId(null);
+      setDeleteMessageId(null);
+      queryClient.invalidateQueries({ queryKey: questionsQueryKey });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete comment");
+    },
+  });
+
   const filteredQuestions = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     if (!keyword) return questions;
@@ -239,6 +373,15 @@ export default function Chat() {
   }, [activeQuestionId, filteredQuestions]);
 
   if (!user) return null;
+
+  const handleDelete = (messageId: number) => {
+    setDeleteMessageId(messageId);
+  };
+
+  const confirmDelete = () => {
+    if (deleteMessageId === null) return;
+    deleteMessage.mutate(deleteMessageId);
+  };
 
   return (
     <Layout>
@@ -329,8 +472,70 @@ export default function Chat() {
                       <span>{formatDate(activeQuestion.createdAt)}</span>
                       {activeQuestion.isFiltered && <Badge variant="outline">Filtered</Badge>}
                     </div>
-                    <h2 className="mt-2 text-xl font-semibold leading-7">{activeQuestion.title}</h2>
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{activeQuestion.content}</p>
+                    {editingMessageId === activeQuestion.id ? (
+                      <div className="mt-3 space-y-3">
+                        <Input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} />
+                        <Textarea
+                          value={editContent}
+                          onChange={(event) => setEditContent(event.target.value)}
+                          className="min-h-24"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={() => setEditingMessageId(null)}>
+                            <X className="h-4 w-4" />
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!editTitle.trim() || !editContent.trim() || updateMessage.isPending}
+                            onClick={() =>
+                              updateMessage.mutate({
+                                messageId: activeQuestion.id,
+                                nextTitle: editTitle,
+                                nextContent: editContent,
+                              })
+                            }
+                          >
+                            <Check className="h-4 w-4" />
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <h2 className="mt-2 text-xl font-semibold leading-7">{activeQuestion.title}</h2>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{activeQuestion.content}</p>
+                        {activeQuestion.senderId === user.id && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingMessageId(activeQuestion.id);
+                                setEditTitle(activeQuestion.title || "");
+                                setEditContent(activeQuestion.content);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="text-destructive"
+                              disabled={deleteMessage.isPending}
+                              onClick={() => handleDelete(activeQuestion.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -346,11 +551,22 @@ export default function Chat() {
                     <ReplyThread
                       replies={activeQuestion.replies}
                       onReply={(messageId) => createReply.mutate(messageId)}
+                      onEdit={(messageId, nextContent) =>
+                        updateMessage.mutate({ messageId, nextContent })
+                      }
+                      onDelete={handleDelete}
+                      currentUserId={user.id}
                       replyingTo={replyingTo}
                       replyText={replyText}
                       setReplyingTo={setReplyingTo}
                       setReplyText={setReplyText}
                       isSubmitting={createReply.isPending}
+                      editingMessageId={editingMessageId}
+                      editContent={editContent}
+                      setEditingMessageId={setEditingMessageId}
+                      setEditContent={setEditContent}
+                      isUpdating={updateMessage.isPending}
+                      isDeleting={deleteMessage.isPending}
                     />
                   ) : (
                     <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -390,6 +606,27 @@ export default function Chat() {
           )}
         </Card>
       </div>
+
+      <AlertDialog open={deleteMessageId !== null} onOpenChange={(open) => !open && setDeleteMessageId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete comment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This comment and its replies will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMessage.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground border-destructive-border"
+              disabled={deleteMessage.isPending}
+              onClick={confirmDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }

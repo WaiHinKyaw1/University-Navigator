@@ -5,12 +5,9 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChatbotHistoryMessageRole } from './chatbotHistoryMessageRole';
 
-export interface ChatbotMessage {
-  id: number;
-  /** user | assistant */
-  role: string;
+export interface ChatbotHistoryMessage {
+  role: ChatbotHistoryMessageRole;
   content: string;
-  sessionId?: string;
-  createdAt: Date;
 }
