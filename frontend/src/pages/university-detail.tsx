@@ -69,6 +69,7 @@ export default function UniversityDetail() {
       </Layout>
     );
   }
+  console.log(selectedMajor);
 
   return (
     <Layout>

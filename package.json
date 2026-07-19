@@ -1,5 +1,5 @@
 {
-  "name": "workspace",
+  "name": "university-admission",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -13,4 +13,4 @@
     "prettier": "^3.8.3",
     "typescript": "~5.9.3"
   }
-}
+} 
