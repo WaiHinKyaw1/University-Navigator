@@ -18,6 +18,7 @@ type AuthContextType = {
   isLoading: boolean;
   login: (token: string, user?: User) => void;
   logout: () => void;
+  updateUser: (data: Partial<User>) => void;
 };
 
 const AuthContext = React.createContext<AuthContextType>({
@@ -25,11 +26,14 @@ const AuthContext = React.createContext<AuthContextType>({
   isLoading: true,
   login: () => {},
   logout: () => {},
+  updateUser: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token"),
+  );
 
   const { data: user, isLoading } = useGetMe({
     query: {
@@ -55,6 +59,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     queryClient.removeQueries({ queryKey: getGetMeQueryKey() });
   };
 
+  const updateUser = (data: Partial<User>) => {
+    queryClient.setQueryData(getGetMeQueryKey(), (old: User | null) => {
+      if (!old) return old;
+
+      return {
+        ...old,
+        ...data,
+      };
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -62,6 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isLoading: !!token && isLoading && !user,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

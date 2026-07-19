@@ -11,6 +11,8 @@ import usersRouter from "./users";
 import chatbotRouter from "./chatbot";
 import admissionGuidesRouter from "./admission-guides";
 import uploadRouter from "./upload";
+import favoritesRouter from "./favorites";
+import profileImageRouter from "./profile-image";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use(usersRouter);
 router.use(chatbotRouter);
 router.use(admissionGuidesRouter);
 router.use(uploadRouter);
+router.use(favoritesRouter);
+router.use(profileImageRouter);
 
 export default router;

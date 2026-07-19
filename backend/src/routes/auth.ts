@@ -4,6 +4,7 @@ import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { signToken, requireAuth } from "../middlewares/auth";
 import { logger } from "../lib/logger";
+import { imageUpload } from "../lib/uploads";
 
 const router: IRouter = Router();
 
@@ -154,5 +155,185 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
     handleAuthDatabaseError(res, error, "load your profile");
   }
 });
+
+router.put("/auth/profile", requireAuth, async (req, res): Promise<void> => {
+  const { name, email } = req.body;
+
+  try {
+    const [updatedUser] = await db
+      .update(usersTable)
+      .set({
+        name,
+        email,
+      })
+      .where(eq(usersTable.id, req.user!.id))
+      .returning();
+
+    if (!updatedUser) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    res.json({
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      status: updatedUser.status,
+      avatarUrl: updatedUser.avatarUrl,
+      createdAt: updatedUser.createdAt,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to update profile",
+    });
+  }
+});
+
+router.put(
+  "/auth/change-password",
+  requireAuth,
+  async (req, res): Promise<void> => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        error: "Current password and new password are required",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({
+        error: "New password must be at least 6 characters",
+      });
+      return;
+    }
+
+    try {
+      const [user] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, req.user!.id));
+
+      if (!user) {
+        res.status(404).json({
+          error: "User not found",
+        });
+        return;
+      }
+
+      const passwordValid = await bcrypt.compare(
+        currentPassword,
+        user.passwordHash,
+      );
+
+      if (!passwordValid) {
+        res.status(400).json({
+          error: "Current password is incorrect",
+        });
+        return;
+      }
+
+      // Hash new password
+      const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+      await db
+        .update(usersTable)
+        .set({
+          passwordHash: newPasswordHash,
+        })
+        .where(eq(usersTable.id, req.user!.id));
+
+      res.json({
+        message: "Password changed successfully",
+      });
+    } catch (error) {
+      logger.error({ error }, "Change password failed");
+
+      res.status(500).json({
+        error: "Failed to change password",
+      });
+    }
+  },
+);
+
+router.post(
+  "/auth/profile/image",
+  requireAuth,
+
+  (req, res, next) => {
+    imageUpload.single("file")(req, res, (err) => {
+      if (err) {
+        res.status(400).json({
+          error: err.message,
+        });
+
+        return;
+      }
+
+      next();
+    });
+  },
+
+  async (req, res) => {
+    if (!req.file) {
+      res.status(400).json({
+        error: "Image required",
+      });
+
+      return;
+    }
+
+    const avatarUrl = `/uploads/images/${req.file.filename}`;
+    const result = await db
+      .update(usersTable)
+
+      .set({
+        avatarUrl,
+      })
+
+      .where(eq(usersTable.id, req.user!.id))
+      .returning();
+
+    res.json({
+      avatarUrl,
+    });
+  },
+);
+
+router.delete(
+  "/auth/profile/image",
+  requireAuth,
+  async (req, res): Promise<void> => {
+    try {
+      const [user] = await db
+        .update(usersTable)
+        .set({
+          avatarUrl: null,
+        })
+        .where(eq(usersTable.id, req.user!.id))
+        .returning();
+
+      if (!user) {
+        res.status(404).json({
+          error: "User not found",
+        });
+        return;
+      }
+
+      res.json({
+        message: "Profile photo removed",
+        avatarUrl: null,
+      });
+    } catch (error) {
+      logger.error({ error }, "Remove profile image failed");
+
+      res.status(500).json({
+        error: "Failed to remove profile image",
+      });
+    }
+  },
+);
 
 export default router;

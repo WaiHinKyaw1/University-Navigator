@@ -70,7 +70,11 @@ function isProviderFallbackError(error: unknown): boolean {
   );
 }
 
-function getChatErrorMessage(error: unknown, hasGemini: boolean, hasOpenAi: boolean): string {
+function getChatErrorMessage(
+  error: unknown,
+  hasGemini: boolean,
+  hasOpenAi: boolean,
+): string {
   if (!hasGemini && !hasOpenAi) {
     return "AI key မရှိပါ။ .env ထဲ GEMINI_API_KEY သို့မဟုတ် OPENAI_API_KEY ထည့်ပြီး server restart လုပ်ပါ။";
   }
@@ -122,7 +126,10 @@ async function completeWithOpenAI(
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error("OPENAI_API_KEY not configured");
 
-  const client = new OpenAI({ apiKey });
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+  });
   const completion = await client.chat.completions.create({
     model: getOpenAiModel(),
     max_tokens: 800,
@@ -142,7 +149,10 @@ async function completeWithOpenAI(
   );
 }
 
-async function completeChat(history: HistoryMessage[], message: string): Promise<string> {
+async function completeChat(
+  history: HistoryMessage[],
+  message: string,
+): Promise<string> {
   const hasGemini = !!process.env.GEMINI_API_KEY?.trim();
   const hasOpenAi = !!process.env.OPENAI_API_KEY?.trim();
 
@@ -151,8 +161,8 @@ async function completeChat(history: HistoryMessage[], message: string): Promise
   }
 
   const providers: LlmProvider[] = [
-    ...(hasGemini ? (["gemini"] as const) : []),
     ...(hasOpenAi ? (["openai"] as const) : []),
+    ...(hasGemini ? (["gemini"] as const) : []),
   ];
 
   let lastError: unknown;
@@ -167,7 +177,10 @@ async function completeChat(history: HistoryMessage[], message: string): Promise
       lastError = error;
       const hasNext = i < providers.length - 1;
       if (hasNext && isProviderFallbackError(error)) {
-        logger.warn({ err: error, provider }, "LLM provider failed, trying fallback");
+        logger.warn(
+          { err: error, provider },
+          "LLM provider failed, trying fallback",
+        );
         continue;
       }
       logger.error({ err: error, provider }, "Chatbot LLM request failed");
@@ -178,34 +191,42 @@ async function completeChat(history: HistoryMessage[], message: string): Promise
   throw lastError ?? new Error("LLM request failed");
 }
 
-if (!process.env.GEMINI_API_KEY?.trim() && !process.env.OPENAI_API_KEY?.trim()) {
+if (
+  !process.env.GEMINI_API_KEY?.trim() &&
+  !process.env.OPENAI_API_KEY?.trim()
+) {
   logger.warn(
     "Neither GEMINI_API_KEY nor OPENAI_API_KEY is set — chatbot will return an error until one is configured",
   );
 }
 
-router.post("/chatbot/message", optionalAuth, async (req, res): Promise<void> => {
-  const { message, sessionId, history } = req.body;
-  if (!message || typeof message !== "string") {
-    res.status(400).json({ error: "Message is required" });
-    return;
-  }
+router.post(
+  "/chatbot/message",
+  optionalAuth,
+  async (req, res): Promise<void> => {
+    const { message, sessionId, history } = req.body;
+    if (!message || typeof message !== "string") {
+      res.status(400).json({ error: "Message is required" });
+      return;
+    }
 
-  const session = sessionId || randomUUID();
-  const conversationHistory = parseHistory(history);
+    const session = sessionId || randomUUID();
+    const conversationHistory = parseHistory(history);
 
-  let reply: string;
-  try {
-    reply = await completeChat(conversationHistory, message.trim());
-  } catch (error) {
-    reply = getChatErrorMessage(
-      error,
-      !!process.env.GEMINI_API_KEY?.trim(),
-      !!process.env.OPENAI_API_KEY?.trim(),
-    );
-  }
+    let reply: string;
+    try {
+      reply = await completeChat(conversationHistory, message.trim());
+    } catch (error) {
+      console.error("GEMINI ERROR:", error);
+      reply = getChatErrorMessage(
+        error,
+        !!process.env.GEMINI_API_KEY?.trim(),
+        !!process.env.OPENAI_API_KEY?.trim(),
+      );
+    }
 
-  res.json({ reply, sessionId: session });
-});
+    res.json({ reply, sessionId: session });
+  },
+);
 
 export default router;

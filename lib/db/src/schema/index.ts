@@ -6,3 +6,4 @@ export * from "./chat";
 export * from "./audit";
 export * from "./admission-guides";
 export * from "./categories";
+export * from "./favorites";

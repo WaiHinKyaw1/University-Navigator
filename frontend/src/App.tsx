@@ -24,6 +24,8 @@ import AdminNews from "@/pages/admin/news";
 import AdminAdmissionGuide from "@/pages/admin/admission-guide";
 import AdminAudit from "@/pages/admin/audit";
 import AdminChatMonitor from "@/pages/admin/chat-monitor";
+import Profile from "@/pages/profile";
+import AdminProfile from "@/pages/admin-profile";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +41,6 @@ function Router() {
       <Route path="/news" component={News} />
       <Route path="/chatbot" component={Chatbot} />
       <Route path="/chat" component={Chat} />
-      
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/universities" component={AdminUniversities} />
@@ -49,7 +50,8 @@ function Router() {
       <Route path="/admin/admission-guide" component={AdminAdmissionGuide} />
       <Route path="/admin/audit" component={AdminAudit} />
       <Route path="/admin/chat-monitor" component={AdminChatMonitor} />
-      
+      <Route path="/profile" component={Profile} />
+      <Route path="/admin/profile" component={AdminProfile} />
       <Route component={NotFound} />
     </Switch>
   );

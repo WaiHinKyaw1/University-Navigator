@@ -18,7 +18,15 @@ import {
   MYANMAR_STATE_DIVISIONS,
   MYANMAR_UNION_TERRITORIES,
 } from "@/lib/myanmar-locations";
-import { Search, MapPin, BookOpen, Building2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  BookOpen,
+  Building2,
+  GraduationCap,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Link } from "wouter";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -56,28 +64,39 @@ const TYPE_BADGE: Record<string, string> = {
 };
 
 const SCORE_COLOR = (s: number) =>
-  s >= 450 ? "bg-rose-50 text-rose-700" :
-    s >= 400 ? "bg-orange-50 text-orange-700" :
-      s >= 360 ? "bg-yellow-50 text-yellow-700" :
-        "bg-emerald-50 text-emerald-700";
+  s >= 450
+    ? "bg-rose-50 text-rose-700"
+    : s >= 400
+      ? "bg-orange-50 text-orange-700"
+      : s >= 360
+        ? "bg-yellow-50 text-yellow-700"
+        : "bg-emerald-50 text-emerald-700";
 
 // ─── University card ──────────────────────────────────────────────────────────
 
 function UniCard({ uni }: { uni: any }) {
   return (
     <Card className="flex flex-col overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-primary/30 rounded-2xl group">
-      <div className={`h-1.5 w-full ${TYPE_STRIP[uni.type] ?? "bg-gradient-to-r from-gray-300 to-gray-400"}`} />
+      <div
+        className={`h-1.5 w-full ${TYPE_STRIP[uni.type] ?? "bg-gradient-to-r from-gray-300 to-gray-400"}`}
+      />
 
       <div className="h-32 bg-gray-50 relative overflow-hidden">
         {uni.imageUrl ? (
-          <img src={uni.imageUrl} alt={uni.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <img
+            src={uni.imageUrl}
+            alt={uni.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Building2 className="h-10 w-10 text-gray-200" />
           </div>
         )}
         <div className="absolute top-2 right-2">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${TYPE_BADGE[uni.type] ?? "bg-gray-50 text-gray-600 border-gray-200"}`}>
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${TYPE_BADGE[uni.type] ?? "bg-gray-50 text-gray-600 border-gray-200"}`}
+          >
             {TYPE_LABEL[uni.type] ?? uni.type}
           </span>
         </div>
@@ -92,14 +111,21 @@ function UniCard({ uni }: { uni: any }) {
 
       <CardContent className="flex-1 p-4 space-y-2.5">
         <div>
-          <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">{uni.name}</h3>
-          {uni.nameEn && <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{uni.nameEn}</p>}
+          <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
+            {uni.name}
+          </h3>
+          {uni.nameEn && (
+            <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">
+              {uni.nameEn}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-1">
           {uni.state && (
             <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-              <MapPin className="h-2.5 w-2.5" /> {uni.city ? `${uni.city}` : uni.state}
+              <MapPin className="h-2.5 w-2.5" />{" "}
+              {uni.city ? `${uni.city}` : uni.state}
             </span>
           )}
           <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-primary/5 text-primary px-2 py-0.5 rounded-full font-medium">
@@ -111,7 +137,10 @@ function UniCard({ uni }: { uni: any }) {
           <div className="flex items-start gap-1 text-[11px] text-gray-500">
             <BookOpen className="h-3 w-3 shrink-0 mt-0.5 text-gray-400" />
             <span className="line-clamp-2">
-              {uni.majors.slice(0, 3).map((m: any) => m.name ?? m).join(" • ")}
+              {uni.majors
+                .slice(0, 3)
+                .map((m: any) => m.name ?? m)
+                .join(" • ")}
               {uni.majors.length > 3 ? ` +${uni.majors.length - 3}` : ""}
             </span>
           </div>
@@ -119,14 +148,21 @@ function UniCard({ uni }: { uni: any }) {
 
         <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
           <span className="text-[11px] text-gray-400">လိုအပ်ရမှတ်</span>
-          <span className={`text-xs font-black px-2.5 py-1 rounded-full ${SCORE_COLOR(uni.minScore)}`}>
+          <span
+            className={`text-xs font-black px-2.5 py-1 rounded-full ${SCORE_COLOR(uni.minScore)}`}
+          >
             {uni.minScore} မှတ်
           </span>
         </div>
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full rounded-xl" variant="outline" size="sm">
+        <Button
+          asChild
+          className="w-full rounded-xl"
+          variant="outline"
+          size="sm"
+        >
           <Link href={`/universities/${uni.id}`}>အသေးစိတ် ကြည့်ရန်</Link>
         </Button>
       </CardFooter>
@@ -136,14 +172,24 @@ function UniCard({ uni }: { uni: any }) {
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
-function Pagination({ page, total, pageSize, onChange }: {
-  page: number; total: number; pageSize: number; onChange: (p: number) => void;
+function Pagination({
+  page,
+  total,
+  pageSize,
+  onChange,
+}: {
+  page: number;
+  total: number;
+  pageSize: number;
+  onChange: (p: number) => void;
 }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
 
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  const visible = pages.filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1);
+  const visible = pages.filter(
+    (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
+  );
 
   return (
     <div className="flex items-center justify-center gap-1.5 pt-4">
@@ -157,13 +203,16 @@ function Pagination({ page, total, pageSize, onChange }: {
 
       {visible.map((p, i, arr) => (
         <span key={p} className="flex items-center gap-1.5">
-          {i > 0 && arr[i - 1] !== p - 1 && <span className="text-gray-400 text-sm px-1">…</span>}
+          {i > 0 && arr[i - 1] !== p - 1 && (
+            <span className="text-gray-400 text-sm px-1">…</span>
+          )}
           <button
             onClick={() => onChange(p)}
-            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${p === page
-              ? "bg-primary text-white shadow-sm"
-              : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
-              }`}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              p === page
+                ? "bg-primary text-white shadow-sm"
+                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+            }`}
           >
             {p}
           </button>
@@ -196,31 +245,48 @@ export default function Universities() {
   const universities: any[] = (response as any)?.universities ?? [];
 
   const filtered = useMemo(() => {
-    let base = activeCategory === "all" ? universities : universities.filter((u) => u.type === activeCategory);
-   
-   console.log(base)
-    if (activeState !== "all") base = base.filter((u) => u.state === activeState);
+    let base =
+      activeCategory === "all"
+        ? universities
+        : universities.filter((u) => u.type === activeCategory);
+
+    //  console.log(base)
+    if (activeState !== "all")
+      base = base.filter((u) => u.state === activeState);
     return base;
   }, [universities, activeCategory, activeState]);
 
   const paginated = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filtered, page]
+    [filtered, page],
   );
 
-  const handleCategoryChange = (cat: string) => { setActiveCategory(cat); setPage(1); };
-  const handleSearchChange = (val: string) => { setSearch(val); setPage(1); };
-  const handleStateChange = (state: string) => { setActiveState(state); setPage(1); };
+  const handleCategoryChange = (cat: string) => {
+    setActiveCategory(cat);
+    setPage(1);
+  };
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
+  const handleStateChange = (state: string) => {
+    setActiveState(state);
+    setPage(1);
+  };
 
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50/30">
         <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-
           {/* Header */}
           <div className="text-center space-y-1">
-            <h1 className="text-2xl sm:text-2xl font-bold text-gray-900 mb-2">တက္ကသိုလ်များ</h1>
-            <p className="text-gray-500 text-sm">မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({universities.length}) — {ACADEMIC_YEAR}</p>
+            <h1 className="text-2xl sm:text-2xl font-bold text-gray-900 mb-2">
+              တက္ကသိုလ်များ
+            </h1>
+            <p className="text-gray-500 text-sm">
+              မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({universities.length}) —{" "}
+              {ACADEMIC_YEAR}
+            </p>
           </div>
 
           {/* Search + state filter */}
@@ -243,17 +309,23 @@ export default function Universities() {
                 <SelectItem value="all">ပြည်နယ်/တိုင်းအားလုံး</SelectItem>
                 <SelectGroup>
                   {MYANMAR_REGIONS.map((state) => (
-                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
                 <SelectGroup>
                   {MYANMAR_STATE_DIVISIONS.map((state) => (
-                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
                 <SelectGroup>
                   {MYANMAR_UNION_TERRITORIES.map((state) => (
-                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
@@ -263,20 +335,31 @@ export default function Universities() {
           {/* Category filter chips */}
           <div className="flex gap-2 flex-wrap justify-center">
             {CATEGORIES.map((cat) => {
-              const count = cat.value === "all" ? universities.length : universities.filter((u) => u.type === cat.value).length;
+              const count =
+                cat.value === "all"
+                  ? universities.length
+                  : universities.filter((u) => u.type === cat.value).length;
               return (
                 <button
                   key={cat.value}
                   onClick={() => handleCategoryChange(cat.value)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${activeCategory === cat.value
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
-                    }`}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
+                    activeCategory === cat.value
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
+                  }`}
                 >
                   <span>{cat.emoji}</span>
                   {cat.label}
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeCategory === cat.value ? "bg-white/25 text-white" : "bg-gray-100 text-gray-500"
-                    }`}>{count}</span>
+                  <span
+                    className={`text-xs px-1.5 py-0.5 rounded-full ${
+                      activeCategory === cat.value
+                        ? "bg-white/25 text-white"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {count}
+                  </span>
                 </button>
               );
             })}
@@ -285,7 +368,8 @@ export default function Universities() {
           {/* Results count */}
           {!isLoading && filtered.length > 0 && (
             <p className="text-xs text-gray-400 text-center">
-              ကျောင်း {filtered.length} ခု တွေ့ရှိသည် — စာမျက်နှာ {page}/{Math.ceil(filtered.length / PAGE_SIZE)}
+              ကျောင်း {filtered.length} ခု တွေ့ရှိသည် — စာမျက်နှာ {page}/
+              {Math.ceil(filtered.length / PAGE_SIZE)}
             </p>
           )}
 
@@ -293,7 +377,10 @@ export default function Universities() {
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="overflow-hidden rounded-2xl border-gray-100">
+                <Card
+                  key={i}
+                  className="overflow-hidden rounded-2xl border-gray-100"
+                >
                   <div className="h-32 bg-gray-100 animate-pulse" />
                   <div className="p-4 space-y-3">
                     <Skeleton className="h-4 w-3/4" />
@@ -308,14 +395,26 @@ export default function Universities() {
             <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
               <Building2 className="mx-auto h-12 w-12 text-gray-200 mb-3" />
               <p className="text-gray-600 font-medium">တက္ကသိုလ် မတွေ့ပါ</p>
-              <p className="text-gray-400 text-sm mt-1">ရှာဖွေမှု သို့ Filter ပြောင်းကြည့်ပါ</p>
+              <p className="text-gray-400 text-sm mt-1">
+                ရှာဖွေမှု သို့ Filter ပြောင်းကြည့်ပါ
+              </p>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {paginated.map((uni) => <UniCard key={uni.id} uni={uni} />)}
+                {paginated.map((uni) => (
+                  <UniCard key={uni.id} uni={uni} />
+                ))}
               </div>
-              <Pagination page={page} total={filtered.length} pageSize={PAGE_SIZE} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+              <Pagination
+                page={page}
+                total={filtered.length}
+                pageSize={PAGE_SIZE}
+                onChange={(p) => {
+                  setPage(p);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
             </>
           )}
         </div>
