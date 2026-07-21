@@ -1,42 +1,78 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin-layout";
 import { useListUsers, useBanUser } from "@workspace/api-client-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Ban, CheckCircle, Shield, ShieldAlert } from "lucide-react";
+import {
+  Search,
+  Ban,
+  CheckCircle,
+  Shield,
+  ShieldAlert,
+  Trash2,
+  MoreHorizontal,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function AdminUsers() {
   const [search, setSearch] = useState("");
   const [banModalOpen, setBanModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ id: number, name: string, isBanned: boolean } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: number;
+    name: string;
+    isBanned: boolean;
+  } | null>(null);
   const [banReason, setBanReason] = useState("");
 
   const queryClient = useQueryClient();
 
   const { data: usersData, isLoading } = useListUsers({
-    search: search || undefined
+    search: search || undefined,
   });
 
   const banMutation = useBanUser({
     mutation: {
       onSuccess: () => {
-        toast.success(selectedUser?.isBanned ? "User unbanned successfully" : "User banned successfully");
+        toast.success(
+          selectedUser?.isBanned
+            ? "User unbanned successfully"
+            : "User banned successfully",
+        );
         setBanModalOpen(false);
         setBanReason("");
         queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       },
       onError: (err) => {
         toast.error(err.message || "Failed to update user status");
-      }
-    }
+      },
+    },
   });
 
   const handleBanSubmit = () => {
@@ -45,15 +81,55 @@ export default function AdminUsers() {
       id: selectedUser.id,
       data: {
         banned: !selectedUser.isBanned,
-        reason: banReason || (selectedUser.isBanned ? "Unbanned by admin" : "Violation of terms")
-      }
+        reason:
+          banReason ||
+          (selectedUser.isBanned ? "Unbanned by admin" : "Violation of terms"),
+      },
     });
   };
 
-  const openBanModal = (user: { id: number, name: string, status: string }) => {
-    setSelectedUser({ id: user.id, name: user.name, isBanned: user.status === "banned" });
+  const openBanModal = (user: { id: number; name: string; status: string }) => {
+    setSelectedUser({
+      id: user.id,
+      name: user.name,
+      isBanned: user.status === "banned",
+    });
     setBanReason("");
     setBanModalOpen(true);
+  };
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedDeleteUser, setSelectedDeleteUser] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  const deleteUser = async (id: number) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`/api/users/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error);
+      }
+
+      toast.success("User deleted successfully");
+
+      setDeleteModalOpen(false);
+
+      queryClient.invalidateQueries({
+        queryKey: ["/api/users"],
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
+    }
   };
 
   return (
@@ -62,7 +138,9 @@ export default function AdminUsers() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-            <p className="text-muted-foreground">Manage students and admin accounts.</p>
+            <p className="text-muted-foreground">
+              Manage students and admin accounts.
+            </p>
           </div>
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -91,11 +169,21 @@ export default function AdminUsers() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading users...</TableCell>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      Loading users...
+                    </TableCell>
                   </TableRow>
                 ) : usersData?.users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No users found.</TableCell>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      No users found.
+                    </TableCell>
                   </TableRow>
                 ) : (
                   usersData?.users.map((user) => (
@@ -103,12 +191,30 @@ export default function AdminUsers() {
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={user.role === 'admin' ? 'border-primary text-primary capitalize' : 'capitalize'}>
+                        <Badge
+                          variant="outline"
+                          className={
+                            user.role === "admin"
+                              ? "border-primary text-primary capitalize"
+                              : "capitalize"
+                          }
+                        >
                           {user.role}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.status === 'active' ? 'secondary' : 'destructive'} className={user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 capitalize' : 'capitalize'}>
+                        <Badge
+                          variant={
+                            user.status === "active"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                          className={
+                            user.status === "active"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 capitalize"
+                              : "capitalize"
+                          }
+                        >
                           {user.status}
                         </Badge>
                       </TableCell>
@@ -116,16 +222,46 @@ export default function AdminUsers() {
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        {user.role !== 'admin' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openBanModal(user)}
-                            className={user.status === 'active' ? 'text-destructive hover:text-destructive hover:bg-destructive/10' : 'text-primary hover:text-primary hover:bg-primary/10'}
-                          >
-                            {user.status === 'active' ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                            <span className="sr-only">{user.status === 'active' ? 'Ban' : 'Unban'}</span>
-                          </Button>
+                        {user.role !== "admin" && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => openBanModal(user)}
+                              >
+                                {user.status === "active" ? (
+                                  <>
+                                    <Ban className="mr-2 h-4 w-4 text-red-500" />
+                                    Ban User
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                    Unban User
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => {
+                                  setSelectedDeleteUser({
+                                    id: user.id,
+                                    name: user.name,
+                                  });
+                                  setDeleteModalOpen(true);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </TableCell>
                     </TableRow>
@@ -140,7 +276,7 @@ export default function AdminUsers() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {selectedUser?.isBanned ? 'Unban User' : 'Ban User'}
+                {selectedUser?.isBanned ? "Unban User" : "Ban User"}
               </DialogTitle>
               <DialogDescription>
                 {selectedUser?.isBanned
@@ -153,20 +289,63 @@ export default function AdminUsers() {
                 <Label htmlFor="reason">Reason (Optional)</Label>
                 <Textarea
                   id="reason"
-                  placeholder={selectedUser?.isBanned ? "Reason for unbanning..." : "Reason for banning..."}
+                  placeholder={
+                    selectedUser?.isBanned
+                      ? "Reason for unbanning..."
+                      : "Reason for banning..."
+                  }
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setBanModalOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setBanModalOpen(false)}>
+                Cancel
+              </Button>
               <Button
                 variant={selectedUser?.isBanned ? "default" : "destructive"}
                 onClick={handleBanSubmit}
                 disabled={banMutation.isPending}
               >
-                {banMutation.isPending ? "Processing..." : selectedUser?.isBanned ? "Unban User" : "Ban User"}
+                {banMutation.isPending
+                  ? "Processing..."
+                  : selectedUser?.isBanned
+                    ? "Unban User"
+                    : "Ban User"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete User</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to permanently delete{" "}
+                <strong>{selectedDeleteUser?.name}</strong>?
+                <br />
+                <br />
+                This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteModalOpen(false)}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (!selectedDeleteUser) return;
+                  deleteUser(selectedDeleteUser.id);
+                }}
+              >
+                Delete User
               </Button>
             </DialogFooter>
           </DialogContent>

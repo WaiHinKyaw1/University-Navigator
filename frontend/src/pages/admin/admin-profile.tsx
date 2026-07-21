@@ -1,27 +1,30 @@
-import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
+import ProfileImageUpload from "@/components/profile-image-upload";
+import ChangePassword from "@/pages/change-password";
+import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
-
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminLayout } from "@/components/admin-layout";
 
-import { toast } from "sonner";
-
-import ChangePassword from "@/pages/change-password";
-import SavedUniversities from "@/components/saved-universities";
-import ProfileImageUpload from "@/components/profile-image-upload";
-
-export default function Profile() {
-  const { user } = useAuth();
+export default function AdminProfile() {
+  const { user, updateUser } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
-
   const [email, setEmail] = useState(user?.email || "");
-
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+    }
+  }, [user]);
+
+  if (!user || user.role !== "admin") {
+    return <Redirect to="/" />;
+  }
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -30,57 +33,48 @@ export default function Profile() {
 
       const res = await fetch("/api/auth/profile", {
         method: "PUT",
-
         headers: {
           "Content-Type": "application/json",
-
           Authorization: `Bearer ${token}`,
         },
-
         body: JSON.stringify({
           name,
-
           email,
         }),
       });
 
-      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error);
+      }
+
+      // Update navbar immediately
+      updateUser(data);
 
       toast.success("Profile updated");
-    } catch {
-      toast.error("Update failed");
+    } catch (err: any) {
+      toast.error(err.message || "Update failed");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setEmail(user.email);
-      setAvatarUrl(user.avatarUrl || null);
-    }
-  }, [user]);
-
   return (
-    <Layout>
+    <AdminLayout>
       <div className="container mx-auto max-w-xl py-10">
-        <h1 className="text-3xl font-bold mb-6">My Profile</h1>
-        <ProfileImageUpload
-          avatarUrl={avatarUrl}
-          onUploaded={(url) => setAvatarUrl(url)}
-        />
+        <h1 className="text-3xl font-bold mb-6">Admin Profile</h1>
 
-        <div className="space-y-5 border rounded-xlp-6 p-6">
+        <ProfileImageUpload avatarUrl={user.avatarUrl} onUploaded={() => {}} />
+
+        <div className="space-y-5 border rounded-xl p-6">
           <div>
             <label>Name</label>
-
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
           <div>
             <label>Email</label>
-
             <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
 
@@ -89,10 +83,10 @@ export default function Profile() {
           </Button>
         </div>
 
-        <ChangePassword />
-
-        <SavedUniversities />
+        <div className="mt-6">
+          <ChangePassword />
+        </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

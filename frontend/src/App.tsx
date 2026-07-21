@@ -25,7 +25,7 @@ import AdminAdmissionGuide from "@/pages/admin/admission-guide";
 import AdminAudit from "@/pages/admin/audit";
 import AdminChatMonitor from "@/pages/admin/chat-monitor";
 import Profile from "@/pages/profile";
-import AdminProfile from "@/pages/admin-profile";
+import AdminProfile from "@/pages/admin/admin-profile";
 
 const queryClient = new QueryClient();
 

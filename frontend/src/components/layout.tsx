@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { GraduationCap, LogOut, Menu, X, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import { useLogout } from "@workspace/api-client-react";
-import { UserCircle } from "lucide-react";
 
 export function Layout({
   children,
@@ -152,13 +151,29 @@ export function Layout({
             <nav className="flex flex-col gap-4">
               <NavLinks />
             </nav>
-            <div className="pt-4 border-t flex flex-col gap-2">
+            <div className="pt-4 border-t flex flex-col gap-3">
               {user ? (
                 <>
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground py-2">
-                    <UserIcon className="h-4 w-4" />
-                    <span>{user.name}</span>
-                  </div>
+                  <Link
+                    href={user.role === "admin" ? "/admin/profile" : "/profile"}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition"
+                  >
+                    <img
+                      src={user.avatarUrl || "/default-avatar.png"}
+                      alt="profile"
+                      className="w-10 h-10 rounded-full object-cover border"
+                    />
+
+                    <div>
+                      <p className="font-medium text-foreground">{user.name}</p>
+
+                      {user.role === "admin" && (
+                        <p className="text-xs text-primary">Admin Profile</p>
+                      )}
+                    </div>
+                  </Link>
+
                   <Button
                     variant="outline"
                     className="w-full justify-start"
@@ -167,7 +182,8 @@ export function Layout({
                       setMobileMenuOpen(false);
                     }}
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
                   </Button>
                 </>
               ) : (

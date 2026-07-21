@@ -44,7 +44,7 @@ export default function Home() {
               <p className="text-lg md:text-xl opacity-90 mb-10 max-w-2xl mx-auto">
                 Navigate your post-Grade 12 journey with confidence. Calculate
                 your eligibility, explore universities, and find the perfect
-                major with our AI guide.
+                major.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button

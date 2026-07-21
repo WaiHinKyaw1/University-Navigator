@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { signToken, requireAuth } from "../middlewares/auth";
+import { signToken, requireAuth, requireAdmin } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 import { imageUpload } from "../lib/uploads";
 
@@ -158,8 +158,24 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
 
 router.put("/auth/profile", requireAuth, async (req, res): Promise<void> => {
   const { name, email } = req.body;
-
+  if (!name || !email) {
+    res.status(400).json({
+      error: "Name and email are required",
+    });
+    return;
+  }
   try {
+    const [existingUser] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, email));
+
+    if (existingUser && existingUser.id !== req.user!.id) {
+      res.status(400).json({
+        error: "Email already exists",
+      });
+      return;
+    }
     const [updatedUser] = await db
       .update(usersTable)
       .set({
@@ -331,6 +347,48 @@ router.delete(
 
       res.status(500).json({
         error: "Failed to remove profile image",
+      });
+    }
+  },
+);
+
+router.delete(
+  "/users/:id",
+  requireAuth,
+  requireAdmin,
+  async (req, res): Promise<void> => {
+    try {
+      const id = Number(req.params.id);
+
+      const [user] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, id));
+
+      if (!user) {
+        res.status(404).json({
+          error: "User not found",
+        });
+        return;
+      }
+
+      if (user.role === "admin") {
+        res.status(403).json({
+          error: "Cannot delete admin account",
+        });
+        return;
+      }
+
+      await db.delete(usersTable).where(eq(usersTable.id, id));
+
+      res.json({
+        message: "User deleted successfully",
+      });
+    } catch (error) {
+      logger.error({ error }, "Delete user failed");
+
+      res.status(500).json({
+        error: "Failed to delete user",
       });
     }
   },
