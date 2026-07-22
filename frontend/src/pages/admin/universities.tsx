@@ -40,7 +40,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Upload } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -90,14 +98,24 @@ const UNIVERSITY_TYPES = [
 ];
 const pageSize = 10;
 
-function Pagination({ page, total, pageSize, onChange }: {
-  page: number; total: number; pageSize: number; onChange: (p: number) => void;
+function Pagination({
+  page,
+  total,
+  pageSize,
+  onChange,
+}: {
+  page: number;
+  total: number;
+  pageSize: number;
+  onChange: (p: number) => void;
 }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
 
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  const visible = pages.filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1);
+  const visible = pages.filter(
+    (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
+  );
 
   return (
     <div className="flex items-center justify-center gap-1.5 pt-4">
@@ -111,13 +129,16 @@ function Pagination({ page, total, pageSize, onChange }: {
 
       {visible.map((p, i, arr) => (
         <span key={p} className="flex items-center gap-1.5">
-          {i > 0 && arr[i - 1] !== p - 1 && <span className="text-gray-400 text-sm px-1">…</span>}
+          {i > 0 && arr[i - 1] !== p - 1 && (
+            <span className="text-gray-400 text-sm px-1">…</span>
+          )}
           <button
             onClick={() => onChange(p)}
-            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${p === page
-              ? "bg-primary text-white shadow-sm"
-              : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
-              }`}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              p === page
+                ? "bg-primary text-white shadow-sm"
+                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+            }`}
           >
             {p}
           </button>
@@ -152,7 +173,7 @@ export default function AdminUniversities() {
 
   const { data: response, isLoading } = useListUniversities({
     search: search || undefined,
-    limit: 100,
+    limit: 1000,
   });
   const { data: majors } = useListMajors();
 
@@ -246,7 +267,9 @@ export default function AdminUniversities() {
       setForm((prev) => ({ ...prev, imageUrl: url }));
       toast.success("Image uploaded successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to upload image");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
     } finally {
       setIsUploadingImage(false);
     }
@@ -304,7 +327,9 @@ export default function AdminUniversities() {
     deleteMutation.mutate({ id: deleteTarget.id });
   };
   const paginated = useMemo(
-    () => response?.universities.slice((page - 1) * pageSize, page * pageSize) ?? [],
+    () =>
+      response?.universities.slice((page - 1) * pageSize, page * pageSize) ??
+      [],
     [response, page],
   );
 
@@ -329,8 +354,8 @@ export default function AdminUniversities() {
               />
             </div>
             <Button onClick={openCreate} className="cursor-pointer">
-              <Plus className="h-4 w-4 mr-2" />Add University
-
+              <Plus className="h-4 w-4 mr-2" />
+              Add University
             </Button>
           </div>
         </div>
@@ -376,7 +401,9 @@ export default function AdminUniversities() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">{uni.type}</Badge>
+                        <Badge variant="outline" className="capitalize">
+                          {uni.type}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {uni.city ? `${uni.city}, ` : ""}
@@ -414,7 +441,15 @@ export default function AdminUniversities() {
             </Table>
           </CardContent>
         </Card>
-        <Pagination page={page} total={response?.universities.length ?? 0} pageSize={pageSize} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+        <Pagination
+          page={page}
+          total={response?.universities.length ?? 0}
+          pageSize={pageSize}
+          onChange={(p) => {
+            setPage(p);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
 
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogContent className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden p-0">
@@ -461,7 +496,11 @@ export default function AdminUniversities() {
                   </SelectTrigger>
                   <SelectContent>
                     {UNIVERSITY_TYPES.map((type) => (
-                      <SelectItem key={type} value={type} className="capitalize">
+                      <SelectItem
+                        key={type}
+                        value={type}
+                        className="capitalize"
+                      >
                         {type}
                       </SelectItem>
                     ))}
@@ -570,7 +609,11 @@ export default function AdminUniversities() {
                 <div className="flex flex-col gap-4">
                   {form.imageUrl && (
                     <div className="relative w-full h-40 rounded-md overflow-hidden border">
-                      <img src={form.imageUrl} alt="University" className="w-full h-full object-cover" />
+                      <img
+                        src={form.imageUrl}
+                        alt="University"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">

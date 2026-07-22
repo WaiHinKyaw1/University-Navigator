@@ -10,7 +10,7 @@ export interface StudentSummary {
   id: number;
   name: string;
   /** @nullable */
-  grade: string | null;
+  // grade: string | null;
   /** @nullable */
   avatarUrl?: string | null;
 }

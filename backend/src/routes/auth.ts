@@ -5,6 +5,9 @@ import { eq } from "drizzle-orm";
 import { signToken, requireAuth, requireAdmin } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 import { imageUpload } from "../lib/uploads";
+import crypto from "crypto";
+import { sendVerificationEmail } from "../lib/mail";
+import { sendResetPasswordEmail } from "../lib/mail";
 
 const router: IRouter = Router();
 
@@ -37,6 +40,9 @@ function handleAuthDatabaseError(
 
 router.post("/auth/register", async (req, res): Promise<void> => {
   const { name, email, password } = req.body;
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+
+  const verificationTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
   if (!name || !email || !password) {
     res.status(400).json({ error: "Missing required fields" });
     return;
@@ -61,21 +67,25 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         passwordHash,
         role: "student",
         status: "active",
+        emailVerified: false,
+        verificationToken,
+        verificationTokenExpiresAt,
       })
       .returning();
+    await sendVerificationEmail(user.email, user.name, verificationToken);
 
-    const token = signToken({ userId: user.id, role: user.role });
+    // const token = signToken({ userId: user.id, role: user.role });
     res.status(201).json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        avatarUrl: user.avatarUrl,
-        createdAt: user.createdAt,
-      },
-      token,
+      // user: {
+      //   id: user.id,
+      //   name: user.name,
+      //   email: user.email,
+      //   role: user.role,
+      //   status: user.status,
+      //   avatarUrl: user.avatarUrl,
+      //   createdAt: user.createdAt,
+      // },
+      message: "Registration successful. Please check your email.",
     });
   } catch (error) {
     handleAuthDatabaseError(res, error, "register");
@@ -102,6 +112,13 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       res.status(401).json({ error: "Invalid email or password" });
+      return;
+    }
+
+    if (!user.emailVerified) {
+      res.status(403).json({
+        error: "Please verify your email first",
+      });
       return;
     }
 
@@ -273,6 +290,162 @@ router.put(
     }
   },
 );
+
+router.get("/auth/verify-email", async (req, res): Promise<void> => {
+  const token = req.query.token as string;
+
+  if (!token) {
+    res.status(400).send("Missing token");
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.verificationToken, token));
+
+  if (!user) {
+    res.status(400).send("Invalid verification link");
+    return;
+  }
+
+  if (
+    user.verificationTokenExpiresAt &&
+    user.verificationTokenExpiresAt < new Date()
+  ) {
+    res.status(400).send("Verification link expired");
+    return;
+  }
+
+  await db
+    .update(usersTable)
+    .set({
+      emailVerified: true,
+      verificationToken: null,
+      verificationTokenExpiresAt: null,
+    })
+    .where(eq(usersTable.id, user.id));
+
+  res.send(`
+      <html>
+        <body style="text-align:center">
+
+          <h2>
+            Email Verified Successfully
+          </h2>
+
+          <p>
+            You can login now.
+          </p>
+
+        </body>
+      </html>
+    `);
+});
+
+router.post("/auth/forgot-password", async (req, res): Promise<void> => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400).json({
+      error: "Email required",
+    });
+    return;
+  }
+
+  try {
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, email));
+
+    if (!user) {
+      res.json({
+        message: "If email exists, reset link has been sent",
+      });
+
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+
+    await db
+      .update(usersTable)
+      .set({
+        resetPasswordToken: token,
+
+        resetPasswordTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      })
+
+      .where(eq(usersTable.id, user.id));
+
+    await sendResetPasswordEmail(user.email, user.name, token);
+
+    res.json({
+      message: "Password reset email sent",
+    });
+  } catch (error) {
+    logger.error(error);
+
+    res.status(500).json({
+      error: "Failed to send reset email",
+    });
+  }
+});
+
+router.post("/auth/reset-password", async (req, res): Promise<void> => {
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    res.status(400).json({
+      error: "Invalid request",
+    });
+
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.resetPasswordToken, token));
+
+  if (!user) {
+    res.status(400).json({
+      error: "Invalid token",
+    });
+
+    return;
+  }
+
+  if (
+    user.resetPasswordTokenExpiresAt &&
+    user.resetPasswordTokenExpiresAt < new Date()
+  ) {
+    res.status(400).json({
+      error: "Token expired",
+    });
+
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  await db
+    .update(usersTable)
+    .set({
+      passwordHash,
+
+      resetPasswordToken: null,
+
+      resetPasswordTokenExpiresAt: null,
+    })
+
+    .where(eq(usersTable.id, user.id));
+
+  res.json({
+    message: "Password reset successfully",
+  });
+});
 
 router.post(
   "/auth/profile/image",

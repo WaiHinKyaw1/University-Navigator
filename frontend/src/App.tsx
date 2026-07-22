@@ -26,6 +26,9 @@ import AdminAudit from "@/pages/admin/audit";
 import AdminChatMonitor from "@/pages/admin/chat-monitor";
 import Profile from "@/pages/profile";
 import AdminProfile from "@/pages/admin/admin-profile";
+import VerifyEmail from "@/pages/verify-email";
+import ResetPassword from "./pages/reset-password";
+import ForgotPassword from "./pages/forgot-password";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +55,11 @@ function Router() {
       <Route path="/admin/chat-monitor" component={AdminChatMonitor} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin/profile" component={AdminProfile} />
+      <Route path="/verify-email">
+        <VerifyEmail />
+      </Route>
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -7,11 +7,22 @@ export const usersTable = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  grade: text("grade"),
   role: text("role").notNull().default("student"), // student | admin
   status: text("status").notNull().default("active"), // active | banned
   banReason: text("ban_reason"),
   avatarUrl: text("avatar_url"),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+
+  verificationToken: text("verification_token"),
+
+  verificationTokenExpiresAt: timestamp("verification_token_expires_at", {
+    withTimezone: true,
+  }),
+  resetPasswordToken: text("reset_password_token"),
+
+  resetPasswordTokenExpiresAt: timestamp("reset_password_token_expires_at", {
+    withTimezone: true,
+  }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

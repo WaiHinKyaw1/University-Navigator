@@ -240,7 +240,7 @@ export default function Universities() {
 
   const { data: response, isLoading } = useListUniversities({
     search: search || undefined,
-    limit: 100,
+    limit: 1000,
   });
   const universities: any[] = (response as any)?.universities ?? [];
 

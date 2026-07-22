@@ -6,7 +6,14 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useRegister } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { GraduationCap } from "lucide-react";
@@ -36,14 +43,16 @@ export default function Register() {
   const registerMutation = useRegister({
     mutation: {
       onSuccess: (data) => {
-        login(data.token, data.user);
-        toast.success("Account created successfully!");
-        setLocation("/");
+        // login(data.token, data.user);
+        toast.success("Registration successful! Please check your email.");
+        setLocation("/login");
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to create account. Please try again.");
-      }
-    }
+        toast.error(
+          error.message || "Failed to create account. Please try again.",
+        );
+      },
+    },
   });
 
   const onSubmit = (data: RegisterFormValues) => {
@@ -60,8 +69,12 @@ export default function Register() {
                 <GraduationCap className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-            <CardDescription>Join to start planning your university journey</CardDescription>
+            <CardTitle className="text-2xl font-bold">
+              Create an account
+            </CardTitle>
+            <CardDescription>
+              Join to start planning your university journey
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -73,7 +86,9 @@ export default function Register() {
                   {...form.register("name")}
                 />
                 {form.formState.errors.name && (
-                  <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.name.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
@@ -85,7 +100,9 @@ export default function Register() {
                   {...form.register("email")}
                 />
                 {form.formState.errors.email && (
-                  <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.email.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
@@ -96,12 +113,14 @@ export default function Register() {
                   {...form.register("password")}
                 />
                 {form.formState.errors.password && (
-                  <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
                 )}
               </div>
-              <Button 
-                type="submit" 
-                className="w-full h-11 text-base mt-4" 
+              <Button
+                type="submit"
+                className="w-full h-11 text-base mt-4"
                 disabled={registerMutation.isPending}
               >
                 {registerMutation.isPending ? "Creating account..." : "Sign up"}
@@ -111,7 +130,10 @@ export default function Register() {
           <CardFooter className="flex flex-col items-center justify-center border-t p-6 gap-2">
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary font-semibold hover:underline">
+              <Link
+                href="/login"
+                className="text-primary font-semibold hover:underline"
+              >
                 Sign in
               </Link>
             </p>

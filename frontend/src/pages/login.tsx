@@ -7,7 +7,14 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useLogin } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { GraduationCap } from "lucide-react";
@@ -57,7 +64,7 @@ export default function Login() {
         }
         toast.error(error.message || "Failed to log in. Please try again.");
       },
-    }
+    },
   });
 
   const onSubmit = (data: LoginFormValues) => {
@@ -75,7 +82,9 @@ export default function Login() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-            <CardDescription>Enter your email to sign in to your account</CardDescription>
+            <CardDescription>
+              Enter your email to sign in to your account
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -88,7 +97,9 @@ export default function Login() {
                   {...form.register("email")}
                 />
                 {form.formState.errors.email && (
-                  <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.email.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
@@ -101,12 +112,15 @@ export default function Login() {
                   {...form.register("password")}
                 />
                 {form.formState.errors.password && (
-                  <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
                 )}
               </div>
-              <Button 
-                type="submit" 
-                className="w-full h-11 text-base mt-2" 
+              <Link href="/forgot-password">Forgot password?</Link>
+              <Button
+                type="submit"
+                className="w-full h-11 text-base mt-2"
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? "Signing in..." : "Sign in"}
@@ -116,7 +130,10 @@ export default function Login() {
           <CardFooter className="flex flex-col items-center justify-center border-t p-6 gap-2">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link href="/register" className="text-primary font-semibold hover:underline">
+              <Link
+                href="/register"
+                className="text-primary font-semibold hover:underline"
+              >
                 Sign up
               </Link>
             </p>
