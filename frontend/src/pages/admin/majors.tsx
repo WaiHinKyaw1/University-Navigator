@@ -36,7 +36,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2, ChevronRight, ChevronLeft } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -94,10 +101,11 @@ function Pagination({
           )}
           <button
             onClick={() => onChange(p)}
-            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${p === page
-              ? "bg-primary text-white shadow-sm"
-              : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
-              }`}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              p === page
+                ? "bg-primary text-white shadow-sm"
+                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+            }`}
           >
             {p}
           </button>
@@ -117,15 +125,18 @@ function Pagination({
 
 export default function AdminMajors() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchMajor, setSearchMajor] = useState("");
   const [page, setPage] = useState(1);
   const [editingMajor, setEditingMajor] = useState<any | null>(null);
   const [form, setForm] = useState<MajorForm>(emptyForm);
-  const [careerPathsList, setCareerPathsList] = useState<Array<{
-    title: string;
-    description: string;
-    skills: string;
-    outlook: string;
-  }>>([]);
+  const [careerPathsList, setCareerPathsList] = useState<
+    Array<{
+      title: string;
+      description: string;
+      skills: string;
+      outlook: string;
+    }>
+  >([]);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
     name: string;
@@ -195,9 +206,11 @@ export default function AdminMajors() {
         parsed.map((p: any) => ({
           title: p.title || "",
           description: p.description || "",
-          skills: Array.isArray(p.skills) ? p.skills.join(", ") : (p.skills || ""),
+          skills: Array.isArray(p.skills)
+            ? p.skills.join(", ")
+            : p.skills || "",
           outlook: p.outlook || "",
-        }))
+        })),
       );
     } catch {
       setCareerPathsList([]);
@@ -216,9 +229,15 @@ export default function AdminMajors() {
     setCareerPathsList(careerPathsList.filter((_, i) => i !== index));
   };
 
-  const handleUpdateCareerPath = (index: number, field: string, value: string) => {
+  const handleUpdateCareerPath = (
+    index: number,
+    field: string,
+    value: string,
+  ) => {
     setCareerPathsList(
-      careerPathsList.map((cp, i) => (i === index ? { ...cp, [field]: value } : cp))
+      careerPathsList.map((cp, i) =>
+        i === index ? { ...cp, [field]: value } : cp,
+      ),
     );
   };
 
@@ -233,7 +252,10 @@ export default function AdminMajors() {
       .map((cp) => ({
         title: cp.title.trim(),
         description: cp.description.trim(),
-        skills: cp.skills.split(",").map((s) => s.trim()).filter(Boolean),
+        skills: cp.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
         outlook: cp.outlook.trim(),
       }));
 
@@ -257,9 +279,24 @@ export default function AdminMajors() {
     if (!deleteTarget) return;
     deleteMutation.mutate({ id: deleteTarget.id });
   };
+
+  const filteredMajors = useMemo(() => {
+    if (!majors) return [];
+
+    return majors.filter((major) => {
+      const keyword = searchMajor.toLowerCase();
+
+      return (
+        major.name.toLowerCase().includes(keyword) ||
+        major.nameEn.toLowerCase().includes(keyword) ||
+        major.category.toLowerCase().includes(keyword)
+      );
+    });
+  }, [majors, searchMajor]);
+
   const paginated = useMemo(
-    () => majors?.slice((page - 1) * pageSize, page * pageSize) ?? [],
-    [majors, page],
+    () => filteredMajors.slice((page - 1) * pageSize, page * pageSize),
+    [filteredMajors, page],
   );
 
   return (
@@ -272,9 +309,26 @@ export default function AdminMajors() {
               Manage academic fields of study.
             </p>
           </div>
-          <Button onClick={openCreate} className="flex items-center justify-center">
-            <Plus className="h-4 w-4 mr-2" /> Add Major
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                className="pl-9 bg-card"
+                value={searchMajor}
+                onChange={(e) => {
+                  setSearchMajor(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <Button
+              onClick={openCreate}
+              className="flex items-center justify-center"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add Major
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -298,7 +352,7 @@ export default function AdminMajors() {
                       Loading...
                     </TableCell>
                   </TableRow>
-                ) : !majors?.length ? (
+                ) : !filteredMajors?.length ? (
                   <TableRow>
                     <TableCell
                       colSpan={4}
@@ -315,7 +369,9 @@ export default function AdminMajors() {
                       </TableCell>
                       <TableCell>{major.nameEn}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="capitalize">{major.category}</Badge>
+                        <Badge variant="secondary" className="capitalize">
+                          {major.category}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -350,7 +406,7 @@ export default function AdminMajors() {
         </Card>
         <Pagination
           page={page}
-          total={majors?.length ?? 0}
+          total={filteredMajors?.length ?? 0}
           pageSize={pageSize}
           onChange={(p) => {
             setPage(p);
@@ -380,7 +436,9 @@ export default function AdminMajors() {
                   <Input
                     id="major-name-en"
                     value={form.nameEn}
-                    onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, nameEn: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -402,7 +460,9 @@ export default function AdminMajors() {
                             <span className="flex items-center gap-2">
                               <span
                                 className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
-                                style={{ backgroundColor: cat.color ?? "#6b7280" }}
+                                style={{
+                                  backgroundColor: cat.color ?? "#6b7280",
+                                }}
                               />
                               {cat.name}
                             </span>
@@ -417,10 +477,14 @@ export default function AdminMajors() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="major-duration">Duration of Study (ဘယ်နှစ်နှစ်တက်ရမလဲ)</Label>
+                  <Label htmlFor="major-duration">
+                    Duration of Study (ဘယ်နှစ်နှစ်တက်ရမလဲ)
+                  </Label>
                   <Select
                     value={form.duration}
-                    onValueChange={(value) => setForm({ ...form, duration: value })}
+                    onValueChange={(value) =>
+                      setForm({ ...form, duration: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Duration" />
@@ -450,20 +514,31 @@ export default function AdminMajors() {
 
               <div className="space-y-4 border-t pt-4 mt-2">
                 <div className="flex justify-between items-center">
-                  <Label className="font-semibold text-base">Career Paths & Opportunities</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddCareerPath}>
+                  <Label className="font-semibold text-base">
+                    Career Paths & Opportunities
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddCareerPath}
+                  >
                     <Plus className="h-4 w-4 mr-1" /> Add Career Path
                   </Button>
                 </div>
 
                 {careerPathsList.length === 0 ? (
                   <p className="text-sm text-muted-foreground italic text-center py-4 bg-muted/20 rounded-xl border border-dashed">
-                    No career paths added yet. Click "Add Career Path" to define career outlook and required skills.
+                    No career paths added yet. Click "Add Career Path" to define
+                    career outlook and required skills.
                   </p>
                 ) : (
                   <div className="space-y-4">
                     {careerPathsList.map((cp, idx) => (
-                      <div key={idx} className="p-4 border rounded-2xl bg-muted/30 space-y-3 relative border-border/80">
+                      <div
+                        key={idx}
+                        className="p-4 border rounded-2xl bg-muted/30 space-y-3 relative border-border/80"
+                      >
                         <Button
                           type="button"
                           variant="ghost"
@@ -478,24 +553,46 @@ export default function AdminMajors() {
                             <Label className="text-xs">Career Title</Label>
                             <Input
                               value={cp.title}
-                              onChange={(e) => handleUpdateCareerPath(idx, "title", e.target.value)}
+                              onChange={(e) =>
+                                handleUpdateCareerPath(
+                                  idx,
+                                  "title",
+                                  e.target.value,
+                                )
+                              }
                               placeholder="e.g. Software Engineer"
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs">Job Outlook / Opportunities</Label>
+                            <Label className="text-xs">
+                              Job Outlook / Opportunities
+                            </Label>
                             <Input
                               value={cp.outlook}
-                              onChange={(e) => handleUpdateCareerPath(idx, "outlook", e.target.value)}
+                              onChange={(e) =>
+                                handleUpdateCareerPath(
+                                  idx,
+                                  "outlook",
+                                  e.target.value,
+                                )
+                              }
                               placeholder="e.g. High Demand - ဆရာဝန်များ အမြဲလိုအပ်သည်"
                             />
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs">Skills (comma-separated)</Label>
+                          <Label className="text-xs">
+                            Skills (comma-separated)
+                          </Label>
                           <Input
                             value={cp.skills}
-                            onChange={(e) => handleUpdateCareerPath(idx, "skills", e.target.value)}
+                            onChange={(e) =>
+                              handleUpdateCareerPath(
+                                idx,
+                                "skills",
+                                e.target.value,
+                              )
+                            }
                             placeholder="e.g. Clinical diagnosis, Patient care"
                           />
                         </div>
@@ -503,7 +600,13 @@ export default function AdminMajors() {
                           <Label className="text-xs">Brief Description</Label>
                           <Textarea
                             value={cp.description}
-                            onChange={(e) => handleUpdateCareerPath(idx, "description", e.target.value)}
+                            onChange={(e) =>
+                              handleUpdateCareerPath(
+                                idx,
+                                "description",
+                                e.target.value,
+                              )
+                            }
                             placeholder="Describe what they do in this career..."
                             rows={2}
                           />
