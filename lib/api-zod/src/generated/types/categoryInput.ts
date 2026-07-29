@@ -8,7 +8,6 @@
 
 export interface CategoryInput {
   name: string;
-  nameEn: string;
   /** @nullable */
   color?: string | null;
   /** @nullable */

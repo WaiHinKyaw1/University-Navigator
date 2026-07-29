@@ -84,6 +84,7 @@ function Pagination({
     (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
   );
 
+
   return (
     <div className="flex items-center justify-center gap-1.5 pt-4">
       <button
@@ -101,11 +102,10 @@ function Pagination({
           )}
           <button
             onClick={() => onChange(p)}
-            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
-              p === page
-                ? "bg-primary text-white shadow-sm"
-                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
-            }`}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${p === page
+              ? "bg-primary text-white shadow-sm"
+              : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+              }`}
           >
             {p}
           </button>
@@ -240,6 +240,9 @@ export default function AdminMajors() {
       ),
     );
   };
+
+  const burmeseNumbers = ['၁', '၂', '၃', '၄', '၅', '၆', '၇'];
+
 
   const handleSubmit = () => {
     if (!form.name.trim() || !form.nameEn.trim() || !form.category.trim()) {
@@ -456,7 +459,7 @@ export default function AdminMajors() {
                     <SelectContent>
                       {categories && categories.length > 0 ? (
                         categories.map((cat) => (
-                          <SelectItem key={cat.nameEn} value={cat.nameEn}>
+                          <SelectItem key={cat.name} value={cat.name}>
                             <span className="flex items-center gap-2">
                               <span
                                 className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
@@ -477,25 +480,23 @@ export default function AdminMajors() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="major-duration">
-                    Duration of Study (ဘယ်နှစ်နှစ်တက်ရမလဲ)
-                  </Label>
+                  <Label htmlFor="major-duration">Duration of Study (ဘယ်နှစ်နှစ်တက်ရမလဲ)</Label>
                   <Select
                     value={form.duration}
-                    onValueChange={(value) =>
-                      setForm({ ...form, duration: value })
-                    }
+                    onValueChange={(value) => setForm({ ...form, duration: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Duration" />
+                      <SelectValue placeholder="နှစ်ရွေးချယ်ပါ" />
                     </SelectTrigger>
-
                     <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7].map((year) => (
-                        <SelectItem key={year} value={`${year} Years`}>
-                          {year} {year === 1 ? "Year" : "Years"}
-                        </SelectItem>
-                      ))}
+                      {burmeseNumbers.map((burmeseNum, index) => {
+                        const yearNumber = index + 1; // 1, 2, 3, ...
+                        return (
+                          <SelectItem key={yearNumber} value={`${burmeseNum} နှစ်`}>
+                            {burmeseNum} နှစ်
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

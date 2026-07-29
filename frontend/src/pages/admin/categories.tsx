@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AdminLayout } from "@/components/admin-layout";
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import {
@@ -28,20 +28,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit, Trash2, Tag } from "lucide-react";
+import { Plus, Edit, Trash2, Tag, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 type CategoryForm = {
   name: string;
-  nameEn: string;
   color: string;
   description: string;
 };
 
 const emptyForm: CategoryForm = {
   name: "",
-  nameEn: "",
   color: "#6366f1",
   description: "",
 };
@@ -72,6 +70,18 @@ export default function AdminCategories() {
   const queryClient = useQueryClient();
 
   const { data: categories, isLoading } = useListCategories();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredCategories = useMemo(() => {
+    if (!categories) return [];
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return categories;
+    return categories.filter(
+      (cat) =>
+        cat.name.toLowerCase().includes(query) ||
+        (cat.description && cat.description.toLowerCase().includes(query))
+    );
+  }, [categories, searchQuery]);
 
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -120,7 +130,6 @@ export default function AdminCategories() {
     setEditingCategory(cat);
     setForm({
       name: cat.name || "",
-      nameEn: cat.nameEn || "",
       color: cat.color || "#6366f1",
       description: cat.description || "",
     });
@@ -128,15 +137,12 @@ export default function AdminCategories() {
   };
 
   const handleSubmit = () => {
-    if (!form.name.trim() || !form.nameEn.trim()) {
-      toast.error("Display name and slug (nameEn) are required");
+    if (!form.name.trim()) {
+      toast.error("Display name is required");
       return;
     }
-    // Normalize slug: lowercase, no spaces
-    const slug = form.nameEn.trim().toLowerCase().replace(/\s+/g, "-");
     const data = {
       name: form.name.trim(),
-      nameEn: slug,
       color: form.color || null,
       description: form.description.trim() || null,
     };
@@ -156,7 +162,7 @@ export default function AdminCategories() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Tag className="h-7 w-7 text-primary" />
@@ -167,10 +173,21 @@ export default function AdminCategories() {
               as the dropdown options when creating or editing a major.
             </p>
           </div>
-          <Button onClick={openCreate} className="shrink-0">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Category
-          </Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search categories..."
+                className="pl-9 h-10 bg-white rounded-xl border-gray-200 shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button onClick={openCreate} className="shrink-0 rounded-xl h-10">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Category
+            </Button>
+          </div>
         </div>
 
         {/* Table */}
@@ -180,7 +197,6 @@ export default function AdminCategories() {
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Display Name</TableHead>
-                  <TableHead>Slug (nameEn)</TableHead>
                   <TableHead>Color</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -190,23 +206,25 @@ export default function AdminCategories() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={4}
                       className="text-center py-10 text-muted-foreground"
                     >
                       Loading…
                     </TableCell>
                   </TableRow>
-                ) : !categories?.length ? (
+                ) : !filteredCategories?.length ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={4}
                       className="text-center py-10 text-muted-foreground"
                     >
-                      No categories yet. Click "Add Category" to create one.
+                      {categories && categories.length > 0
+                        ? "No matching categories found."
+                        : "No categories yet. Click \"Add Category\" to create one."}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  categories.map((cat) => (
+                  filteredCategories.map((cat) => (
                     <TableRow key={cat.id}>
                       <TableCell className="font-semibold">
                         <div className="flex items-center gap-2">
@@ -216,11 +234,6 @@ export default function AdminCategories() {
                           />
                           {cat.name}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {cat.nameEn}
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -288,25 +301,7 @@ export default function AdminCategories() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="cat-name-en">
-                  Slug{" "}
-                  <span className="text-muted-foreground text-xs">
-                    (unique lowercase identifier, e.g. engineering)
-                  </span>
-                </Label>
-                <Input
-                  id="cat-name-en"
-                  placeholder="e.g. engineering"
-                  value={form.nameEn}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      nameEn: e.target.value.toLowerCase().replace(/\s+/g, "-"),
-                    })
-                  }
-                />
-              </div>
+
               <div className="grid gap-2">
                 <Label>Badge Color</Label>
                 <div className="flex flex-wrap gap-2">
@@ -405,7 +400,7 @@ export default function AdminCategories() {
           title="Delete Category"
           description={
             deleteTarget
-              ? `Are you sure you want to delete "${deleteTarget.name}"? Existing majors using this category will still reference the old slug, but the category won't appear in new dropdowns.`
+              ? `Are you sure you want to delete "${deleteTarget.name}"?`
               : ""
           }
           onConfirm={confirmDelete}

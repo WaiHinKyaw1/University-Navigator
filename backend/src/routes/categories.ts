@@ -14,15 +14,15 @@ router.get("/categories", async (_req, res): Promise<void> => {
 });
 
 router.post("/categories", requireAdmin, async (req, res): Promise<void> => {
-  const { name, nameEn, color, description } = req.body;
-  if (!name || !nameEn) {
-    res.status(400).json({ error: "name and nameEn are required" });
+  const { name, color, description } = req.body;
+  if (!name) {
+    res.status(400).json({ error: "name is required" });
     return;
   }
 
   const [category] = await db
     .insert(categoriesTable)
-    .values({ name, nameEn, color, description })
+    .values({ name, color, description })
     .returning();
   res.status(201).json(category);
 });
@@ -35,10 +35,10 @@ router.put("/categories/:id", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
 
-  const { name, nameEn, color, description } = req.body;
+  const { name, color, description } = req.body;
   const [updated] = await db
     .update(categoriesTable)
-    .set({ name, nameEn, color, description })
+    .set({ name, color, description })
     .where(eq(categoriesTable.id, id))
     .returning();
 

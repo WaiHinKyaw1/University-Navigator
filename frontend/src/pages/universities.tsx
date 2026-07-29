@@ -284,7 +284,7 @@ export default function Universities() {
               တက္ကသိုလ်များ
             </h1>
             <p className="text-gray-500 text-sm">
-              မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({universities.length}) —{" "}
+              မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({filtered.length}) —{" "}
               {ACADEMIC_YEAR}
             </p>
           </div>
@@ -335,10 +335,11 @@ export default function Universities() {
           {/* Category filter chips */}
           <div className="flex gap-2 flex-wrap justify-center">
             {CATEGORIES.map((cat) => {
-              const count =
-                cat.value === "all"
-                  ? universities.length
-                  : universities.filter((u) => u.type === cat.value).length;
+              const count = universities.filter((u) => {
+                const matchesCategory = cat.value === "all" || u.type === cat.value;
+                const matchesState = activeState === "all" || u.state === activeState;
+                return matchesCategory && matchesState;
+              }).length;
               return (
                 <button
                   key={cat.value}
