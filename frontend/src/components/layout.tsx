@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GraduationCap, LogOut, Menu, X, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import { useLogout } from "@workspace/api-client-react";
+import { useScoreStore } from "@/store/score-store";
 
 export function Layout({
   children,
@@ -15,10 +16,12 @@ export function Layout({
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { reset } = useScoreStore();
 
   const logoutMutation = useLogout({
     mutation: {
       onSuccess: () => {
+        useScoreStore.getState().reset();
         logout();
         setLocation("/");
       },
