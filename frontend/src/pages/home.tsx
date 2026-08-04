@@ -54,7 +54,7 @@ export default function Home() {
                   asChild
                 >
                   <Link href="/score">
-                    Calculate Score <Calculator className="ml-2 h-5 w-5" />
+                    Score Calculator <Calculator className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button
