@@ -24,7 +24,7 @@ export interface RegisterInput {
   /** @minLength 6 */
   password: string;
   /** G-10, G-11, G-12 */
-  // grade: string;
+  grade: string;
 }
 
 export interface LoginInput {
@@ -39,7 +39,7 @@ export interface User {
   /** student | admin */
   role: string;
   /** @nullable */
-  // grade?: string | null;
+  grade?: string | null;
   /** active | banned */
   status: string;
   /** @nullable */
@@ -134,12 +134,10 @@ export interface Category {
   id: number;
   /** Display name, e.g. Engineering */
   name: string;
-  /** Slug used as value in majors.category, e.g. engineering */
-  nameEn: string;
   /**
-   * Optional badge color hex, e.g. \"#3b82f6\"
-   * @nullable
-   */
+     * Optional badge color hex, e.g. \"#3b82f6\"
+     * @nullable
+     */
   color?: string | null;
   /** @nullable */
   description?: string | null;
@@ -147,7 +145,6 @@ export interface Category {
 
 export interface CategoryInput {
   name: string;
-  nameEn: string;
   /** @nullable */
   color?: string | null;
   /** @nullable */
@@ -187,18 +184,18 @@ export interface ScoreMatch {
   matchScore: number;
   eligible: boolean;
   /**
-   * Score gap if not eligible (positive means eligible, negative means gap)
-   * @nullable
-   */
+     * Score gap if not eligible (positive means eligible, negative means gap)
+     * @nullable
+     */
   gap?: number | null;
 }
 
-export type ChatbotHistoryMessageRole =
-  (typeof ChatbotHistoryMessageRole)[keyof typeof ChatbotHistoryMessageRole];
+export type ChatbotHistoryMessageRole = typeof ChatbotHistoryMessageRole[keyof typeof ChatbotHistoryMessageRole];
+
 
 export const ChatbotHistoryMessageRole = {
-  user: "user",
-  assistant: "assistant",
+  user: 'user',
+  assistant: 'assistant',
 } as const;
 
 export interface ChatbotHistoryMessage {
@@ -223,7 +220,7 @@ export interface StudentSummary {
   id: number;
   name: string;
   /** @nullable */
-  // grade: string | null;
+  grade: string | null;
   /** @nullable */
   avatarUrl?: string | null;
 }
@@ -392,31 +389,32 @@ export interface TrendPoint {
 }
 
 export type ListUniversitiesParams = {
-  search?: string;
-  type?: string;
-  state?: string;
-  majorId?: number;
-  page?: number;
-  limit?: number;
+search?: string;
+type?: string;
+state?: string;
+majorId?: number;
+page?: number;
+limit?: number;
 };
 
 export type ListNewsParams = {
-  page?: number;
-  limit?: number;
+page?: number;
+limit?: number;
 };
 
 export type ListUsersParams = {
-  search?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
+search?: string;
+status?: string;
+page?: number;
+limit?: number;
 };
 
 export type ListAuditLogsParams = {
-  page?: number;
-  limit?: number;
+page?: number;
+limit?: number;
 };
 
 export type ListStudentsParams = {
-  search?: string;
+search?: string;
 };
+

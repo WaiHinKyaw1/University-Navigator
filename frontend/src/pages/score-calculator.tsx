@@ -127,9 +127,10 @@ function ScoreInput({
 }) {
   const num = Math.min(100, Math.max(0, Number(value) || 0));
   const pct = num;
+  const isFailed = value !== "" && Number(value) < 40;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+    <div className={`bg-white rounded-2xl border ${isFailed ? "border-red-300 shadow-red-100" : "border-gray-100"} shadow-sm p-4 flex flex-col gap-2.5 transition-colors`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="font-bold text-gray-800 text-sm leading-tight">
@@ -137,22 +138,25 @@ function ScoreInput({
           </p>
           <p className="text-[11px] text-gray-400 mt-0.5">{subject.labelEn}</p>
         </div>
-        <input
-          type="number"
-          min={0}
-          max={100}
-          value={value}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === "" || (Number(v) >= 0 && Number(v) <= 100)) onChange(v);
-          }}
-          placeholder="—"
-          className="w-14 h-11 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-center text-xl font-black text-gray-900 bg-gray-50 transition-colors"
-        />
+        <div className="flex flex-col items-end">
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={value}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "" || (Number(v) >= 0 && Number(v) <= 100)) onChange(v);
+            }}
+            placeholder="—"
+            className={`w-14 h-11 rounded-xl border-2 ${isFailed ? "border-red-300 focus:border-red-500 bg-red-50 text-red-700" : "border-gray-200 focus:border-primary bg-gray-50 text-gray-900"} focus:outline-none text-center text-xl font-black transition-colors`}
+          />
+          {isFailed && <p className="text-[10px] text-red-500 font-bold mt-1">ကျရှုံး</p>}
+        </div>
       </div>
       <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-300 ${subject.color}`}
+          className={`h-full rounded-full transition-all duration-300 ${isFailed ? "bg-red-400" : subject.color}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -189,9 +193,9 @@ function TotalScoreSlider({
           : value < 470
             ? { text: "အလွန်ကောင်းသည်", color: "text-emerald-600" }
             : {
-                text: "🏆 ဆေးကျောင်း ဝင်ခွင့်ရနိုင်",
-                color: "text-emerald-700 font-bold",
-              };
+              text: "🏆 ဆေးကျောင်း ဝင်ခွင့်ရနိုင်",
+              color: "text-emerald-700 font-bold",
+            };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
@@ -291,11 +295,10 @@ function ResultCard({
 
   return (
     <div
-      className={`rounded-2xl border overflow-hidden transition-all hover:shadow-md ${
-        eligible
-          ? "border-primary/30 bg-white shadow-sm"
-          : "border-gray-200 bg-gray-50/60"
-      }`}
+      className={`rounded-2xl border overflow-hidden transition-all hover:shadow-md ${eligible
+        ? "border-primary/30 bg-white shadow-sm"
+        : "border-gray-200 bg-gray-50/60"
+        }`}
     >
       <div
         className={`h-1 w-full ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-gray-200"}`}
@@ -368,11 +371,10 @@ function ResultCard({
             )}
             <Link href={`/universities/${uni.id}`}>
               <span
-                className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer transition-colors ${
-                  eligible
-                    ? "text-primary bg-primary/10 hover:bg-primary/20"
-                    : "text-gray-500 bg-gray-100 hover:bg-gray-200"
-                }`}
+                className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer transition-colors ${eligible
+                  ? "text-primary bg-primary/10 hover:bg-primary/20"
+                  : "text-gray-500 bg-gray-100 hover:bg-gray-200"
+                  }`}
               >
                 အသေးစိတ် <ChevronRight className="h-3 w-3" />
               </span>
@@ -438,6 +440,13 @@ export default function ScoreCalculator() {
     () => subjects.reduce((sum, s) => sum + (Number(scores[s.id]) || 0), 0),
     [scores, subjects],
   );
+
+  const isFailedExam = useMemo(() => {
+    return subjects.some(s => {
+      const val = scores[s.id];
+      return val !== "" && val !== undefined && Number(val) < 40;
+    });
+  }, [scores, subjects]);
 
   const maxPossible = subjects.length * 100;
   const subjectPct =
@@ -513,7 +522,7 @@ export default function ScoreCalculator() {
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50/50">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
           {/* Header */}
           <div className="text-center space-y-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -532,22 +541,20 @@ export default function ScoreCalculator() {
                 setHasSearched(false);
                 calculateMutation.reset();
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
-                inputMode === "subjects"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-gray-500 hover:bg-gray-50"
-              }`}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${inputMode === "subjects"
+                ? "bg-primary text-white shadow-sm"
+                : "text-gray-500 hover:bg-gray-50"
+                }`}
             >
               <PenLine className="h-4 w-4" />
               ဘာသာရပ်တိုင်း ထည့်မည်
             </button>
             <button
               onClick={() => setInputMode("slider")}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
-                inputMode === "slider"
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-gray-500 hover:bg-gray-50"
-              }`}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${inputMode === "slider"
+                ? "bg-primary text-white shadow-sm"
+                : "text-gray-500 hover:bg-gray-50"
+                }`}
             >
               <SlidersHorizontal className="h-4 w-4" />
               စုစုပေါင်းဖြင့် ရှာမည်
@@ -561,21 +568,19 @@ export default function ScoreCalculator() {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
                 <button
                   onClick={() => handleStreamChange("science")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${
-                    stream === "science"
-                      ? "bg-primary/10 text-primary"
-                      : "text-gray-500 hover:bg-gray-50"
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${stream === "science"
+                    ? "bg-primary/10 text-primary"
+                    : "text-gray-500 hover:bg-gray-50"
+                    }`}
                 >
                   <FlaskConical className="h-4 w-4" /> သိပ္ပံ (Science)
                 </button>
                 <button
                   onClick={() => handleStreamChange("arts")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${
-                    stream === "arts"
-                      ? "bg-primary/10 text-primary"
-                      : "text-gray-500 hover:bg-gray-50"
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${stream === "arts"
+                    ? "bg-primary/10 text-primary"
+                    : "text-gray-500 hover:bg-gray-50"
+                    }`}
                 >
                   <BookOpen className="h-4 w-4" /> ဝိဇ္ဇာ (Arts)
                 </button>
@@ -587,21 +592,19 @@ export default function ScoreCalculator() {
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
                     <button
                       onClick={() => handleScienceSixthChange("biology")}
-                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${
-                        scienceSixth === "biology"
-                          ? "bg-teal-50 text-teal-700 border border-teal-200"
-                          : "text-gray-500 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${scienceSixth === "biology"
+                        ? "bg-teal-50 text-teal-700 border border-teal-200"
+                        : "text-gray-500 hover:bg-gray-50"
+                        }`}
                     >
                       ဇီဝဗေဒ (Biology)
                     </button>
                     <button
                       onClick={() => handleScienceSixthChange("economics")}
-                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${
-                        scienceSixth === "economics"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "text-gray-500 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${scienceSixth === "economics"
+                        ? "bg-rose-50 text-rose-700 border border-rose-200"
+                        : "text-gray-500 hover:bg-gray-50"
+                        }`}
                     >
                       ဘောဂ (Economics)
                     </button>
@@ -659,7 +662,9 @@ export default function ScoreCalculator() {
                   />
                 </div>
                 <p className="text-center text-sm font-medium text-gray-500">
-                  {subjectTotal < 350
+                  {isFailedExam
+                    ? <span className="text-red-500 font-bold">❌ ဘာသာရပ်တစ်ခုခု ၄၀ အောက်ရရှိပါက တက္ကသိုလ်ဝင်ခွင့် မရနိုင်ပါ</span>
+                    : subjectTotal < 350
                     ? "🔴 ဝင်ခွင့်ရမှတ် မရောက်သေး"
                     : subjectTotal < 400
                       ? "🟡 ကောင်းသည်"
@@ -672,7 +677,7 @@ export default function ScoreCalculator() {
               {/* Search button */}
               <button
                 onClick={handleSubjectSearch}
-                disabled={subjectTotal === 0 || calculateMutation.isPending}
+                disabled={subjectTotal === 0 || isFailedExam || calculateMutation.isPending}
                 className="w-full py-4 rounded-2xl bg-primary text-white font-bold text-base shadow-md hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {calculateMutation.isPending ? (
@@ -705,8 +710,16 @@ export default function ScoreCalculator() {
               )}
 
               {/* Subject mode results */}
-              {subjectResults && !calculateMutation.isPending && (
-                <div className="space-y-6">
+              {isFailedExam ? (
+                <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-center space-y-3 mt-4">
+                  <XCircle className="mx-auto h-12 w-12 text-red-500" />
+                  <h3 className="text-lg font-bold text-red-700">တက္ကသိုလ်တက်ရောက်ရန် မအောင်မြင်ပါ</h3>
+                  <p className="text-sm text-red-600">
+                    ဘာသာရပ်တိုင်းတွင် အနည်းဆုံး ရမှတ် (၄၀) ရရှိရန် လိုအပ်ပါသည်။
+                  </p>
+                </div>
+              ) : subjectResults && !calculateMutation.isPending && (
+                <div className="space-y-6 mt-4">
                   <div className="flex items-center justify-between">
                     <h2 className="font-bold text-gray-900 text-lg">
                       ရလဒ်များ

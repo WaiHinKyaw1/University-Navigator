@@ -35,13 +35,12 @@ function formatGuide(
     isActive: guide.isActive,
     uploadedById: guide.uploadedById,
     uploadedByName: uploadedByName || "Admin",
-    downloadUrl: guide.isActive
-      ? "/api/admission-guide/download"
-      : `/api/admin/admission-guides/${guide.id}/download`,
+    downloadUrl: `/api/admission-guides/${guide.id}/download`,
     createdAt: guide.createdAt,
     updatedAt: guide.updatedAt,
   };
 }
+
 
 function sendGuideFile(
   res: import("express").Response,
@@ -82,6 +81,21 @@ router.get("/admission-guide", async (_req, res): Promise<void> => {
   res.json(formatGuide(guide, uploader?.name));
 });
 
+router.get("/admission-guides", async (_req, res): Promise<void> => {
+  const guides = await db
+    .select({
+      guide: admissionGuidesTable,
+      uploadedByName: usersTable.name,
+    })
+    .from(admissionGuidesTable)
+    .leftJoin(usersTable, eq(admissionGuidesTable.uploadedById, usersTable.id))
+    .orderBy(desc(admissionGuidesTable.createdAt));
+
+  res.json({
+    guides: guides.map((row) => formatGuide(row.guide, row.uploadedByName)),
+  });
+});
+
 router.get("/admission-guide/download", async (_req, res): Promise<void> => {
   const [guide] = await db
     .select()
@@ -92,6 +106,28 @@ router.get("/admission-guide/download", async (_req, res): Promise<void> => {
 
   if (!guide) {
     res.status(404).json({ error: "No admission guide available" });
+    return;
+  }
+
+  sendGuideFile(res, guide);
+});
+
+// Public: download any guide by ID
+router.get("/admission-guides/:id/download", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  const [guide] = await db
+    .select()
+    .from(admissionGuidesTable)
+    .where(eq(admissionGuidesTable.id, id));
+
+  if (!guide) {
+    res.status(404).json({ error: "Admission guide not found" });
     return;
   }
 

@@ -53,6 +53,12 @@ export function Layout({
         News
       </Link>
       <Link
+        href="/admission-guide"
+        className={`text-sm font-medium transition-colors hover:text-primary ${location === "/admission-guide" ? "text-primary" : "text-muted-foreground"}`}
+      >
+        Admission Guide
+      </Link>
+      <Link
         href="/chatbot"
         className={`text-sm font-medium transition-colors hover:text-primary ${location === "/chatbot" ? "text-primary" : "text-muted-foreground"}`}
       >
@@ -250,6 +256,12 @@ export function Layout({
                 className="hover:text-foreground transition-colors"
               >
                 AI Guide
+              </Link>
+              <Link
+                href="/admission-guide"
+                className="hover:text-foreground transition-colors"
+              >
+                Admission Guide
               </Link>
             </div>
           </div>

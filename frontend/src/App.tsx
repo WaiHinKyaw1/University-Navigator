@@ -14,6 +14,7 @@ import ScoreCalculator from "@/pages/score-calculator";
 import Chatbot from "@/pages/chatbot";
 import Chat from "@/pages/chat";
 import News from "@/pages/news";
+import AdmissionGuide from "@/pages/admission-guide";
 
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/universities/:id" component={UniversityDetail} />
       <Route path="/score" component={ScoreCalculator} />
       <Route path="/news" component={News} />
+      <Route path="/admission-guide" component={AdmissionGuide} />
       <Route path="/chatbot" component={Chatbot} />
       <Route path="/chat" component={Chat} />
       <Route path="/admin" component={AdminDashboard} />

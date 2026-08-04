@@ -40,6 +40,9 @@ const CATEGORIES = [
   { value: "technical", label: "နည်းပညာ/ကွန်ပျူတာ", emoji: "⚙️" },
   { value: "government", label: "ဝိဇ္ဇာ/သိပ္ပံ", emoji: "📚" },
   { value: "education", label: "ပညာရေး", emoji: "🎓" },
+  { value: "business", label: "စီးပွားရေး", emoji: "💼" },
+  { value: "law", label: "ဥပဒေ", emoji: "⚖️" },
+  { value: "distance", label: "အဝေးသင်", emoji: "📡" },
 ];
 
 const TYPE_LABEL: Record<string, string> = {
@@ -47,6 +50,9 @@ const TYPE_LABEL: Record<string, string> = {
   technical: "နည်းပညာ",
   government: "ဝိဇ္ဇာ/သိပ္ပံ",
   education: "ပညာရေး",
+  business: "စီးပွားရေး",
+  law: "ဥပဒေ",
+  distance: "အဝေးသင်",
 };
 
 const TYPE_STRIP: Record<string, string> = {
@@ -54,6 +60,9 @@ const TYPE_STRIP: Record<string, string> = {
   technical: "bg-gradient-to-r from-blue-400 to-indigo-500",
   education: "bg-gradient-to-r from-amber-400 to-orange-400",
   government: "bg-gradient-to-r from-violet-400 to-purple-500",
+  business: "bg-gradient-to-r from-emerald-400 to-teal-500",
+  law: "bg-gradient-to-r from-slate-400 to-gray-500",
+  distance: "bg-gradient-to-r from-cyan-400 to-blue-500",
 };
 
 const TYPE_BADGE: Record<string, string> = {
@@ -61,6 +70,9 @@ const TYPE_BADGE: Record<string, string> = {
   technical: "bg-blue-50 text-blue-700 border-blue-200",
   government: "bg-violet-50 text-violet-700 border-violet-200",
   education: "bg-amber-50 text-amber-700 border-amber-200",
+  business: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  law: "bg-slate-50 text-slate-700 border-slate-200",
+  distance: "bg-cyan-50 text-cyan-700 border-cyan-200",
 };
 
 const SCORE_COLOR = (s: number) =>
@@ -238,11 +250,12 @@ export default function Universities() {
   const [activeState, setActiveState] = useState("all");
   const [page, setPage] = useState(1);
 
-  const { data: response, isLoading } = useListUniversities({
+  const { data: response, isLoading, isError } = useListUniversities({
     search: search || undefined,
     limit: 1000,
   });
   const universities: any[] = (response as any)?.universities ?? [];
+
 
   const filtered = useMemo(() => {
     let base =
@@ -392,7 +405,16 @@ export default function Universities() {
                 </Card>
               ))}
             </div>
+          ) : isError ? (
+            <div className="text-center py-20 bg-white rounded-2xl border border-red-100">
+              <Building2 className="mx-auto h-12 w-12 text-red-200 mb-3" />
+              <p className="text-gray-700 font-semibold">Data ရယူ၍ မရပါ</p>
+              <p className="text-gray-400 text-sm mt-1">
+                ကွန်ယက်ချိတ်ဆက်မှု စစ်ပြီး ပြန်လည် ကြိုးစားပါ
+              </p>
+            </div>
           ) : paginated.length === 0 ? (
+
             <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
               <Building2 className="mx-auto h-12 w-12 text-gray-200 mb-3" />
               <p className="text-gray-600 font-medium">တက္ကသိုလ် မတွေ့ပါ</p>

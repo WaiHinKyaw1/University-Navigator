@@ -1164,16 +1164,13 @@ components:
     # ── CATEGORY ──────────────────────────────────────────
     Category:
       type: object
-      required: [id, name, nameEn]
+      required: [id, name]
       properties:
         id:
           type: integer
         name:
           type: string
           description: Display name, e.g. Engineering
-        nameEn:
-          type: string
-          description: Slug used as value in majors.category, e.g. engineering
         color:
           type: ["string", "null"]
           description: Optional badge color hex, e.g. \"#3b82f6\"
@@ -1182,11 +1179,9 @@ components:
 
     CategoryInput:
       type: object
-      required: [name, nameEn]
+      required: [name]
       properties:
         name:
-          type: string
-        nameEn:
           type: string
         color:
           type: ["string", "null"]
