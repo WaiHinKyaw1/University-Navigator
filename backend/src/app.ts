@@ -47,8 +47,8 @@ app.use("/api", router);
 const frontendDist = path.join(process.cwd(), "..", "frontend", "dist", "public");
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
-  // SPA fallback - return index.html for all non-API routes
-  app.get("*", (_req, res) => {
+  // SPA fallback - return index.html for all non-API routes (Express 5 compatible)
+  app.get(/(.*)/, (_req, res) => {
     const indexPath = path.join(frontendDist, "index.html");
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
