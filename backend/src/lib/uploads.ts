@@ -1,10 +1,24 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import multer from "multer";
 
-// Use process.cwd() which always points to the backend/ directory when running `npm run dev`
-const apiServerRoot = process.cwd();
+// Anchor to the directory of the compiled file (backend/dist/) so this works
+// regardless of the working directory the server process is started from.
+// In dev (ts-node/tsx), import.meta.url points to backend/src/lib/uploads.ts → go up 3 levels.
+// In production (esbuild bundle), __dirname is injected by esbuild's banner → go up 1 level.
+const _thisFile =
+  typeof __dirname !== "undefined"
+    ? __dirname // esbuild production bundle: backend/dist/
+    : path.dirname(fileURLToPath(import.meta.url)); // dev: backend/src/lib/
+
+// From backend/dist/ go up 1 level → backend/
+// From backend/src/lib/ go up 3 levels → backend/
+const apiServerRoot =
+  typeof __dirname !== "undefined"
+    ? path.resolve(_thisFile, "..")
+    : path.resolve(_thisFile, "..", "..", "..");
 
 export const ADMISSION_GUIDE_UPLOAD_DIR = path.join(
   apiServerRoot,
@@ -17,6 +31,8 @@ export const IMAGE_UPLOAD_DIR = path.join(
   "uploads",
   "images",
 );
+
+export { apiServerRoot };
 
 export function ensureUploadDirs(): void {
   fs.mkdirSync(ADMISSION_GUIDE_UPLOAD_DIR, { recursive: true });
