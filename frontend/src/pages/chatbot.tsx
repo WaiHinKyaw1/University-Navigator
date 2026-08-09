@@ -15,20 +15,20 @@ type LocalMessage = {
 const TOPIC_CHIPS = [
   { label: "🤔 တက္ကသိုလ်မသိသေးဘူး", msg: "တက္ကသိုလ်အကြောင်း သိပ်မသိသေးဘူး။ ဘယ်ကျောင်းတွေ ရှိလဲ ရှင်းပြပေးပါ" },
   { label: "🏥 ဆေးတက္ကသိုလ်", msg: "ဆေးတက္ကသိုလ် ဝင်ချင်တယ်။ ဘယ်ကျောင်းတွေ တက်လို့ရသလဲ၊ ဘယ်လောက်ရမှတ် လိုသလဲ ပြောပြပါ" },
-  { label: "💻 ကွန်ပျူတာ/IT", msg: "ကွန်ပျူတာ သိပ္ပံ သို့ IT ဘာသာတက်ချင်တယ်။ UCSY နဲ့ ကွန်ပျူတာကျောင်းတွေ အကြောင်း ပြောပြပါ" },
-  { label: "⚙️ အင်ဂျင်နီယာ", msg: "အင်ဂျင်နီယာ ဘာသာ တက်ချင်တယ်။ YTU, MTU နဲ့ နည်းပညာကျောင်းများ ဆိုင်ရာ ပြောပြပါ" },
+  { label: "💻 ကွန်ပျူတာ/IT", msg: "ကွန်ပျူတာ သိပ္ပံ သို့ IT ဘာသာတက်ချင်တယ်။ ကွန်ပျူတာကျောင်းတွေ အကြောင်း ပြောပြပါ" },
+  { label: "⚙️ အင်ဂျင်နီယာ", msg: "အင်ဂျင်နီယာ ဘာသာ တက်ချင်တယ်။ နည်းပညာကျောင်းများ အကြောင်း ပြောပြပါ" },
   { label: "📊 စီးပွားရေး/ငွေကြေး", msg: "စီးပွားရေး သို့ Finance ဘာသာ တက်ချင်တယ်။ ဘယ်ကျောင်းတွေ ဝင်လို့ရသလဲ ပြောပြပါ" },
-  { label: "⚖️ ဥပဒေ", msg: "ဥပဒေ ဘာသာ တက်ချင်တယ်။ ULY, ULM နဲ့ ဥပဒေကျောင်းများ အကြောင်း ပြောပြပါ" },
+  { label: "⚖️ ဥပဒေ", msg: "ဥပဒေ ဘာသာ တက်ချင်တယ်။ ဥပဒေကျောင်းများ အကြောင်း ပြောပြပါ" },
   { label: "🎓 ပညာရေး/ဆရာ", msg: "ဆရာ/ဆရာမ ဖြစ်ချင်တယ်။ ပညာရေးတက္ကသိုလ် ဝင်ခွင့်နဲ့ career path ပြောပြပါ" },
   { label: "📚 ဝိဇ္ဇာ/သိပ္ပံ", msg: "ဝိဇ္ဇာ ဒါမှမဟုတ် သိပ္ပံ ဘာသာ တက်ချင်တယ်။ ရန်ကုန်၊ မန္တလေးတက္ကသိုလ် အကြောင်း ပြောပြပါ" },
-  { label: "🌍 နိုင်ငံခြားဘာသာ", msg: "နိုင်ငံခြားဘာသာ (Japanese/Chinese/Korean) ဘာသာ တက်ချင်တယ်။ YUFL နဲ့ ဘာသာကျောင်းများ ပြောပြပါ" },
+  { label: "🌍 နိုင်ငံခြားဘာသာ", msg: "နိုင်ငံခြားဘာသာ (Japanese/Chinese/Korean) ဘာသာ တက်ချင်တယ်။ ဘာသာကျောင်းများ ပြောပြပါ" },
 ];
 
 const WELCOME_MESSAGE: LocalMessage = {
   id: 0,
   role: "assistant",
   content:
-    "မင်္ဂလာပါ! ကျွန်တော်က G-12 ကျောင်းသားများကို မြန်မာနိုင်ငံတက္ကသိုလ်များ၊ မေဂျာ၊ career path များအကြောင်း ကူညီသော AI လမ်းညွှန်ဖြစ်ပါသည်။\n\nတက္ကသိုလ်ဝင်ခွင့်၊ မေဂျာရွေးချယ်မှု၊ အလုပ်အကိုင်အခွင့်အလမ်းများသာ မေးမြန်းနိုင်ပါသည်။",
+    "မင်္ဂလာပါ! ကျွန်တော်က G-12 ကျောင်းသားများကို မြန်မာနိုင်ငံတက္ကသိုလ်များ၊ မေဂျာ၊ career path များအကြောင်း ကူညီသော Chatbot ဖြစ်ပါသည်။\n\nတက္ကသိုလ်ဝင်ခွင့်၊ မေဂျာရွေးချယ်မှု၊ အလုပ်အကိုင်အခွင့်အလမ်းများသာ မေးမြန်းနိုင်ပါသည်။",
   createdAt: new Date().toISOString(),
 };
 
@@ -132,7 +132,7 @@ export default function Chatbot() {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">AI တက္ကသိုလ် လမ်းညွှန်</p>
+              <p className="font-bold text-gray-900 text-sm leading-tight">တက္ကသိုလ် လမ်းညွှန်</p>
               <p className="text-[11px] text-gray-400">တက္ကသိုလ် · မေဂျာ · Career Guide</p>
             </div>
           </div>
@@ -149,9 +149,8 @@ export default function Chatbot() {
           {messages.map((msg, idx) => (
             <div key={msg.id || idx} className={`flex items-end gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
               <div
-                className={`shrink-0 h-7 w-7 rounded-full flex items-center justify-center mb-0.5 ${
-                  msg.role === "user" ? "bg-primary" : "bg-white border border-gray-200"
-                }`}
+                className={`shrink-0 h-7 w-7 rounded-full flex items-center justify-center mb-0.5 ${msg.role === "user" ? "bg-primary" : "bg-white border border-gray-200"
+                  }`}
               >
                 {msg.role === "user" ? (
                   <UserIcon className="h-3.5 w-3.5 text-white" />
@@ -161,11 +160,10 @@ export default function Chatbot() {
               </div>
 
               <div
-                className={`max-w-[78%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl ${
-                  msg.role === "user"
-                    ? "bg-primary text-white rounded-br-sm"
-                    : "bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-100"
-                }`}
+                className={`max-w-[78%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl ${msg.role === "user"
+                  ? "bg-primary text-white rounded-br-sm"
+                  : "bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-100"
+                  }`}
               >
                 {msg.role === "assistant" ? (
                   <MsgContent text={msg.content} />

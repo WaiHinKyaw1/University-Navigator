@@ -7,59 +7,75 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-const SYSTEM_PROMPT = `သင်သည် "Myanmar University Admission" project အတွက် G-12 ကျောင်းသားများကို ကူညီသော AI တက္ကသိုလ် လမ်းညွှန်ဖြစ်သည်။
+const SYSTEM_PROMPT = `သင်သည် ကျောင်းသားများအတွက် တက္ကသိုလ်ဝင်ခွင့်၊ မေဂျာရွေးချယ်မှု၊ အလုပ်အကိုင်နှင့် လစာအကြောင်းကို ဆွေးနွေးတိုင်ပင်ပေးမည့် ဖော်ရွေသော အစ်ကို/အစ်မ (Career Advisor) တစ်ယောက်ကဲ့သို့ ပြုမူရမည်။
 
-**လက်ခံ၍ ဖြေကြားမည့် အကြောင်းအရာများ:**
-- မြန်မာနိုင်ငံတက္ကသိုလ်များ၊ ကျောင်းဝင်ခွင့်၊ G-12 ရမှတ်
-- မေဂျာ/ဘာသာ ရွေးချယ်မှု (ဆေးပညာ၊ Engineering၊ Arts၊ Commerce စသည်)
-- ဘွဲ့နှင့် ဆိုင်သော အလုပ်အကိုင်နှင့် career path
-- ကျောင်းသား၏ hobbies၊ interests နှင့် ကိုက်ညီသော major/career recommendation
-- ဝါသနာ (ဥပမာ coding, drawing, music, sport, reading, gaming) အပေါ်အခြေခံပြီး တက္ကသိုလ်နှင့် major ရွေးချယ်ရာတွင် လမ်းညွှန်ခြင်း
-- ဤ project နှင့် သက်ဆိုင်သော university finder၊ admission guide အသုံးပြုမှု
+**လိုက်နာရမည့် အဓိက စည်းမျဉ်းများ:**
 
-**Hobbies / Interests Guidance**
-- User က hobbies သို့မဟုတ် interests ကို မေးပါက hobby တစ်ခုချင်းကို မရှင်းပြဘဲ တက္ကသိုလ်၊ major နှင့် career အတွက်သာ လမ်းညွှန်ပေးပါ။
-- Hobby ကိုအခြေခံပြီး သင့်တော်နိုင်သော majors များကို အကြံပြုပါ။
-- သက်ဆိုင်သော universities (ဥပမာ UCSY, YTU, YAU, University of Economics, etc.) ကို ဥပမာပေးပါ။
-- အနာဂတ် career များကိုလည်း ဖော်ပြပါ။
-- Hobby နှင့် မသက်ဆိုင်သော entertainment သို့မဟုတ် general discussion မလုပ်ပါနှင့်။
+၁။ **စကားပြောဆိုပုံ (Conversational Tone):**
 
-**မဖြေကြားရ — ယဉ်ကျေးစွာ ငြင်းပါ:**
-- နိုင်ငံရေး၊ ဘာသာရေး အငြင်းပွားမှု
-- University၊ major၊ career၊ student guidance နှင့် မသက်ဆိုင်သော hobbies discussion
-- Hobby ကို entertainment အနေနှင့်သာ မေးပါက project နှင့် ဆက်စပ်သော major/career guidance ဘက်သို့ ပြောင်းလဲပေးပါ။
-- ဤ project နှင့် မသက်ဆိုင်သော general knowledge၊ entertainment၊ coding၊ personal advice
-- Off-topic မေးခွန်း ရရှိပါက "ကျွန်တော်/ကျွန်မ က တက္ကသိုလ်ဝင်ခွင့်၊ မေဂျာနှင့် career guide များသာ ကူညီနိုင်ပါသည်" ဟု ပြန်ပြောပြီး project ဆိုင်ရာ မေးခွန်း မိတ်ဆက်ပါ။
+- စက်ရုပ် (AI) လိုမပြောဘဲ၊ လူအချင်းချင်း စကားပြောသလို သဘာဝကျကျ (Conversational) ပြောပါ။
+- အချက်အလက်များကို Bullet Point (၁၊ ၂၊ ၃) ချပြီး ရှင်းပြခြင်းကို လုံးဝ (လုံးဝ) မလုပ်ပါနှင့်။ စာပိုဒ်တိုလေးတွေနဲ့သာ ဖြေပါ။
+- အဖြေကို တိုတိုနဲ့ လိုရင်းတိုရှင်း (စာကြောင်း ၂ ကြောင်း သို့မဟုတ် ၃ ကြောင်းခန့်) သာ ဖြေပြီး၊ ကျောင်းသားကို ပြန်လည်မေးခွန်းထုတ်ကာ အပြန်အလှန် ဆွေးနွေးပါ။ 
+- ဥပမာ - "ညီလေးက ဘယ်လိုအလုပ်မျိုးလုပ်ချင်တာလဲ" "ဘယ်ဘာသာရပ်ကို အားအသာဆုံးလဲ"
 
-**ဘာသာစကား:**
-- မြန်မာဘာသာဖြင့် ကောင်းကောင်း ဖြေပါ (English abbreviations: UCSY, YTU စသည် သုံးနိုင်)
-- ရိုးရှင်းပြီး ကျောင်းသားများ နားလည်နိုင်သော စကားလုံးများ
-- bullet point သို့မဟုတ် ၃-၅ ကြောင်း အတိုချုပ်
+၂။ **ကန့်သတ်ထားသော အကြောင်းအရာများ (Topic Restriction):**
 
-**Student Interest Guidance:**
-- User က hobby သို့မဟုတ် interest ပြောလာပါက
-  - ထို hobby နှင့် သက်ဆိုင်သော major များကို အကြံပြုပါ
-  - သက်ဆိုင်သော career path ကိုရှင်းပြပါ
-  - မဖြစ်မနေ တစ်ခုတည်းရွေးခိုင်းခြင်းမလုပ်ပါနှင့်
+- အောက်ပါအကြောင်းအရာ ၄ ခုကိုသာ ဖြေကြားခွင့်ရှိသည်:
+  ၁. တက္ကသိုလ်များနှင့် ကျောင်းဝင်ခွင့် (University & Admissions)
+  ၂. အလုပ်အကိုင် (Careers & Jobs)
+  ၃. လိုအပ်သော ကျွမ်းကျင်မှုများ (Skills)
+  ၄. လစာ (Salary Expectations)
 
-**ပုံစံ:**
-- friendly၊ encouraging tone — တက္ကသိုလ် မသိသေးရင် စ worry မလုပ်ပါနဲ့ လို့ ပြောပြီး လမ်းညွှန်ပါ
-- ရမှတ်/ဘာသာတွဲ မသိသေးရင် အတင်းမမေးပါနှင့်`;
+- ဝါသနာ (Hobbies) အကြောင်းမေးလာလျှင် အထက်ပါ ၄ ချက်နှင့် ချိတ်ဆက်ပြီးသာ ဖြေပါ။
+- နိုင်ငံရေး၊ ဘာသာရေး၊ အားကစား၊ အနုပညာ၊ ဂိမ်းကစားခြင်း သက်သက် စသည့် အခြားအကြောင်းအရာများ မေးလာပါက ယဉ်ကျေးစွာ ငြင်းပယ်ပါ။
+- ဥပမာ ငြင်းပယ်ရန် - "တောင်းပန်ပါတယ်၊ အစ်ကိုတို့က တက္ကသိုလ်နဲ့ အလုပ်အကိုင်ရေးရာ ကိစ္စတွေကိုပဲ အဓိကထား ကူညီပေးနေတာပါ။ တက္ကသိုလ်ရွေးချယ်ဖို့ အခက်အခဲရှိနေရင် ပြောပြပေးလို့ရပါတယ်"
 
-type HistoryMessage = { role: "user" | "assistant"; content: string };
+၃။ **အသုံးအနှုန်း (Language):**
 
-type LlmProvider = "gemini" | "openai";
+- မြန်မာလို အတတ်နိုင်ဆုံး သဘာဝကျကျ ဖြေပါ။
+- အင်္ဂလိပ်လို သုံးနှုန်းရမည့် စကားလုံးများ (ဥပမာ - Engineering, UCSY, Coding) ကို အင်္ဂလိပ်လို ထည့်ရေးနိုင်သည်။
+- မြန်မာစာကို ရှင်းလင်းပြီး ကျောင်းသားများ နားလည်လွယ်အောင် ရေးပါ။
+
+၄။ **လုံခြုံရေး (Safety):**
+
+- ညစ်ညမ်းသော စကားလုံးများ၊ ဆဲဆိုမှုများကို လုံးဝ လက်မခံပါနှင့်။ ယဉ်ကျေးစွာ ဆက်သွယ်ရန် သတိပေးပါ။
+
+မှတ်ချက်:
+သင်သည် AI ဖြစ်ကြောင်း ထုတ်ပြောစရာမလိုပါ။
+ကျောင်းသားရဲ့ အနာဂတ်အတွက် စေတနာပါပါနဲ့ အကြံပေးမယ့် သူတစ်ယောက်လိုသာ ဖြေကြားပါ။`;
+
+type HistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+type LlmProvider = "gemini" | "openrouter";
 
 function getGeminiModel(): string {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+  return (
+    process.env.GEMINI_MODEL?.trim() ||
+    "gemini-2.5-pro"
+  );
 }
 
-function getOpenAiModel(): string {
-  return process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
+function getOpenRouterPaidModel(): string {
+  return (
+    process.env.OPENROUTER_PAID_MODEL?.trim() ||
+    "anthropic/claude-sonnet-5"
+  );
+}
+
+function getOpenRouterFreeModel(): string {
+  return (
+    process.env.OPENROUTER_FREE_MODEL?.trim() ||
+    "openrouter/free"
+  );
 }
 
 function parseHistory(raw: unknown): HistoryMessage[] {
-  if (!Array.isArray(raw)) return [];
+  if (!Array.isArray(raw)) {
+    return [];
+  }
 
   return raw
     .filter(
@@ -73,52 +89,83 @@ function parseHistory(raw: unknown): HistoryMessage[] {
     .slice(-10);
 }
 
+
 function isProviderFallbackError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
   const msg = error.message.toLowerCase();
+
   return (
     msg.includes("429") ||
     msg.includes("quota") ||
     msg.includes("rate limit") ||
-    msg.includes("401") ||
-    msg.includes("403") ||
-    msg.includes("invalid api key") ||
-    msg.includes("api key")
+    msg.includes("rate_limit") ||
+    msg.includes("402") ||
+    msg.includes("credit") ||
+    msg.includes("insufficient")
   );
 }
 
 function getChatErrorMessage(
   error: unknown,
   hasGemini: boolean,
-  hasOpenAi: boolean,
+  hasOpenRouter: boolean,
 ): string {
-  if (!hasGemini && !hasOpenAi) {
-    return "AI key မရှိပါ။ .env ထဲ GEMINI_API_KEY သို့မဟုတ် OPENAI_API_KEY ထည့်ပြီး server restart လုပ်ပါ။";
+  if (!hasGemini && !hasOpenRouter) {
+    return "AI key မရှိပါ။ .env ထဲ GEMINI_API_KEY သို့မဟုတ် OPENROUTER_API_KEY ထည့်ပြီး server restart လုပ်ပါ။";
   }
 
-  if (isProviderFallbackError(error)) {
-    const msg = error instanceof Error ? error.message.toLowerCase() : "";
-    if (msg.includes("quota")) {
-      return "AI quota ကုန်သွားပါပြီ။ API account မှာ credits/billing စစ်ပါ။";
-    }
-    if (msg.includes("401") || msg.includes("403") || msg.includes("api key")) {
-      return "AI API key မမှန်ပါ။ .env ထဲ key ကို စစ်ပြီး restart လုပ်ပါ။";
-    }
+  const msg =
+    error instanceof Error
+      ? error.message.toLowerCase()
+      : "";
+
+  if (
+    msg.includes("401") ||
+    msg.includes("403") ||
+    msg.includes("invalid api key") ||
+    msg.includes("api key")
+  ) {
+    return "AI API key မမှန်ပါ။ .env ထဲက API key ကို စစ်ပြီး server restart လုပ်ပါ။";
   }
 
-  return "AI နှင့် ချိတ်ဆက်ရာတွင် ပြဿနာရှိနေပါသည်။ ခဏန후 ထပ်မံကြိုးစားပါ။";
+  if (
+    msg.includes("429") ||
+    msg.includes("quota") ||
+    msg.includes("rate limit")
+  ) {
+    return "AI အသုံးပြုခွင့် limit ပြည့်သွားပါပြီ။ ခဏအကြာတွင် ပြန်လည်ကြိုးစားပါ။";
+  }
+
+  if (
+    msg.includes("402") ||
+    msg.includes("credit") ||
+    msg.includes("insufficient")
+  ) {
+    return "AI account ရဲ့ credit/billing limit ပြည့်သွားပါပြီ။ Account billing ကို စစ်ဆေးပေးပါ။";
+  }
+
+  return "AI နှင့် ချိတ်ဆက်ရာတွင် ပြဿနာရှိနေပါသည်။ ကျေးဇူးပြု၍ နောက်တစ်ကြိမ် ထပ်မံကြိုးစားပါ။";
 }
+
 
 async function completeWithGemini(
   history: HistoryMessage[],
   message: string,
+  modelOverride?: string,
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY not configured");
+  }
 
   const genAI = new GoogleGenerativeAI(apiKey);
+
   const model = genAI.getGenerativeModel({
-    model: getGeminiModel(),
+    model: modelOverride || getGeminiModel(),
     systemInstruction: SYSTEM_PROMPT,
   });
 
@@ -130,33 +177,48 @@ async function completeWithGemini(
   });
 
   const result = await chat.sendMessage(message);
+
   return (
     result.response.text()?.trim() ||
     "ကျေးဇူးပြု၍ နောက်တစ်ကြိမ် ထပ်မံမေးမြန်းပါ။"
   );
 }
 
-async function completeWithOpenAI(
+async function completeWithOpenRouter(
   history: HistoryMessage[],
   message: string,
+  modelOverride?: string,
 ): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) throw new Error("OPENAI_API_KEY not configured");
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY not configured");
+  }
 
   const client = new OpenAI({
     apiKey,
     baseURL: "https://openrouter.ai/api/v1",
   });
+
   const completion = await client.chat.completions.create({
-    model: getOpenAiModel(),
-    max_tokens: 800,
+    model: modelOverride || getOpenRouterPaidModel(),
+    max_tokens: 500,
+
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "system",
+        content: SYSTEM_PROMPT,
+      },
+
       ...history.map((item) => ({
         role: item.role as "user" | "assistant",
         content: item.content,
       })),
-      { role: "user", content: message },
+
+      {
+        role: "user",
+        content: message,
+      },
     ],
   });
 
@@ -166,41 +228,110 @@ async function completeWithOpenAI(
   );
 }
 
+
 async function completeChat(
   history: HistoryMessage[],
   message: string,
 ): Promise<string> {
   const hasGemini = !!process.env.GEMINI_API_KEY?.trim();
-  const hasOpenAi = !!process.env.OPENAI_API_KEY?.trim();
+  const hasOpenRouter = !!process.env.OPENROUTER_API_KEY?.trim();
 
-  if (!hasGemini && !hasOpenAi) {
+  if (!hasGemini && !hasOpenRouter) {
     throw new Error("No LLM API key configured");
   }
 
-  const providers: LlmProvider[] = [
-    ...(hasOpenAi ? (["openai"] as const) : []),
-    ...(hasGemini ? (["gemini"] as const) : []),
-  ];
+  const strategies: {
+    provider: LlmProvider;
+    model: string;
+  }[] = [];
+
+  if (hasOpenRouter) {
+    strategies.push({
+      provider: "openrouter",
+      model:
+        process.env.OPENROUTER_PAID_MODEL?.trim() ||
+        "anthropic/claude-sonnet-5",
+    });
+  }
+
+  if (hasGemini) {
+    strategies.push({
+      provider: "gemini",
+      model:
+        process.env.GEMINI_PAID_MODEL?.trim() ||
+        "gemini-2.5-pro",
+    });
+  }
+  if (hasGemini) {
+    strategies.push({
+      provider: "gemini",
+      model:
+        process.env.GEMINI_FREE_MODEL?.trim() ||
+        "gemini-3.6-flash",
+    });
+  }
+
+  if (hasOpenRouter) {
+    strategies.push({
+      provider: "openrouter",
+      model:
+        process.env.OPENROUTER_FREE_MODEL?.trim() ||
+        "openrouter/free",
+    });
+  }
 
   let lastError: unknown;
-  for (let i = 0; i < providers.length; i += 1) {
-    const provider = providers[i];
+
+  for (let i = 0; i < strategies.length; i += 1) {
+    const strategy = strategies[i];
+
     try {
-      if (provider === "gemini") {
-        return await completeWithGemini(history, message);
+      logger.info(
+        {
+          provider: strategy.provider,
+          model: strategy.model,
+        },
+        "Trying LLM strategy",
+      );
+
+      if (strategy.provider === "gemini") {
+        return await completeWithGemini(
+          history,
+          message,
+          strategy.model,
+        );
       }
-      return await completeWithOpenAI(history, message);
+
+      return await completeWithOpenRouter(
+        history,
+        message,
+        strategy.model,
+      );
     } catch (error) {
       lastError = error;
-      const hasNext = i < providers.length - 1;
+
+      const hasNext = i < strategies.length - 1;
+
       if (hasNext && isProviderFallbackError(error)) {
         logger.warn(
-          { err: error, provider },
-          "LLM provider failed, trying fallback",
+          {
+            err: error,
+            strategy,
+          },
+          "LLM limit/quota/credit reached, trying fallback",
         );
+
         continue;
       }
-      logger.error({ err: error, provider }, "Chatbot LLM request failed");
+
+      logger.error(
+        {
+          err: error,
+          strategy,
+        },
+        "Chatbot LLM request failed",
+      );
+
       throw error;
     }
   }
@@ -210,10 +341,10 @@ async function completeChat(
 
 if (
   !process.env.GEMINI_API_KEY?.trim() &&
-  !process.env.OPENAI_API_KEY?.trim()
+  !process.env.OPENROUTER_API_KEY?.trim()
 ) {
   logger.warn(
-    "Neither GEMINI_API_KEY nor OPENAI_API_KEY is set — chatbot will return an error until one is configured",
+    "Neither GEMINI_API_KEY nor OPENROUTER_API_KEY is set — chatbot will return an error until one is configured",
   );
 }
 
@@ -221,28 +352,53 @@ router.post(
   "/chatbot/message",
   optionalAuth,
   async (req, res): Promise<void> => {
-    const { message, sessionId, history } = req.body;
-    if (!message || typeof message !== "string") {
-      res.status(400).json({ error: "Message is required" });
+    const {
+      message,
+      sessionId,
+      history,
+    } = req.body;
+
+    if (
+      !message ||
+      typeof message !== "string"
+    ) {
+      res.status(400).json({
+        error: "Message is required",
+      });
+
       return;
     }
 
-    const session = sessionId || randomUUID();
-    const conversationHistory = parseHistory(history);
+    const session =
+      sessionId || randomUUID();
+
+    const conversationHistory =
+      parseHistory(history);
 
     let reply: string;
+
     try {
-      reply = await completeChat(conversationHistory, message.trim());
+      reply = await completeChat(
+        conversationHistory,
+        message.trim(),
+      );
     } catch (error) {
-      console.error("GEMINI ERROR:", error);
+      logger.error(
+        { err: error },
+        "Chatbot request failed",
+      );
+
       reply = getChatErrorMessage(
         error,
         !!process.env.GEMINI_API_KEY?.trim(),
-        !!process.env.OPENAI_API_KEY?.trim(),
+        !!process.env.OPENROUTER_API_KEY?.trim(),
       );
     }
 
-    res.json({ reply, sessionId: session });
+    res.json({
+      reply,
+      sessionId: session,
+    });
   },
 );
 

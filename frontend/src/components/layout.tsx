@@ -56,13 +56,13 @@ export function Layout({
         href="/admission-guide"
         className={`text-sm font-medium transition-colors hover:text-primary ${location === "/admission-guide" ? "text-primary" : "text-muted-foreground"}`}
       >
-        Admission Guide
+        Admission Info
       </Link>
       <Link
         href="/chatbot"
         className={`text-sm font-medium transition-colors hover:text-primary ${location === "/chatbot" ? "text-primary" : "text-muted-foreground"}`}
       >
-        AI Guide
+        Chatbot Advisor
       </Link>
       {user && (
         <Link
@@ -255,13 +255,13 @@ export function Layout({
                 href="/chatbot"
                 className="hover:text-foreground transition-colors"
               >
-                AI Guide
+                Chatbot Advisor
               </Link>
               <Link
                 href="/admission-guide"
                 className="hover:text-foreground transition-colors"
               >
-                Admission Guide
+                Admission Info
               </Link>
             </div>
           </div>

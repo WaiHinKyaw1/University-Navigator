@@ -83,6 +83,10 @@ export default function UniversityDetail() {
   }
   console.log(selectedMajor);
 
+  const toMyanmarNumber = (number: number) => {
+    return number.toString().replace(/\d/g, d => '၀၁၂၃၄၅၆၇၈၉'[d]);
+  };
+
   return (
     <Layout>
       <div className="container py-8 max-w-4xl mx-auto">
@@ -332,7 +336,7 @@ export default function UniversityDetail() {
                         <Briefcase className="h-3.5 w-3.5" /> Career Paths
                       </span>
                       <span className="text-lg font-bold text-foreground">
-                        {parsedCareers.length} Options
+                        {toMyanmarNumber(parsedCareers.length)} ခု
                       </span>
                     </div>
                   </div>

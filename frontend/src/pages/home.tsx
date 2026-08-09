@@ -140,16 +140,16 @@ export default function Home() {
                 <div className="w-12 h-12 bg-secondary/20 text-secondary-foreground rounded-xl flex items-center justify-center mb-6">
                   <Sparkles className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">AI Interest Guide</h3>
+                <h3 className="text-xl font-bold mb-3">Interest Guide</h3>
                 <p className="text-muted-foreground mb-6">
-                  Not sure what to study? Chat with our AI about your hobbies
+                  Not sure what to study? Chat with our advisor about your hobbies
                   and strengths to get personalized major recommendations.
                 </p>
                 <Link
                   href="/chatbot"
                   className="text-primary font-medium flex items-center hover:underline"
                 >
-                  Chat with AI <ArrowRight className="ml-1 h-4 w-4" />
+                  Get Advice <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </div>
 
