@@ -57,7 +57,7 @@ export const MYANMAR_CITIES: Record<MyanmarState, string[]> = {
   ],
 
   "ကရင်ပြည်နယ်": [
-    "ဖားအံ",
+    "ဘားအံ",
     "မြဝတီ",
     "ကော့ကရိတ်",
     "လှိုင်းဘွဲ့",
@@ -142,6 +142,7 @@ export const MYANMAR_CITIES: Record<MyanmarState, string[]> = {
     "မိတ္ထီလာ",
     "ကျောက်ဆည်",
     "မိုးကုတ်",
+    "မြင်းခြံ",
     "အမရပူရ",
     "စဉ့်ကိုင်",
     "မြစ်သား",
@@ -189,6 +190,7 @@ export const MYANMAR_CITIES: Record<MyanmarState, string[]> = {
   "ရှမ်းပြည်နယ်": [
     "တောင်ကြီး",
     "လားရှိုး",
+    "ပင်လုံ",
     "ကျိုင်းတုံ",
     "မူဆယ်",
     "သီပေါ",

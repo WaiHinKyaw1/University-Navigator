@@ -206,7 +206,7 @@ export default function UniversityDetail() {
                 <div className="bg-muted p-5 rounded-xl space-y-4">
                   <div>
                     <span className="text-sm font-medium text-muted-foreground block mb-1">
-                      Minimum Score Requirement
+                      Entrance Requirement
                     </span>
                     <div className="text-3xl font-bold text-primary">
                       {uni.minScore}
