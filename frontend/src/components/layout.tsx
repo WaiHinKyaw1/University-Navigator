@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, LogOut, Menu, X, User as UserIcon } from "lucide-react";
 import { useState } from "react";
-import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
+import { useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
 
 export function Layout({
@@ -17,9 +17,6 @@ export function Layout({
   const [location, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { reset } = useScoreStore();
-  const { data: siteSettings } = useGetSiteSettings();
-  const projectName = siteSettings?.projectName || "MM Uni Finder";
-  const tagline = siteSettings?.tagline || "Guiding Myanmar students to their future.";
 
   const logoutMutation = useLogout({
     mutation: {
@@ -92,15 +89,11 @@ export function Layout({
         <div className="container flex h-16 items-center justify-between mx-auto">
           <div className="flex items-center gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-primary p-1.5">
-                {siteSettings?.logoUrl ? (
-                  <img src={siteSettings.logoUrl} alt="Project logo" className="h-full w-full object-contain" />
-                ) : (
-                  <GraduationCap className="h-6 w-6 text-primary-foreground" />
-                )}
+              <div className="bg-primary p-1.5 rounded-lg">
+                <GraduationCap className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="inline-block font-bold text-xl text-primary">
-                {projectName}
+                MM Uni Finder
               </span>
             </Link>
             <nav className="hidden md:flex gap-6">
@@ -232,18 +225,12 @@ export function Layout({
         <footer className="border-t bg-muted/40 py-5 md:py-8 mt-auto">
           <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
             <div>
-                              <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
-                {siteSettings?.logoUrl ? (
-                  <img src={siteSettings.logoUrl} alt="Project logo" className="h-4 w-4 rounded object-contain" />
-                ) : (
-                  <GraduationCap className="h-4 w-4" />
-                )}
-                {projectName}
+              <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
+                <GraduationCap className="h-4 w-4" /> MM Uni Finder
               </p>
               <p className="mt-1">
-                {tagline}
+                Guiding Myanmar's Grade 12 students to their future.
               </p>
-
             </div>
             <div className="flex gap-4">
               <Link

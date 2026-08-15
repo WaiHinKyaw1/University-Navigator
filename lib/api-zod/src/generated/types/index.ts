@@ -45,8 +45,6 @@ export * from './registerInput';
 export * from './scoreInput';
 export * from './scoreInputSubjects';
 export * from './scoreMatch';
-export * from './siteSettings';
-export * from './siteSettingsInput';
 export * from './studentSummary';
 export * from './trendPoint';
 export * from './university';

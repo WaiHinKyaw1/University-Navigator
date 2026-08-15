@@ -22,7 +22,6 @@ import { toast } from "sonner";
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  grade: z.string().min(1, "Please enter your grade"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -37,7 +36,6 @@ export default function Register() {
     defaultValues: {
       name: "",
       email: "",
-      grade: "",
       password: "",
     },
   });
@@ -104,19 +102,6 @@ export default function Register() {
                 {form.formState.errors.email && (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="grade">Grade / education level</Label>
-                <Input
-                  id="grade"
-                  placeholder="Grade 12"
-                  {...form.register("grade")}
-                />
-                {form.formState.errors.grade && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.grade.message}
                   </p>
                 )}
               </div>

@@ -27,7 +27,6 @@ import AdminAudit from "@/pages/admin/audit";
 import AdminChatMonitor from "@/pages/admin/chat-monitor";
 import Profile from "@/pages/profile";
 import AdminProfile from "@/pages/admin/admin-profile";
-import AdminSettings from "@/pages/admin/settings";
 import VerifyEmail from "@/pages/verify-email";
 import ResetPassword from "./pages/reset-password";
 import ForgotPassword from "./pages/forgot-password";
@@ -58,7 +57,6 @@ function Router() {
       <Route path="/admin/chat-monitor" component={AdminChatMonitor} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin/profile" component={AdminProfile} />
-      <Route path="/admin/settings" component={AdminSettings} />
       <Route path="/verify-email">
         <VerifyEmail />
       </Route>
