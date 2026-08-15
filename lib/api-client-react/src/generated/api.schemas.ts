@@ -17,14 +17,44 @@ export interface MessageResponse {
   message: string;
 }
 
+export interface SiteSettings {
+  id: number;
+  projectName: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  tagline: string;
+  academicYear: string;
+  /** @nullable */
+  contactEmail?: string | null;
+  /** @nullable */
+  contactPhone?: string | null;
+  /** @nullable */
+  welcomeMessage?: string | null;
+  updatedAt: string;
+}
+
+export interface SiteSettingsInput {
+  /** @minLength 1 */
+  projectName: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  tagline?: string;
+  /** @minLength 1 */
+  academicYear: string;
+  /** @nullable */
+  contactEmail?: string | null;
+  /** @nullable */
+  contactPhone?: string | null;
+  /** @nullable */
+  welcomeMessage?: string | null;
+}
+
 export interface RegisterInput {
   /** @minLength 2 */
   name: string;
   email: string;
   /** @minLength 6 */
   password: string;
-  /** G-10, G-11, G-12 */
-  grade: string;
 }
 
 export interface LoginInput {
@@ -38,8 +68,6 @@ export interface User {
   email: string;
   /** student | admin */
   role: string;
-  /** @nullable */
-  grade?: string | null;
   /** active | banned */
   status: string;
   /** @nullable */
@@ -219,8 +247,6 @@ export interface ChatbotResponse {
 export interface StudentSummary {
   id: number;
   name: string;
-  /** @nullable */
-  grade: string | null;
   /** @nullable */
   avatarUrl?: string | null;
 }

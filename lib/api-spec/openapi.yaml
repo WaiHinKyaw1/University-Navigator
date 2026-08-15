@@ -931,6 +931,45 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuditLogListResponse"
 
+  # ── SITE SETTINGS ─────────────────────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSiteSettings
+      tags: [admin]
+      summary: Get public project settings
+      responses:
+        "200":
+          description: Current project settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteSettings"
+
+  /admin/settings:
+    put:
+      operationId: updateSiteSettings
+      tags: [admin]
+      summary: Update project settings (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SiteSettingsInput"
+      responses:
+        "200":
+          description: Updated project settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteSettings"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── STUDENTS LIST (for peer chat) ─────────────────────────────────────────
   /students:
     get:
@@ -978,10 +1017,55 @@ components:
       required:
         - message
 
+    SiteSettings:
+      type: object
+      required: [id, projectName, tagline, academicYear, updatedAt]
+      properties:
+        id:
+          type: integer
+        projectName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        tagline:
+          type: string
+        academicYear:
+          type: string
+        contactEmail:
+          type: ["string", "null"]
+        contactPhone:
+          type: ["string", "null"]
+        welcomeMessage:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+
+    SiteSettingsInput:
+      type: object
+      required: [projectName, academicYear]
+      properties:
+        projectName:
+          type: string
+          minLength: 1
+        logoUrl:
+          type: ["string", "null"]
+        tagline:
+          type: string
+        academicYear:
+          type: string
+          minLength: 1
+        contactEmail:
+          type: ["string", "null"]
+        contactPhone:
+          type: ["string", "null"]
+        welcomeMessage:
+          type: ["string", "null"]
+
     # ── AUTH ──────────────────────────────────────────────────────────────
     RegisterInput:
       type: object
-      required: [name, email, password, grade]
+      required: [name, email, password]
       properties:
         name:
           type: string
@@ -992,10 +1076,6 @@ components:
         password:
           type: string
           minLength: 6
-        grade:
-          type: string
-          description: "G-10, G-11, G-12"
-
     LoginInput:
       type: object
       required: [email, password]
@@ -1028,8 +1108,6 @@ components:
         role:
           type: string
           description: "student | admin"
-        grade:
-          type: ["string", "null"]
         status:
           type: string
           description: "active | banned"
@@ -1379,14 +1457,12 @@ components:
 
     StudentSummary:
       type: object
-      required: [id, name, grade]
+      required: [id, name]
       properties:
         id:
           type: integer
         name:
           type: string
-        grade:
-          type: ["string", "null"]
         avatarUrl:
           type: ["string", "null"]
 
