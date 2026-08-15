@@ -14,6 +14,8 @@ tags:
     description: Authentication
   - name: universities
     description: University management
+  - name: favorites
+    description: Authenticated saved universities
   - name: majors
     description: Major / field of study management
   - name: categories
@@ -263,7 +265,83 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
-  # ── MAJORS ────────────────────────────────────────────────────────────────
+  # ── FAVORITES ────────────────────────────────────────────────────────────
+  /favorites:
+    get:
+      operationId: listFavorites
+      tags: [favorites]
+      summary: List the current user's saved universities
+      responses:
+        "200":
+          description: Saved universities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Favorite"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /favorites/{universityId}:
+    post:
+      operationId: createFavorite
+      tags: [favorites]
+      summary: Save a university for the current user
+      parameters:
+        - name: universityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteFavorite
+      tags: [favorites]
+      summary: Remove a university from the current user's Favorites
+      parameters:
+        - name: universityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── MAJORS ───────────────────────────────────────────────────────────────
   /majors:
     get:
       operationId: listMajors
@@ -1218,6 +1296,18 @@ components:
           type: integer
         limit:
           type: integer
+
+    Favorite:
+      type: object
+      required: [favoriteId, savedAt, university]
+      properties:
+        favoriteId:
+          type: integer
+        savedAt:
+          type: string
+          format: date-time
+        university:
+          $ref: "#/components/schemas/University"
 
     # ── MAJOR ─────────────────────────────────────────────────────────────
     Major:

@@ -1,18 +1,25 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout";
+import FavoriteButton from "@/components/favorite-button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetSiteSettings, useListUniversities } from "@workspace/api-client-react";
+import {
+  useGetSiteSettings,
+  useListUniversities,
+  type University,
+} from "@workspace/api-client-react";
 import {
   MYANMAR_REGIONS,
   MYANMAR_STATE_DIVISIONS,
@@ -26,10 +33,9 @@ import {
   GraduationCap,
   ChevronLeft,
   ChevronRight,
+  RotateCcw,
 } from "lucide-react";
 import { Link } from "wouter";
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 9;
 
@@ -74,114 +80,110 @@ const TYPE_BADGE: Record<string, string> = {
   distance: "bg-cyan-50 text-cyan-700 border-cyan-200",
 };
 
-const SCORE_COLOR = (s: number) =>
-  s >= 450
+const SCORE_COLOR = (score: number) =>
+  score >= 450
     ? "bg-rose-50 text-rose-700"
-    : s >= 400
+    : score >= 400
       ? "bg-orange-50 text-orange-700"
-      : s >= 360
+      : score >= 360
         ? "bg-yellow-50 text-yellow-700"
         : "bg-emerald-50 text-emerald-700";
 
-// ─── University card ──────────────────────────────────────────────────────────
-
-function UniCard({ uni, academicYear }: { uni: any; academicYear: string }) {
+function UniversityCard({
+  university,
+  academicYear,
+}: {
+  university: University;
+  academicYear: string;
+}) {
   return (
-    <Card className="flex flex-col overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-primary/30 rounded-2xl group">
+    <Card className="group flex flex-col overflow-hidden rounded-2xl border-gray-100 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
       <div
-        className={`h-1.5 w-full ${TYPE_STRIP[uni.type] ?? "bg-gradient-to-r from-gray-300 to-gray-400"}`}
+        className={`h-1.5 w-full ${TYPE_STRIP[university.type] ?? "bg-gradient-to-r from-gray-300 to-gray-400"}`}
       />
 
-      <div className="h-32 bg-gray-50 relative overflow-hidden">
-        {uni.imageUrl ? (
+      <div className="relative h-32 overflow-hidden bg-gray-50">
+        {university.imageUrl ? (
           <img
-            src={uni.imageUrl}
-            alt={uni.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            src={university.imageUrl}
+            alt={university.name}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center">
             <Building2 className="h-10 w-10 text-gray-200" />
           </div>
         )}
-        <div className="absolute top-2 right-2">
+        <div className="absolute right-2 top-2 flex items-center gap-2">
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${TYPE_BADGE[uni.type] ?? "bg-gray-50 text-gray-600 border-gray-200"}`}
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${TYPE_BADGE[university.type] ?? "border-gray-200 bg-gray-50 text-gray-600"}`}
           >
-            {TYPE_LABEL[uni.type] ?? uni.type}
+            {TYPE_LABEL[university.type] ?? university.type}
           </span>
+          <FavoriteButton universityId={university.id} compact />
         </div>
-        {uni.abbreviation && (
+        {university.abbreviation && (
           <div className="absolute bottom-2 left-2">
-            <span className="text-xs font-bold text-white bg-black/50 px-2 py-0.5 rounded-lg">
-              {uni.abbreviation}
+            <span className="rounded-lg bg-black/50 px-2 py-0.5 text-xs font-bold text-white">
+              {university.abbreviation}
             </span>
           </div>
         )}
       </div>
 
-      <CardContent className="flex-1 p-4 space-y-2.5">
+      <CardContent className="flex-1 space-y-2.5 p-4">
         <div>
-          <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
-            {uni.name}
+          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">
+            {university.name}
           </h3>
-          {uni.nameEn && (
-            <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">
-              {uni.nameEn}
-            </p>
-          )}
+          <p className="mt-0.5 line-clamp-1 text-[11px] text-gray-400">
+            {university.nameEn}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-1">
-          {uni.state && (
-            <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-              <MapPin className="h-2.5 w-2.5" />{" "}
-              {uni.city ? `${uni.city}` : uni.state}
-            </span>
-          )}
-          <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-primary/5 text-primary px-2 py-0.5 rounded-full font-medium">
+          <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
+            <MapPin className="h-2.5 w-2.5" />
+            {university.city || university.state}
+          </span>
+          <span className="flex items-center gap-1 rounded-full bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary">
             <GraduationCap className="h-2.5 w-2.5" /> {academicYear}
           </span>
         </div>
 
-        {uni.majors?.length > 0 && (
+        {university.majors && university.majors.length > 0 && (
           <div className="flex items-start gap-1 text-[11px] text-gray-500">
-            <BookOpen className="h-3 w-3 shrink-0 mt-0.5 text-gray-400" />
+            <BookOpen className="mt-0.5 h-3 w-3 shrink-0 text-gray-400" />
             <span className="line-clamp-2">
-              {uni.majors
+              {university.majors
                 .slice(0, 3)
-                .map((m: any) => m.name ?? m)
+                .map((major) => major.name)
                 .join(" • ")}
-              {uni.majors.length > 3 ? ` +${uni.majors.length - 3}` : ""}
+              {university.majors.length > 3
+                ? ` +${university.majors.length - 3}`
+                : ""}
             </span>
           </div>
         )}
 
-        <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+        <div className="flex items-center justify-between border-t border-gray-100 pt-2">
           <span className="text-[11px] text-gray-400">လိုအပ်ရမှတ်</span>
           <span
-            className={`text-xs font-black px-2.5 py-1 rounded-full ${SCORE_COLOR(uni.minScore)}`}
+            className={`rounded-full px-2.5 py-1 text-xs font-black ${SCORE_COLOR(university.minScore)}`}
           >
-            {uni.minScore} မှတ်
+            {university.minScore} မှတ်
           </span>
         </div>
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <Button
-          asChild
-          className="w-full rounded-xl"
-          variant="outline"
-          size="sm"
-        >
-          <Link href={`/universities/${uni.id}`}>အသေးစိတ် ကြည့်ရန်</Link>
+        <Button asChild className="w-full rounded-xl" variant="outline" size="sm">
+          <Link href={`/universities/${university.id}`}>အသေးစိတ် ကြည့်ရန်</Link>
         </Button>
       </CardFooter>
     </Card>
   );
 }
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
 
 function Pagination({
   page,
@@ -192,48 +194,58 @@ function Pagination({
   page: number;
   total: number;
   pageSize: number;
-  onChange: (p: number) => void;
+  onChange: (nextPage: number) => void;
 }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
 
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  const visible = pages.filter(
-    (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const visiblePages = pages.filter(
+    (candidate) =>
+      candidate === 1 ||
+      candidate === totalPages ||
+      Math.abs(candidate - page) <= 1,
   );
 
   return (
     <div className="flex items-center justify-center gap-1.5 pt-4">
       <button
+        type="button"
         onClick={() => onChange(page - 1)}
         disabled={page === 1}
-        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Previous page"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
 
-      {visible.map((p, i, arr) => (
-        <span key={p} className="flex items-center gap-1.5">
-          {i > 0 && arr[i - 1] !== p - 1 && (
-            <span className="text-gray-400 text-sm px-1">…</span>
+      {visiblePages.map((candidate, index, visible) => (
+        <span key={candidate} className="flex items-center gap-1.5">
+          {index > 0 && visible[index - 1] !== candidate - 1 && (
+            <span className="px-1 text-sm text-gray-400">…</span>
           )}
           <button
-            onClick={() => onChange(p)}
-            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
-              p === page
+            type="button"
+            onClick={() => onChange(candidate)}
+            className={`h-9 min-w-9 rounded-xl px-2.5 text-sm font-semibold transition-colors ${
+              candidate === page
                 ? "bg-primary text-white shadow-sm"
                 : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
             }`}
+            aria-label={`Page ${candidate}`}
+            aria-current={candidate === page ? "page" : undefined}
           >
-            {p}
+            {candidate}
           </button>
         </span>
       ))}
 
       <button
+        type="button"
         onClick={() => onChange(page + 1)}
         disabled={page === totalPages}
-        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Next page"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -241,86 +253,86 @@ function Pagination({
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
-
 export default function Universities() {
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeState, setActiveState] = useState("all");
   const [page, setPage] = useState(1);
 
   const { data: siteSettings } = useGetSiteSettings();
-  const { data: response, isLoading, isError } = useListUniversities({
-    search: search || undefined,
-    limit: 1000,
-  });
-  const universities: any[] = (response as any)?.universities ?? [];
+  const { data: response, isLoading, isFetching, isError, refetch } =
+    useListUniversities({
+      search: search || undefined,
+      type: activeCategory === "all" ? undefined : activeCategory,
+      state: activeState === "all" ? undefined : activeState,
+      page,
+      limit: PAGE_SIZE,
+      sortBy: "name",
+      sortOrder: "asc",
+    });
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 300);
 
-  const filtered = useMemo(() => {
-    let base =
-      activeCategory === "all"
-        ? universities
-        : universities.filter((u) => u.type === activeCategory);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
 
-    //  console.log(base)
-    if (activeState !== "all")
-      base = base.filter((u) => u.state === activeState);
-    return base;
-  }, [universities, activeCategory, activeState]);
+  const universities = response?.universities ?? [];
+  const total = response?.total ?? 0;
+  const academicYear = `ပညာသင်နှစ် ${siteSettings?.academicYear ?? "၂၀၂၅-၂၀၂၆"}`;
 
-  const paginated = useMemo(
-    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filtered, page],
-  );
-
-  const handleCategoryChange = (cat: string) => {
-    setActiveCategory(cat);
-    setPage(1);
-  };
-  const handleSearchChange = (val: string) => {
-    setSearch(val);
-    setPage(1);
-  };
-  const handleStateChange = (state: string) => {
-    setActiveState(state);
+  const resetFilters = () => {
+    setSearchInput("");
+    setSearch("");
+    setActiveCategory("all");
+    setActiveState("all");
     setPage(1);
   };
 
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50/30">
-        <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-1">
-            <h1 className="text-2xl sm:text-2xl font-bold text-gray-900 mb-2">
-              တက္ကသိုလ်များ
-            </h1>
-            <p className="text-gray-500 text-sm">
-              မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({filtered.length}) —{" "}
-              ပညာသင်နှစ် {siteSettings?.academicYear ?? "၂၀၂၅-၂၀၂၆"}
+        <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+          <div className="space-y-2 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900">တက္ကသိုလ်များ</h1>
+              {!isLoading && <Badge variant="secondary">{total} ခု</Badge>}
+            </div>
+            <p className="text-sm text-gray-500">
+              မြန်မာနိုင်ငံရှိ တက္ကသိုလ်များကို အမည်၊ နေရာဒေသ၊ အမျိုးအစားအလိုက် ရှာဖွေကြည့်ရှုပါ — {academicYear}
             </p>
           </div>
 
-          {/* Search + state filter */}
-          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3">
+          <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
               <Input
                 type="search"
-                placeholder="တက္ကသိုလ်နာမည် ရှာပါ..."
-                className="pl-10 h-12 bg-white rounded-2xl border-gray-100 shadow-sm"
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="အမည်၊ English name၊ abbreviation၊ မြို့ သို့မဟုတ် ပြည်နယ် ရှာပါ..."
+                className="h-12 rounded-2xl border-gray-100 bg-white pl-10 shadow-sm"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                aria-label="Search universities"
               />
             </div>
-            <Select value={activeState} onValueChange={handleStateChange}>
-              <SelectTrigger className="h-12 w-full sm:w-[220px] bg-white rounded-2xl border-gray-100 shadow-sm shrink-0">
+            <Select
+              value={activeState}
+              onValueChange={(value) => {
+                setActiveState(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="h-12 w-full shrink-0 rounded-2xl border-gray-100 bg-white shadow-sm sm:w-[240px]">
                 <SelectValue placeholder="တိုင်းဒေသကြီး / ပြည်နယ်" />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px] overflow-y-auto">
+              <SelectContent className="max-h-[320px] overflow-y-auto">
                 <SelectItem value="all">ပြည်နယ်/တိုင်းအားလုံး</SelectItem>
                 <SelectGroup>
+                  <SelectLabel>တိုင်းဒေသကြီး</SelectLabel>
                   {MYANMAR_REGIONS.map((state) => (
                     <SelectItem key={state} value={state}>
                       {state}
@@ -328,6 +340,7 @@ export default function Universities() {
                   ))}
                 </SelectGroup>
                 <SelectGroup>
+                  <SelectLabel>ပြည်နယ်</SelectLabel>
                   {MYANMAR_STATE_DIVISIONS.map((state) => (
                     <SelectItem key={state} value={state}>
                       {state}
@@ -335,6 +348,7 @@ export default function Universities() {
                   ))}
                 </SelectGroup>
                 <SelectGroup>
+                  <SelectLabel>ပြည်ထောင်စုနယ်မြေ</SelectLabel>
                   {MYANMAR_UNION_TERRITORIES.map((state) => (
                     <SelectItem key={state} value={state}>
                       {state}
@@ -345,100 +359,95 @@ export default function Universities() {
             </Select>
           </div>
 
-          {/* Category filter chips */}
-          <div className="flex gap-2 flex-wrap justify-center">
-            {CATEGORIES.map((cat) => {
-              const count = universities.filter((u) => {
-                const matchesCategory = cat.value === "all" || u.type === cat.value;
-                const matchesState = activeState === "all" || u.state === activeState;
-                return matchesCategory && matchesState;
-              }).length;
-              return (
-                <button
-                  key={cat.value}
-                  onClick={() => handleCategoryChange(cat.value)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
-                    activeCategory === cat.value
-                      ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
-                  }`}
-                >
-                  <span>{cat.emoji}</span>
-                  {cat.label}
-                  <span
-                    className={`text-xs px-1.5 py-0.5 rounded-full ${
-                      activeCategory === cat.value
-                        ? "bg-white/25 text-white"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap justify-center gap-2">
+            {CATEGORIES.map((category) => (
+              <button
+                key={category.value}
+                type="button"
+                onClick={() => {
+                  setActiveCategory(category.value);
+                  setPage(1);
+                }}
+                className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                  activeCategory === category.value
+                    ? "border-primary bg-primary text-white shadow-sm"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-primary/40 hover:text-primary"
+                }`}
+              >
+                <span>{category.emoji}</span>
+                {category.label}
+              </button>
+            ))}
           </div>
 
-          {/* Results count */}
-          {!isLoading && filtered.length > 0 && (
-            <p className="text-xs text-gray-400 text-center">
-              ကျောင်း {filtered.length} ခု တွေ့ရှိသည် — စာမျက်နှာ {page}/
-              {Math.ceil(filtered.length / PAGE_SIZE)}
-            </p>
-          )}
+          <div className="flex min-h-5 items-center justify-center gap-2 text-center text-xs text-gray-400">
+            {isFetching && !isLoading && <span>ရှာဖွေနေသည်...</span>}
+            {!isLoading && !isFetching && total > 0 && (
+              <span>
+                {total} ခု တွေ့ရှိသည် — စာမျက်နှာ {page}/{Math.ceil(total / PAGE_SIZE)}
+              </span>
+            )}
+            {(search || activeCategory !== "all" || activeState !== "all") && !isLoading && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Filter ပြန်စမယ်
+              </button>
+            )}
+          </div>
 
-          {/* Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card
-                  key={i}
-                  className="overflow-hidden rounded-2xl border-gray-100"
-                >
-                  <div className="h-32 bg-gray-100 animate-pulse" />
-                  <div className="p-4 space-y-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((index) => (
+                <Card key={index} className="overflow-hidden rounded-2xl border-gray-100">
+                  <Skeleton className="h-32 rounded-none" />
+                  <div className="space-y-3 p-4">
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-3 w-1/2" />
                     <Skeleton className="h-3 w-full" />
-                    <Skeleton className="h-8 w-full mt-2" />
+                    <Skeleton className="mt-2 h-8 w-full" />
                   </div>
                 </Card>
               ))}
             </div>
           ) : isError ? (
-            <div className="text-center py-20 bg-white rounded-2xl border border-red-100">
-              <Building2 className="mx-auto h-12 w-12 text-red-200 mb-3" />
-              <p className="text-gray-700 font-semibold">Data ရယူ၍ မရပါ</p>
-              <p className="text-gray-400 text-sm mt-1">
-                ကွန်ယက်ချိတ်ဆက်မှု စစ်ပြီး ပြန်လည် ကြိုးစားပါ
-              </p>
+            <div className="rounded-2xl border border-red-100 bg-white py-20 text-center">
+              <Building2 className="mx-auto mb-3 h-12 w-12 text-red-200" />
+              <p className="font-semibold text-gray-700">Data ရယူ၍ မရပါ</p>
+              <p className="mt-1 text-sm text-gray-400">ကွန်ယက်ချိတ်ဆက်မှု စစ်ပြီး ပြန်လည် ကြိုးစားပါ</p>
+              <Button variant="outline" className="mt-5" onClick={() => void refetch()}>
+                ပြန်လည်ကြိုးစားမယ်
+              </Button>
             </div>
-          ) : paginated.length === 0 ? (
-
-            <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
-              <Building2 className="mx-auto h-12 w-12 text-gray-200 mb-3" />
-              <p className="text-gray-600 font-medium">တက္ကသိုလ် မတွေ့ပါ</p>
-              <p className="text-gray-400 text-sm mt-1">
-                ရှာဖွေမှု သို့ Filter ပြောင်းကြည့်ပါ
-              </p>
+          ) : universities.length === 0 ? (
+            <div className="rounded-2xl border border-gray-100 bg-white py-20 text-center">
+              <Building2 className="mx-auto mb-3 h-12 w-12 text-gray-200" />
+              <p className="font-medium text-gray-600">တက္ကသိုလ် မတွေ့ပါ</p>
+              <p className="mt-1 text-sm text-gray-400">ရှာဖွေမှု သို့မဟုတ် Filter ပြောင်းကြည့်ပါ</p>
+              <Button variant="outline" className="mt-5" onClick={resetFilters}>
+                Filter ပြန်စမယ်
+              </Button>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {paginated.map((uni) => (
-                  <UniCard
-                key={uni.id}
-                uni={uni}
-                academicYear={`ပညာသင်နှစ် ${siteSettings?.academicYear ?? "၂၀၂၅-၂၀၂၆"}`}
-              />
+              <div className={`grid grid-cols-1 gap-5 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? "opacity-60" : "opacity-100"}`}>
+                {universities.map((university) => (
+                  <UniversityCard
+                    key={university.id}
+                    university={university}
+                    academicYear={academicYear}
+                  />
                 ))}
               </div>
               <Pagination
                 page={page}
-                total={filtered.length}
+                total={total}
                 pageSize={PAGE_SIZE}
-                onChange={(p) => {
-                  setPage(p);
+                onChange={(nextPage) => {
+                  setPage(nextPage);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               />

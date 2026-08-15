@@ -78,6 +78,8 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
         ilike(universitiesTable.name, `%${search}%`),
         ilike(universitiesTable.nameEn, `%${search}%`),
         ilike(universitiesTable.abbreviation, `%${search}%`),
+        ilike(universitiesTable.city, `%${search}%`),
+        ilike(universitiesTable.state, `%${search}%`),
       ),
     );
   }

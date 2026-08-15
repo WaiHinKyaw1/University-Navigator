@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Universities from "@/pages/universities";
+import Favorites from "@/pages/favorites";
 import UniversityDetail from "@/pages/university-detail";
 import ScoreCalculator from "@/pages/score-calculator";
 import Chatbot from "@/pages/chatbot";
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/universities" component={Universities} />
+      <Route path="/favorites" component={Favorites} />
       <Route path="/universities/:id" component={UniversityDetail} />
       <Route path="/score" component={ScoreCalculator} />
       <Route path="/news" component={News} />
