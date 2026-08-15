@@ -84,8 +84,7 @@ export default function UniversityDetail() {
   console.log(selectedMajor);
 
   const toMyanmarNumber = (number: number) => {
-    const digits = "၀၁၂၃၄၅၆၇၈၉";
-    return number.toString().replace(/\d/g, (d) => digits[Number(d)]);
+    return number.toString().replace(/\d/g, d => '၀၁၂၃၄၅၆၇၈၉'[d]);
   };
 
   return (

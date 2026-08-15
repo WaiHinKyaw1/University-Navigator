@@ -17,38 +17,6 @@ export interface MessageResponse {
   message: string;
 }
 
-export interface SiteSettings {
-  id: number;
-  projectName: string;
-  /** @nullable */
-  logoUrl?: string | null;
-  tagline: string;
-  academicYear: string;
-  /** @nullable */
-  contactEmail?: string | null;
-  /** @nullable */
-  contactPhone?: string | null;
-  /** @nullable */
-  welcomeMessage?: string | null;
-  updatedAt: string;
-}
-
-export interface SiteSettingsInput {
-  /** @minLength 1 */
-  projectName: string;
-  /** @nullable */
-  logoUrl?: string | null;
-  tagline?: string;
-  /** @minLength 1 */
-  academicYear: string;
-  /** @nullable */
-  contactEmail?: string | null;
-  /** @nullable */
-  contactPhone?: string | null;
-  /** @nullable */
-  welcomeMessage?: string | null;
-}
-
 export interface RegisterInput {
   /** @minLength 2 */
   name: string;

@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetSiteSettings, useListUniversities } from "@workspace/api-client-react";
+import { useListUniversities } from "@workspace/api-client-react";
 import {
   MYANMAR_REGIONS,
   MYANMAR_STATE_DIVISIONS,
@@ -32,6 +32,7 @@ import { Link } from "wouter";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 9;
+const ACADEMIC_YEAR = "ပညာသင်နှစ် ၂၀၂၅-၂၀၂၆";
 
 const CATEGORIES = [
   { value: "all", label: "ကျောင်းအားလုံး", emoji: "🏛️" },
@@ -85,7 +86,7 @@ const SCORE_COLOR = (s: number) =>
 
 // ─── University card ──────────────────────────────────────────────────────────
 
-function UniCard({ uni, academicYear }: { uni: any; academicYear: string }) {
+function UniCard({ uni }: { uni: any }) {
   return (
     <Card className="flex flex-col overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-primary/30 rounded-2xl group">
       <div
@@ -140,7 +141,7 @@ function UniCard({ uni, academicYear }: { uni: any; academicYear: string }) {
             </span>
           )}
           <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-primary/5 text-primary px-2 py-0.5 rounded-full font-medium">
-            <GraduationCap className="h-2.5 w-2.5" /> {academicYear}
+            <GraduationCap className="h-2.5 w-2.5" /> {ACADEMIC_YEAR}
           </span>
         </div>
 
@@ -249,7 +250,6 @@ export default function Universities() {
   const [activeState, setActiveState] = useState("all");
   const [page, setPage] = useState(1);
 
-  const { data: siteSettings } = useGetSiteSettings();
   const { data: response, isLoading, isError } = useListUniversities({
     search: search || undefined,
     limit: 1000,
@@ -298,7 +298,7 @@ export default function Universities() {
             </h1>
             <p className="text-gray-500 text-sm">
               မြန်မာနိုင်ငံ တက္ကသိုလ်ပေါင်း ({filtered.length}) —{" "}
-              ပညာသင်နှစ် {siteSettings?.academicYear ?? "၂၀၂၅-၂၀၂၆"}
+              {ACADEMIC_YEAR}
             </p>
           </div>
 
@@ -426,11 +426,7 @@ export default function Universities() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {paginated.map((uni) => (
-                  <UniCard
-                key={uni.id}
-                uni={uni}
-                academicYear={`ပညာသင်နှစ် ${siteSettings?.academicYear ?? "၂၀၂၅-၂၀၂၆"}`}
-              />
+                  <UniCard key={uni.id} uni={uni} />
                 ))}
               </div>
               <Pagination

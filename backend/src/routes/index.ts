@@ -13,7 +13,6 @@ import admissionGuidesRouter from "./admission-guides";
 import uploadRouter from "./upload";
 import favoritesRouter from "./favorites";
 import profileImageRouter from "./profile-image";
-import siteSettingsRouter from "./site-settings";
 
 const router: IRouter = Router();
 
@@ -31,6 +30,5 @@ router.use(admissionGuidesRouter);
 router.use(uploadRouter);
 router.use(favoritesRouter);
 router.use(profileImageRouter);
-router.use(siteSettingsRouter);
 
 export default router;
