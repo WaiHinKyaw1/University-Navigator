@@ -50,7 +50,6 @@ export function Layout({
           </div>
           <h1 className="text-2xl font-bold text-foreground">{projectName} is under maintenance</h1>
           <p className="mt-3 text-muted-foreground">{siteSettings?.maintenanceMessage || "We are making a few improvements. Please check back soon."}</p>
-          <p className="mt-6 text-sm text-muted-foreground">Please check back soon.</p>
           <Button asChild variant="outline" className="mt-6">
             <Link href="/login">Admin login</Link>
           </Button>
