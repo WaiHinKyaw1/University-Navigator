@@ -14,6 +14,7 @@ import {
   ArrowBigLeft,
   Tag,
   UserCog,
+  Settings,
   Menu,
   X,
 } from "lucide-react";
@@ -148,6 +149,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
             Profile
           </div>
+          <NavItem href="/admin/settings" icon={Settings} label="Settings" />
           <NavItem
             href="/admin/profile"
             icon={UserCog}
@@ -199,6 +201,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 Profile
               </div>
             )}
+            <NavItem href="/admin/settings" icon={Settings} label="Settings" collapsed={!sidebarOpen} />
             <NavItem href="/admin/profile" icon={UserCog} label="Admin Profile" collapsed={!sidebarOpen} />
           </div>
         </aside>

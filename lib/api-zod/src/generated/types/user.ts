@@ -13,7 +13,7 @@ export interface User {
   /** student | admin */
   role: string;
   /** @nullable */
-  // grade?: string | null;
+  grade?: string | null;
   /** active | banned */
   status: string;
   /** @nullable */
