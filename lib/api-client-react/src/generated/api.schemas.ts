@@ -30,6 +30,8 @@ export interface SiteSettings {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
   updatedAt: string;
 }
 
@@ -47,6 +49,8 @@ export interface SiteSettingsInput {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
 }
 
 export interface RegisterInput {

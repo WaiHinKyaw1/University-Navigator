@@ -1,8 +1,22 @@
-import { useEffect, useState } from "react";
-import { BookOpen, Image as ImageIcon, Loader2, Mail, MessageSquare, Phone, Save, Settings2, Upload } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
+  Eye,
+  Image as ImageIcon,
+  Loader2,
+  Mail,
+  MessageSquare,
+  Phone,
+  RotateCcw,
+  Save,
+  Settings2,
+  Upload,
+  Wrench,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  type SiteSettings,
   type SiteSettingsInput,
   useGetSiteSettings,
   useUpdateSiteSettings,
@@ -12,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadImage } from "@/lib/upload-image-api";
 
@@ -19,30 +34,42 @@ const FALLBACK_SETTINGS: SiteSettingsInput = {
   projectName: "MM Uni Finder",
   logoUrl: null,
   tagline: "Guiding Myanmar students to their future.",
-  academicYear: "2025-2026",
+  academicYear: "2024-2025",
   contactEmail: null,
   contactPhone: null,
   welcomeMessage: null,
+  maintenanceMode: false,
+  maintenanceMessage: "We are making a few improvements. Please check back soon.",
 };
+
+function toForm(settings: SiteSettings | undefined): SiteSettingsInput {
+  if (!settings) return FALLBACK_SETTINGS;
+  return {
+    projectName: settings.projectName,
+    logoUrl: settings.logoUrl ?? null,
+    tagline: settings.tagline,
+    academicYear: settings.academicYear,
+    contactEmail: settings.contactEmail ?? null,
+    contactPhone: settings.contactPhone ?? null,
+    welcomeMessage: settings.welcomeMessage ?? null,
+    maintenanceMode: settings.maintenanceMode,
+    maintenanceMessage: settings.maintenanceMessage ?? FALLBACK_SETTINGS.maintenanceMessage,
+  };
+}
 
 export default function AdminSettings() {
   const queryClient = useQueryClient();
   const settingsQuery = useGetSiteSettings();
   const [form, setForm] = useState<SiteSettingsInput>(FALLBACK_SETTINGS);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
-    if (!settingsQuery.data) return;
-    setForm({
-      projectName: settingsQuery.data.projectName,
-      logoUrl: settingsQuery.data.logoUrl ?? null,
-      tagline: settingsQuery.data.tagline,
-      academicYear: settingsQuery.data.academicYear,
-      contactEmail: settingsQuery.data.contactEmail ?? null,
-      contactPhone: settingsQuery.data.contactPhone ?? null,
-      welcomeMessage: settingsQuery.data.welcomeMessage ?? null,
-    });
+    if (settingsQuery.data) setForm(toForm(settingsQuery.data));
   }, [settingsQuery.data]);
+
+  const savedForm = useMemo(() => toForm(settingsQuery.data), [settingsQuery.data]);
+  const hasChanges = JSON.stringify(form) !== JSON.stringify(savedForm);
 
   const updateMutation = useUpdateSiteSettings({
     mutation: {
@@ -63,6 +90,11 @@ export default function AdminSettings() {
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 2 * 1024 * 1024) {
+      toast.error("Please choose an image smaller than 2 MB");
+      event.target.value = "";
+      return;
+    }
     try {
       setIsUploadingLogo(true);
       const url = await uploadImage(file);
@@ -76,21 +108,46 @@ export default function AdminSettings() {
     }
   };
 
+  const handleReset = () => {
+    setForm(savedForm);
+    setIsPreviewOpen(false);
+    toast.success("Unsaved changes reset");
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!form.projectName.trim() || !form.academicYear.trim()) {
-      toast.error("Project name and academic year are required");
+    const projectName = form.projectName.trim();
+    const academicYear = form.academicYear.trim();
+    const contactEmail = form.contactEmail?.trim() || null;
+    const maintenanceMessage = form.maintenanceMessage?.trim() ?? "";
+
+    if (!projectName || projectName.length > 80) {
+      toast.error("Project name is required and must be 80 characters or fewer");
       return;
     }
+    if (!/^\d{4}\s*-\s*\d{4}$/.test(academicYear)) {
+      toast.error("Academic year must use the format YYYY-YYYY");
+      return;
+    }
+    if (contactEmail && !/^\S+@\S+\.\S+$/.test(contactEmail)) {
+      toast.error("Please enter a valid contact email");
+      return;
+    }
+    if (!maintenanceMessage || maintenanceMessage.length > 240) {
+      toast.error("Maintenance message is required and must be 240 characters or fewer");
+      return;
+    }
+
     updateMutation.mutate({
       data: {
         ...form,
-        projectName: form.projectName.trim(),
-        academicYear: form.academicYear.trim(),
+        projectName,
+        academicYear,
         tagline: form.tagline?.trim() || "",
-        contactEmail: form.contactEmail?.trim() || null,
+        contactEmail,
         contactPhone: form.contactPhone?.trim() || null,
         welcomeMessage: form.welcomeMessage?.trim() || null,
+        maintenanceMessage,
       },
     });
   };
@@ -129,9 +186,7 @@ export default function AdminSettings() {
                 <CardTitle className="flex items-center gap-2">
                   <ImageIcon className="h-5 w-5 text-primary" /> Brand identity
                 </CardTitle>
-                <CardDescription>
-                  These values appear in the public navigation and footer.
-                </CardDescription>
+                <CardDescription>These values appear in the public navigation and footer.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-[180px_1fr]">
@@ -157,11 +212,11 @@ export default function AdminSettings() {
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="project-name">Project name</Label>
-                      <Input id="project-name" value={form.projectName} onChange={(event) => updateField("projectName", event.target.value)} placeholder="MM Uni Finder" disabled={isLoading} />
+                      <Input id="project-name" value={form.projectName} onChange={(event) => updateField("projectName", event.target.value)} placeholder="MM Uni Finder" disabled={isLoading} maxLength={80} />
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="tagline">Tagline</Label>
-                      <Input id="tagline" value={form.tagline ?? ""} onChange={(event) => updateField("tagline", event.target.value)} placeholder="Guiding Myanmar students to their future." disabled={isLoading} />
+                      <Input id="tagline" value={form.tagline ?? ""} onChange={(event) => updateField("tagline", event.target.value)} placeholder="Guiding Myanmar students to their future." disabled={isLoading} maxLength={200} />
                     </div>
                   </div>
                 </div>
@@ -173,15 +228,33 @@ export default function AdminSettings() {
                 <CardTitle className="flex items-center gap-2">
                   <BookOpen className="h-5 w-5 text-primary" /> Academic settings
                 </CardTitle>
-                <CardDescription>
-                  Keep the current school year visible and consistent across the application.
-                </CardDescription>
+                <CardDescription>Keep the current school year visible and consistent across the application.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="max-w-sm space-y-2">
                   <Label htmlFor="academic-year">Current academic year</Label>
-                  <Input id="academic-year" value={form.academicYear} onChange={(event) => updateField("academicYear", event.target.value)} placeholder="2025-2026" disabled={isLoading} />
-                  <p className="text-xs text-muted-foreground">Example: 2025-2026 or 2025 intake.</p>
+                  <Input id="academic-year" value={form.academicYear} onChange={(event) => updateField("academicYear", event.target.value)} placeholder="2025-2026" disabled={isLoading} maxLength={40} />
+                  <p className="text-xs text-muted-foreground">Use the format YYYY-YYYY, for example 2025-2026.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5 text-primary" /> Availability</CardTitle>
+                <CardDescription>Temporarily show a maintenance message to public visitors while admins keep access.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-4">
+                  <div>
+                    <Label htmlFor="maintenance-mode">Maintenance mode</Label>
+                    <p className="text-sm text-muted-foreground">Public pages are replaced by the maintenance screen when enabled.</p>
+                  </div>
+                  <Switch id="maintenance-mode" checked={form.maintenanceMode} onCheckedChange={(checked) => updateField("maintenanceMode", checked)} disabled={isLoading} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maintenance-message">Maintenance message</Label>
+                  <Textarea id="maintenance-message" value={form.maintenanceMessage} onChange={(event) => updateField("maintenanceMessage", event.target.value)} placeholder="We are making a few improvements. Please check back soon." className="min-h-24" disabled={isLoading} maxLength={240} />
                 </div>
               </CardContent>
             </Card>
@@ -189,28 +262,56 @@ export default function AdminSettings() {
             <Card>
               <CardHeader>
                 <CardTitle>Contact and welcome content</CardTitle>
-                <CardDescription>
-                  Optional content for public contact areas and future onboarding surfaces.
-                </CardDescription>
+                <CardDescription>Optional content for public contact areas and future onboarding surfaces.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="contact-email" className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /> Contact email</Label>
-                  <Input id="contact-email" type="email" value={form.contactEmail ?? ""} onChange={(event) => updateField("contactEmail", event.target.value)} placeholder="hello@example.com" disabled={isLoading} />
+                  <Input id="contact-email" type="email" value={form.contactEmail ?? ""} onChange={(event) => updateField("contactEmail", event.target.value)} placeholder="hello@example.com" disabled={isLoading} maxLength={160} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="contact-phone" className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> Contact phone</Label>
-                  <Input id="contact-phone" value={form.contactPhone ?? ""} onChange={(event) => updateField("contactPhone", event.target.value)} placeholder="09 ..." disabled={isLoading} />
+                  <Input id="contact-phone" value={form.contactPhone ?? ""} onChange={(event) => updateField("contactPhone", event.target.value)} placeholder="09 ..." disabled={isLoading} maxLength={40} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="welcome-message" className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-muted-foreground" /> Welcome message</Label>
-                  <Textarea id="welcome-message" value={form.welcomeMessage ?? ""} onChange={(event) => updateField("welcomeMessage", event.target.value)} placeholder="Welcome to University Navigator" className="min-h-28" disabled={isLoading} />
+                  <Textarea id="welcome-message" value={form.welcomeMessage ?? ""} onChange={(event) => updateField("welcomeMessage", event.target.value)} placeholder="Welcome to University Navigator" className="min-h-28" disabled={isLoading} maxLength={1000} />
                 </div>
               </CardContent>
             </Card>
 
-            <div className="sticky bottom-4 z-10 flex justify-end">
-              <Button type="submit" size="lg" className="shadow-lg" disabled={isLoading || isSaving || isUploadingLogo}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Eye className="h-5 w-5 text-primary" /> Public preview</CardTitle>
+                <CardDescription>Preview the current unsaved branding before publishing it.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button type="button" variant="outline" onClick={() => setIsPreviewOpen((open) => !open)}>
+                  <Eye className="mr-2 h-4 w-4" /> {isPreviewOpen ? "Hide preview" : "Show preview"}
+                </Button>
+                {isPreviewOpen && (
+                  <div className="rounded-xl border border-border bg-background p-5 shadow-sm">
+                    <div className="flex items-center gap-3 border-b pb-4">
+                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-primary p-1.5">
+                        {form.logoUrl ? <img src={form.logoUrl} alt="Preview logo" className="h-full w-full object-contain" /> : <BookOpen className="h-6 w-6 text-primary-foreground" />}
+                      </div>
+                      <div>
+                        <p className="font-bold text-primary">{form.projectName || "Project name"}</p>
+                        <p className="text-xs text-muted-foreground">{form.tagline || "Your project tagline"}</p>
+                      </div>
+                    </div>
+                    {form.maintenanceMode && <p className="mt-4 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">{form.maintenanceMessage}</p>}
+                    <p className="mt-4 text-sm text-muted-foreground">Current academic year: <span className="font-medium text-foreground">{form.academicYear || "YYYY-YYYY"}</span></p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="sticky bottom-4 z-10 flex flex-wrap justify-end gap-3">
+              <Button type="button" variant="outline" onClick={handleReset} disabled={isLoading || isSaving || isUploadingLogo || !hasChanges}>
+                <RotateCcw className="mr-2 h-4 w-4" /> Reset changes
+              </Button>
+              <Button type="submit" size="lg" className="shadow-lg" disabled={isLoading || isSaving || isUploadingLogo || !hasChanges}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {isSaving ? "Saving settings..." : "Save settings"}
               </Button>

@@ -973,6 +973,8 @@ export const GetSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
+  "maintenanceMode": zod.boolean(),
+  "maintenanceMessage": zod.string(),
   "updatedAt": zod.coerce.date()
 })
 
@@ -991,7 +993,9 @@ export const UpdateSiteSettingsBody = zod.object({
   "academicYear": zod.string().min(1),
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
-  "welcomeMessage": zod.string().nullish()
+  "welcomeMessage": zod.string().nullish(),
+  "maintenanceMode": zod.boolean().optional(),
+  "maintenanceMessage": zod.string().optional()
 })
 
 export const UpdateSiteSettingsResponse = zod.object({
@@ -1003,6 +1007,8 @@ export const UpdateSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
+  "maintenanceMode": zod.boolean(),
+  "maintenanceMessage": zod.string(),
   "updatedAt": zod.coerce.date()
 })
 

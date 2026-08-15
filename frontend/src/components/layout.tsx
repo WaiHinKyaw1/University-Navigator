@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, Menu, X, User as UserIcon } from "lucide-react";
+import { GraduationCap, LogOut, Menu, X, User as UserIcon, Wrench } from "lucide-react";
 import { useState } from "react";
 import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
@@ -20,6 +20,8 @@ export function Layout({
   const { data: siteSettings } = useGetSiteSettings();
   const projectName = siteSettings?.projectName || "MM Uni Finder";
   const tagline = siteSettings?.tagline || "Guiding Myanmar students to their future.";
+  const maintenanceMode = siteSettings?.maintenanceMode === true;
+  const maintenanceExempt = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"].some((path) => location.startsWith(path));
 
   const logoutMutation = useLogout({
     mutation: {
@@ -34,6 +36,28 @@ export function Layout({
   const handleLogout = () => {
     logoutMutation.mutate();
   };
+
+  if (maintenanceMode && user?.role !== "admin" && !maintenanceExempt) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+        <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            {siteSettings?.logoUrl ? (
+              <img src={siteSettings.logoUrl} alt={`${projectName} logo`} className="h-full w-full rounded-2xl object-contain p-2" />
+            ) : (
+              <Wrench className="h-7 w-7" />
+            )}
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">{projectName} is under maintenance</h1>
+          <p className="mt-3 text-muted-foreground">{siteSettings?.maintenanceMessage || "We are making a few improvements. Please check back soon."}</p>
+          <p className="mt-6 text-sm text-muted-foreground">Please check back soon.</p>
+          <Button asChild variant="outline" className="mt-6">
+            <Link href="/login">Admin login</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const NavLinks = () => (
     <>

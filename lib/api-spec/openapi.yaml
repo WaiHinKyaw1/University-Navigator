@@ -1037,6 +1037,10 @@ components:
           type: ["string", "null"]
         welcomeMessage:
           type: ["string", "null"]
+        maintenanceMode:
+          type: boolean
+        maintenanceMessage:
+          type: string
         updatedAt:
           type: string
           format: date-time
@@ -1061,6 +1065,10 @@ components:
           type: ["string", "null"]
         welcomeMessage:
           type: ["string", "null"]
+        maintenanceMode:
+          type: boolean
+        maintenanceMessage:
+          type: string
 
     # ── AUTH ──────────────────────────────────────────────────────────────
     RegisterInput:
