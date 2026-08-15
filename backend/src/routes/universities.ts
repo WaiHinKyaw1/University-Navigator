@@ -5,7 +5,7 @@ import {
   universityMajorsTable,
   majorsTable,
 } from "@workspace/db";
-import { eq, ilike, or, and, sql, inArray } from "drizzle-orm";
+import { asc, desc, eq, ilike, or, and, sql, inArray } from "drizzle-orm";
 import { requireAdmin, optionalAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -64,6 +64,8 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
     state,
     page = "1",
     limit = "1000",
+    sortBy = "name",
+    sortOrder = "asc",
   } = req.query as Record<string, string>;
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.min(1000, parseInt(limit, 10));
@@ -83,6 +85,15 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
   if (state) conditions.push(eq(universitiesTable.state, state));
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  const sortColumns = {
+    name: universitiesTable.name,
+    minScore: universitiesTable.minScore,
+    type: universitiesTable.type,
+    state: universitiesTable.state,
+  } as const;
+  const sortColumn =
+    sortColumns[sortBy as keyof typeof sortColumns] ?? universitiesTable.name;
+  const orderBy = sortOrder === "desc" ? desc(sortColumn) : asc(sortColumn);
 
   const [countResult] = await db
     .select({ count: sql<number>`count(*)` })
@@ -95,7 +106,7 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
     .where(whereClause)
     .limit(limitNum)
     .offset(offset)
-    .orderBy(universitiesTable.name);
+    .orderBy(orderBy, asc(universitiesTable.name));
 
   const withMajors = await attachMajorsToUniversities(unis);
 

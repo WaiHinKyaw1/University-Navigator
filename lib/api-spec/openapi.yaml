@@ -137,7 +137,7 @@ paths:
     get:
       operationId: listUniversities
       tags: [universities]
-      summary: List all universities with optional filters
+      summary: List all universities with optional filters and sorting
       parameters:
         - name: search
           in: query
@@ -163,6 +163,16 @@ paths:
           in: query
           schema:
             type: integer
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, minScore, type, state]
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
       responses:
         "200":
           description: List of universities

@@ -90,7 +90,7 @@ export const GetMeResponse = zod.object({
 
 
 /**
- * @summary List all universities with optional filters
+ * @summary List all universities with optional filters and sorting
  */
 export const ListUniversitiesQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
@@ -98,7 +98,9 @@ export const ListUniversitiesQueryParams = zod.object({
   "state": zod.coerce.string().optional(),
   "majorId": zod.coerce.number().optional(),
   "page": zod.coerce.number().optional(),
-  "limit": zod.coerce.number().optional()
+  "limit": zod.coerce.number().optional(),
+  "sortBy": zod.enum(["name", "minScore", "type", "state"]).optional(),
+  "sortOrder": zod.enum(["asc", "desc"]).optional()
 })
 
 export const ListUniversitiesResponse = zod.object({

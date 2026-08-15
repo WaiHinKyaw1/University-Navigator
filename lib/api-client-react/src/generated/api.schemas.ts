@@ -425,6 +425,8 @@ state?: string;
 majorId?: number;
 page?: number;
 limit?: number;
+sortBy?: 'name' | 'minScore' | 'type' | 'state';
+sortOrder?: 'asc' | 'desc';
 };
 
 export type ListNewsParams = {
