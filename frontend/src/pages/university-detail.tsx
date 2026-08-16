@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { useRoute, Link } from "wouter";
-import {
-  useGetSiteSettings,
-  useGetUniversity,
-  getGetUniversityQueryKey,
-} from "@workspace/api-client-react";
+import { useGetUniversity, getGetUniversityQueryKey } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,9 +19,7 @@ import {
   BookOpen,
   TrendingUp,
   ExternalLink,
-  Mail,
   Map,
-  Phone,
 } from "lucide-react";
 
 export default function UniversityDetail() {
@@ -44,7 +38,6 @@ export default function UniversityDetail() {
       queryKey: getGetUniversityQueryKey(id),
     },
   });
-  const { data: siteSettings } = useGetSiteSettings();
 
   if (isLoading) {
     return (
@@ -357,29 +350,6 @@ export default function UniversityDetail() {
                     )}
                   </div>
                 </div>
-                {(siteSettings?.contactEmail || siteSettings?.contactPhone) && (
-                  <div className="rounded-xl border border-border/60 bg-card p-5 space-y-3">
-                    <h3 className="font-bold border-b pb-2">Contact</h3>
-                    {siteSettings.contactEmail && (
-                      <a
-                        href={`mailto:${siteSettings.contactEmail}`}
-                        className="flex items-center gap-3 text-sm text-foreground hover:text-primary hover:underline break-all"
-                      >
-                        <Mail className="h-4 w-4 shrink-0 text-primary" />
-                        {siteSettings.contactEmail}
-                      </a>
-                    )}
-                    {siteSettings.contactPhone && (
-                      <a
-                        href={`tel:${siteSettings.contactPhone}`}
-                        className="flex items-center gap-3 text-sm text-foreground hover:text-primary hover:underline"
-                      >
-                        <Phone className="h-4 w-4 shrink-0 text-primary" />
-                        {siteSettings.contactPhone}
-                      </a>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>

@@ -8,15 +8,15 @@ import { logger } from "../lib/logger";
 // In-memory multer (no local disk writes) so profile images persist on
 // serverless deployments (Vercel) where local disk is ephemeral. The image is
 // stored in the database as a base64 data URL on the new `avatar_data` column.
-const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024; // ~2 MB once base64-encoded
-const AVATAR_MEMORY_LIMIT = 4 * 1024 * 1024; // reject oversized payloads early
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // ~2.8 MB once base64-encoded
+const AVATAR_MEMORY_LIMIT = 6 * 1024 * 1024; // reject oversized payloads early
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: AVATAR_MEMORY_LIMIT },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
-      cb(new Error("Only image files are allowed"));
+      cb(new Error("Only image files are allowed (JPG, PNG, or WebP)"));
       return;
     }
     cb(null, true);
@@ -37,7 +37,7 @@ router.post(
       if (err) {
         const message =
           err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
-            ? "Image too large. Please choose an image smaller than 1.5MB."
+            ? "Image too large. Please choose a photo smaller than 2 MB."
             : err.message || "Upload failed";
         res.status(400).json({ error: message });
         return;
@@ -54,7 +54,7 @@ router.post(
       }
       if (file.buffer.length > MAX_AVATAR_BYTES) {
         res.status(400).json({
-          error: "Image too large. Please choose an image smaller than 1.5MB.",
+          error: "Image too large. Please choose a photo smaller than 2 MB.",
         });
         return;
       }
