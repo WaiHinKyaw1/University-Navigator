@@ -112,54 +112,6 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              Recent Users
-            </CardTitle>
-            {overview?.recentUsers && (
-              <span className="text-xs text-muted-foreground">Last 5 registered</span>
-            )}
-          </CardHeader>
-          <CardContent>
-            {isOverviewLoading ? (
-              <CircleLoading label="Loading recent users" />
-            ) : overview?.recentUsers && overview.recentUsers.length > 0 ? (
-              <div className="space-y-3">
-                {overview.recentUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <img
-                        src={user.avatarUrl || "/default-avatar.png"}
-                        alt={user.name}
-                        className="h-9 w-9 rounded-full object-cover border"
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${user.role === "admin" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                        {user.role}
-                      </span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${user.status === "banned" ? "bg-destructive/10 text-destructive" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"}`}>
-                        {user.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex h-full items-center justify-center py-6 text-muted-foreground">No recent users</div>
-            )}
-          </CardContent>
-        </Card>
-
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="col-span-1">
             <CardHeader>
@@ -221,6 +173,53 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+                <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              Recent Users
+            </CardTitle>
+            {overview?.recentUsers && (
+              <span className="text-xs text-muted-foreground">Last 5 registered</span>
+            )}
+          </CardHeader>
+          <CardContent>
+            {isOverviewLoading ? (
+              <CircleLoading label="Loading recent users" />
+            ) : overview?.recentUsers && overview.recentUsers.length > 0 ? (
+              <div className="space-y-3">
+                {overview.recentUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <img
+                        src={user.avatarUrl || "/default-avatar.png"}
+                        alt={user.name}
+                        className="h-9 w-9 rounded-full object-cover border"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${user.role === "admin" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {user.role}
+                      </span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${user.status === "banned" ? "bg-destructive/10 text-destructive" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"}`}>
+                        {user.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center py-6 text-muted-foreground">No recent users</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
