@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-export default function ChangePassword() {
+export default function ChangePassword({ compact }: { compact?: boolean } = {}) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,9 +59,7 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="space-y-5 border rounded-xl p-6 bg-card mt-6">
-      <h2 className="text-xl font-bold">Change Password</h2>
-
+    <div className={`space-y-5 ${compact ? "" : "border rounded-xl p-6 bg-card mt-6"}`}>
       <div>
         <label className="text-sm font-medium">Current Password</label>
 

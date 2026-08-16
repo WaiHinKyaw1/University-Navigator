@@ -4,33 +4,13 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, User as UserIcon, Mail, Lock, Loader2, CheckCircle2 } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Loader2, CheckCircle2, Pencil } from "lucide-react";
 
 import { toast } from "sonner";
 
 import ChangePassword from "@/pages/change-password";
 import SavedUniversities from "@/components/saved-universities";
 import ProfileImageUpload from "@/components/profile-image-upload";
-
-function ProfileSectionHeader({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div className="mb-4">
-      <div className="mb-1 flex items-center gap-2 text-primary">
-        {icon}
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      </div>
-      {description && <p className="text-sm text-muted-foreground">{description}</p>}
-    </div>
-  );
-}
 
 export default function Profile() {
   const { user } = useAuth();
@@ -44,6 +24,8 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
 
   const [saved, setSaved] = useState(false);
+
+  const [editingInfo, setEditingInfo] = useState(false);
 
   const handleSave = async () => {
     try {
@@ -72,6 +54,7 @@ export default function Profile() {
 
       toast.success("Profile updated");
       setSaved(true);
+      setEditingInfo(false);
     } catch {
       toast.error("Update failed");
     } finally {
@@ -87,86 +70,135 @@ export default function Profile() {
     }
   }, [user]);
 
+  const initials = (name || user?.email || "U")
+    .split(" ")
+    .map((part) => part.trim()[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <Layout>
-      <div className="container mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <UserIcon className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">My Profile</h1>
-            <p className="text-sm text-muted-foreground">ကိုယ်အကောင့်အချက်အလက်နဲ့ သိမ်းထားသော တက္ကသိုလ်များ</p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-6">
-            <ProfileSectionHeader
-              icon={<UserIcon className="h-5 w-5" />}
-              title="Avatar"
-              description="Profile ပုံကို ပြောင်းလဲနိုင်ပါတယ်။"
-            />
-            <ProfileImageUpload
-              avatarUrl={avatarUrl}
-              onUploaded={(url) => setAvatarUrl(url)}
-            />
-          </div>
-
-          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-6">
-            <ProfileSectionHeader
-              icon={<Mail className="h-5 w-5" />}
-              title="Account Information"
-              description="အမည်နဲ့ အီးမေးလ်ကို ဖြည့်သွင်းပြီး သိမ်းဆည်းပါ။"
-            />
-            <div className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Name</label>
-
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Email</label>
-
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-
-              <div className="flex items-center gap-3 pt-1">
-                <Button className="min-h-10 flex-1 sm:flex-none" onClick={handleSave} disabled={loading}>
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                    </span>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
-                {saved && (
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="h-4 w-4" /> Saved
-                  </span>
+      <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
+          {/* Left: identity card */}
+          <div className="rounded-2xl border border-border/70 bg-card shadow-sm">
+            <div className="relative flex flex-col items-center border-b border-border/70 bg-primary/5 px-5 py-7">
+              <div className="relative">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile avatar"
+                    className="h-24 w-24 rounded-full border-4 border-background object-cover shadow-md"
+                  />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-background bg-primary/15 text-2xl font-bold text-primary shadow-md">
+                    {initials}
+                  </div>
                 )}
               </div>
+              <h1 className="mt-4 text-lg font-bold text-foreground">{name || "My Profile"}</h1>
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Mail className="h-3.5 w-3.5" /> {email}
+              </p>
+              <span
+                className={`mt-2 rounded-full px-3 py-1 text-[11px] font-semibold ${
+                  user?.role === "admin"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                }`}
+              >
+                {user?.role === "admin" ? "Administrator" : "Student"}
+              </span>
+            </div>
+
+            <div className="px-5 py-5">
+              <ProfileImageUpload
+                avatarUrl={avatarUrl}
+                onUploaded={(url) => setAvatarUrl(url)}
+                compact
+              />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-6">
-            <ProfileSectionHeader
-              icon={<Lock className="h-5 w-5" />}
-              title="Security"
-              description="စကားဝှက် ပြောင်းလဲနိုင်ပါတယ်။"
-            />
-            <ChangePassword />
-          </div>
+          {/* Right: sections */}
+          <div className="grid gap-5 xl:grid-cols-2">
+            <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary">
+                  <Mail className="h-4 w-4" />
+                  <h2 className="text-sm font-semibold text-foreground">Account Information</h2>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 cursor-pointer text-muted-foreground hover:text-foreground"
+                  onClick={() => setEditingInfo((v) => !v)}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  {editingInfo ? "Cancel" : "Edit"}
+                </Button>
+              </div>
 
-          <section>
-            <div className="mb-4 flex items-center gap-2">
-              <Heart className="h-4 w-4 fill-current text-rose-500" />
-              <h2 className="text-lg font-semibold text-foreground">Saved Universities</h2>
-            </div>
-            <SavedUniversities />
-          </section>
+              {editingInfo ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Email</label>
+                    <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div className="flex items-center gap-3 pt-1">
+                    <Button className="h-9 cursor-pointer" onClick={handleSave} disabled={loading}>
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...
+                        </span>
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </Button>
+                    {saved && (
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Saved
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2">
+                    <span className="text-muted-foreground">Name</span>
+                    <span className="font-medium text-foreground">{name || "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Email</span>
+                    <span className="break-all font-medium text-foreground">{email || "—"}</span>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-2 text-primary">
+                <Lock className="h-4 w-4" />
+                <h2 className="text-sm font-semibold text-foreground">Security</h2>
+              </div>
+              <ChangePassword compact />
+            </section>
+
+            <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm xl:col-span-2">
+              <div className="mb-3 flex items-center gap-2 text-primary">
+                <UserIcon className="h-4 w-4" />
+                <h2 className="text-sm font-semibold text-foreground">Saved Universities</h2>
+              </div>
+              <SavedUniversities />
+            </section>
+          </div>
         </div>
       </div>
     </Layout>

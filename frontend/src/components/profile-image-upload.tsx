@@ -7,9 +7,10 @@ import { useAuth } from "@/hooks/use-auth";
 interface Props {
   avatarUrl?: string | null;
   onUploaded: (url: string | null) => void;
+  compact?: boolean;
 }
 
-export default function ProfileImageUpload({ avatarUrl, onUploaded }: Props) {
+export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -121,6 +122,44 @@ export default function ProfileImageUpload({ avatarUrl, onUploaded }: Props) {
       toast.error("Remove failed");
     }
   };
+
+  if (compact) {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <p className="mb-1 text-xs font-medium text-muted-foreground">Profile Photo</p>
+        {file && <p className="text-xs text-muted-foreground">{file.name}</p>}
+        <div className="flex w-full gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex-1 cursor-pointer"
+            onClick={() => inputRef.current?.click()}
+          >
+            <Camera className="mr-1 h-4 w-4" />
+            {file ? "Change Photo" : "Upload Photo"}
+          </Button>
+          {file && (
+            <Button type="button" size="sm" className="cursor-pointer" onClick={upload} disabled={loading}>
+              {loading ? "Saving..." : "Save"}
+            </Button>
+          )}
+          {avatarUrl && !file && (
+            <Button type="button" variant="destructive" size="sm" className="cursor-pointer" onClick={remove}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <input
+          ref={inputRef}
+          hidden
+          type="file"
+          accept="image/*"
+          onChange={chooseFile}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-5 mb-8">

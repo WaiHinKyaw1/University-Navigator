@@ -89,7 +89,9 @@ export async function downloadUniversityCsv(): Promise<void> {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!response.ok) throw new Error("Failed to export universities");
-  const blob = await response.blob();
+  // Prepend a UTF-8 BOM so Excel (and other spreadsheet apps) render Myanmar text correctly.
+  const text = await response.text();
+  const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

@@ -16,15 +16,9 @@ export default function SavedUniversities() {
   };
 
   return (
-    <section className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Heart className="h-4 w-4 fill-current text-rose-500" />
-            <h2 className="text-lg font-semibold text-foreground">Saved Universities</h2>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">နောက်မှ ပြန်ကြည့်ရန် သိမ်းထားသော တက္ကသိုလ်များ</p>
-        </div>
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">နောက်မှ ပြန်ကြည့်ရန် သိမ်းထားသော တက္ကသိုလ်များ</p>
       </div>
 
       {isLoading ? (
@@ -45,7 +39,7 @@ export default function SavedUniversities() {
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <Building2 className="mx-auto mb-3 h-9 w-9 text-muted-foreground/40" />
           <p className="font-medium text-foreground">သိမ်းထားတာ မရှိသေးပါ</p>
-          <p className="mt-1 text-sm text-muted-foreground">Universities စာမျက်နှာမှ တက်ကသိုလ်ကိတ်ကာဒ်ပေါ်ရှိ နှလုံးပုံခလုတ်ကို နှိပ်ပီး သိမ်းနိုင်ပါတယ်။</p>
+          <p className="mt-1 text-sm text-muted-foreground">Universities စာမျက်နှာမှ ကြိုက်နှစ်သက်သော တက်ကသိုလ်ကို သိမ်းနိုင်ပါတယ်။</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -85,6 +79,6 @@ export default function SavedUniversities() {
           })}
         </div>
       )}
-    </section>
+    </div>
   );
 }
