@@ -163,7 +163,7 @@ export default function AdminSettings() {
             <p className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
               <Settings2 className="h-4 w-4" /> Project configuration
             </p>
-            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
             <p className="mt-1 text-muted-foreground">
               Update the public identity and academic settings without changing code.
             </p>
@@ -188,7 +188,7 @@ export default function AdminSettings() {
                 </CardTitle>
                 <CardDescription>These values appear in the public navigation and footer.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-5 sm:space-y-6">
                 <div className="grid gap-6 md:grid-cols-[180px_1fr]">
                   <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/20 p-4">
                     <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background shadow-sm">

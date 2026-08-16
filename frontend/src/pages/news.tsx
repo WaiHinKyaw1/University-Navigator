@@ -48,7 +48,7 @@ export default function News() {
               <Newspaper className="h-4 w-4" />
               Admission News
             </div>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">Latest announcements</h1>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Latest announcements</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               တက္ကသိုလ်ဝင်ခွင့်၊ ကြေညာချက်များနှင့် scholarship သတင်းများကို ဒီနေရာမှာ ကြည့်နိုင်ပါတယ်။
             </p>
@@ -107,10 +107,10 @@ export default function News() {
                   <img
                     src={activeArticle.imageUrl}
                     alt={activeArticle.title}
-                    className="h-64 w-full object-cover"
+                    className="h-48 w-full object-cover sm:h-64"
                   />
                 )}
-                <div className="p-5 md:p-7">
+                <div className="p-4 sm:p-5 md:p-7">
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <Badge>{activeArticle.category}</Badge>
                     <span>{formatDate(activeArticle.createdAt)}</span>

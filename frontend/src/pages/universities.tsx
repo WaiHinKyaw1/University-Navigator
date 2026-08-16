@@ -107,12 +107,12 @@ function UniversityCard({
   onToggleCompare: (university: University) => void;
 }) {
   return (
-    <Card className="group flex flex-col overflow-hidden rounded-2xl border-gray-100 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
+    <Card className="group flex flex-col overflow-hidden rounded-2xl border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
       <div
         className={`h-1.5 w-full ${TYPE_STRIP[university.type] ?? "bg-gradient-to-r from-gray-300 to-gray-400"}`}
       />
 
-      <div className="relative h-32 overflow-hidden bg-gray-50">
+      <div className="relative h-32 overflow-hidden bg-muted/30">
         {university.imageUrl ? (
             <img
             src={university.imageUrl}
@@ -123,7 +123,7 @@ function UniversityCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <Building2 className="h-10 w-10 text-gray-200" />
+            <Building2 className="h-10 w-10 text-muted-foreground/40" />
           </div>
         )}
         <div className="absolute right-2 top-2 flex items-center gap-2">
@@ -145,16 +145,16 @@ function UniversityCard({
 
       <CardContent className="flex-1 space-y-2.5 p-4">
         <div>
-          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">
+          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-card-foreground">
             {university.name}
           </h3>
-          <p className="mt-0.5 line-clamp-1 text-[11px] text-gray-400">
+          <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
             {university.nameEn}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-1">
-          <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
+          <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
             <MapPin className="h-2.5 w-2.5" />
             {university.city || university.state}
           </span>
@@ -164,8 +164,8 @@ function UniversityCard({
         </div>
 
         {university.majors && university.majors.length > 0 && (
-          <div className="flex items-start gap-1 text-[11px] text-gray-500">
-            <BookOpen className="mt-0.5 h-3 w-3 shrink-0 text-gray-400" />
+          <div className="flex items-start gap-1 text-[11px] text-muted-foreground">
+            <BookOpen className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
             <span className="line-clamp-2">
               {university.majors
                 .slice(0, 3)
@@ -178,8 +178,8 @@ function UniversityCard({
           </div>
         )}
 
-        <div className="flex items-center justify-between border-t border-gray-100 pt-2">
-          <span className="text-[11px] text-gray-400">လိုအပ်ရမှတ်</span>
+        <div className="flex items-center justify-between border-t border-border pt-2">
+          <span className="text-[11px] text-muted-foreground">လိုအပ်ရမှတ်</span>
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-black ${SCORE_COLOR(university.minScore)}`}
           >
@@ -231,12 +231,12 @@ function Pagination({
   );
 
   return (
-    <div className="flex items-center justify-center gap-1.5 pt-4">
+    <div className="flex flex-wrap items-center justify-center gap-1.5 pt-4">
       <button
         type="button"
         onClick={() => onChange(page - 1)}
         disabled={page === 1}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Previous page"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -250,10 +250,10 @@ function Pagination({
           <button
             type="button"
             onClick={() => onChange(candidate)}
-            className={`h-9 min-w-9 rounded-xl px-2.5 text-sm font-semibold transition-colors ${
+            className={`touch-target h-9 min-w-9 rounded-xl px-2.5 text-sm font-semibold transition-colors ${
               candidate === page
                 ? "bg-primary text-white shadow-sm"
-                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+                : "border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-primary"
             }`}
             aria-label={`Page ${candidate}`}
             aria-current={candidate === page ? "page" : undefined}
@@ -267,7 +267,7 @@ function Pagination({
         type="button"
         onClick={() => onChange(page + 1)}
         disabled={page === totalPages}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Next page"
       >
         <ChevronRight className="h-4 w-4" />
@@ -356,14 +356,14 @@ export default function Universities() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50/30">
-        <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:space-y-6 sm:py-8">
           <div className="space-y-2 text-center">
             <div className="flex items-center justify-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900">တက္ကသိုလ်များ</h1>
+              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">တက္ကသိုလ်များ</h1>
               {!isLoading && <Badge variant="secondary">{total} ခု</Badge>}
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               မြန်မာနိုင်ငံရှိ တက္ကသိုလ်များကို အမည်၊ နေရာဒေသ၊ အမျိုးအစားအလိုက် ရှာဖွေကြည့်ရှုပါ — {academicYear}
             </p>
           </div>
@@ -374,7 +374,7 @@ export default function Universities() {
               <Input
                 type="search"
                 placeholder="အမည်၊ English name၊ abbreviation၊ မြို့ သို့မဟုတ် ပြည်နယ် ရှာပါ..."
-                className="h-12 rounded-2xl border-gray-100 bg-white pl-10 shadow-sm"
+                className="h-12 rounded-2xl border-input bg-card pl-10 shadow-sm"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
                 aria-label="Search universities"
@@ -387,7 +387,7 @@ export default function Universities() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="h-12 w-full shrink-0 rounded-2xl border-gray-100 bg-white shadow-sm sm:w-[240px]">
+              <SelectTrigger className="h-12 w-full shrink-0 rounded-2xl border-input bg-card shadow-sm sm:w-[240px]">
                 <SelectValue placeholder="တိုင်းဒေသကြီး / ပြည်နယ်" />
               </SelectTrigger>
               <SelectContent className="max-h-[320px] overflow-y-auto">
@@ -420,7 +420,7 @@ export default function Universities() {
             </Select>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="-mx-1 flex flex-wrap justify-center gap-2 px-1">
             {CATEGORIES.map((category) => (
               <button
                 key={category.value}
@@ -429,10 +429,10 @@ export default function Universities() {
                   setActiveCategory(category.value);
                   setPage(1);
                 }}
-                className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                className={`touch-target flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-semibold transition-all sm:px-4 ${
                   activeCategory === category.value
                     ? "border-primary bg-primary text-white shadow-sm"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-primary/40 hover:text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-primary"
                 }`}
               >
                 <span>{category.emoji}</span>
@@ -441,7 +441,7 @@ export default function Universities() {
             ))}
           </div>
 
-          <div className="flex min-h-5 items-center justify-center gap-2 text-center text-xs text-gray-400">
+          <div className="flex min-h-5 flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-muted-foreground">
             {isFetching && !isLoading && <span>ရှာဖွေနေသည်...</span>}
             {!isLoading && !isFetching && total > 0 && (
               <span>
@@ -461,7 +461,7 @@ export default function Universities() {
           </div>
 
           {compareUniversities.length > 0 && (
-            <div className="sticky bottom-4 z-30 flex flex-col gap-3 rounded-2xl border border-primary/20 bg-background/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="safe-area-pb sticky bottom-0 z-30 -mx-2 flex flex-col gap-3 rounded-2xl border border-primary/20 bg-background/95 p-3 shadow-lg backdrop-blur sm:bottom-4 sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:p-4">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <GitCompareArrows className="h-4 w-4" />
@@ -486,11 +486,11 @@ export default function Universities() {
                   </div>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={clearUniversities}>
+              <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+                <Button type="button" variant="ghost" size="sm" className="flex-1 sm:flex-none" onClick={clearUniversities}>
                   အားလုံးဖယ်မယ်
                 </Button>
-                <Button asChild size="sm" disabled={compareUniversities.length < 2}>
+                <Button asChild size="sm" className="flex-1 sm:flex-none" disabled={compareUniversities.length < 2}>
                   <Link href="/compare">
                     <GitCompareArrows className="mr-1.5 h-4 w-4" />
                     Compare ကြည့်မယ်
@@ -515,7 +515,7 @@ export default function Universities() {
               ))}
             </div>
           ) : isError ? (
-            <div className="rounded-2xl border border-red-100 bg-white py-20 text-center">
+            <div className="rounded-2xl border border-red-200/60 bg-card px-4 py-16 text-center">
               <Building2 className="mx-auto mb-3 h-12 w-12 text-red-200" />
               <p className="font-semibold text-gray-700">Data ရယူ၍ မရပါ</p>
               <p className="mt-1 text-sm text-gray-400">ကွန်ယက်ချိတ်ဆက်မှု စစ်ပြီး ပြန်လည် ကြိုးစားပါ</p>
@@ -524,7 +524,7 @@ export default function Universities() {
               </Button>
             </div>
           ) : universities.length === 0 ? (
-            <div className="rounded-2xl border border-gray-100 bg-white py-20 text-center">
+            <div className="rounded-2xl border border-border bg-card px-4 py-16 text-center">
               <Building2 className="mx-auto mb-3 h-12 w-12 text-gray-200" />
               <p className="font-medium text-gray-600">တက္ကသိုလ် မတွေ့ပါ</p>
               <p className="mt-1 text-sm text-gray-400">ရှာဖွေမှု သို့မဟုတ် Filter ပြောင်းကြည့်ပါ</p>

@@ -46,8 +46,8 @@ export default function Compare() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-muted/20">
-        <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-6">
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:space-y-6 sm:py-8 md:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="mb-2 flex items-center gap-2 text-primary">
@@ -62,7 +62,7 @@ export default function Compare() {
               </p>
             </div>
             {universities.length > 0 && (
-              <Button variant="outline" onClick={clearUniversities}>
+              <Button variant="outline" className="w-full sm:w-auto" onClick={clearUniversities}>
                 အားလုံးဖယ်မယ်
               </Button>
             )}
@@ -87,8 +87,8 @@ export default function Compare() {
             </Card>
           ) : (
             <Card className="overflow-hidden border-border/70 shadow-sm">
-              <CardContent className="overflow-x-auto p-0">
-                <div className="min-w-[910px]">
+              <CardContent className="overflow-x-auto p-0 [scrollbar-width:thin]">
+                <div className="min-w-[910px] pb-2 touch-pan-x">
                   <div
                     className="grid bg-card"
                     style={{ gridTemplateColumns: `minmax(150px, 0.8fr) repeat(${universities.length}, minmax(190px, 1fr))` }}
@@ -103,13 +103,13 @@ export default function Compare() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-2 top-2 h-7 w-7 text-muted-foreground hover:text-destructive"
+                          className="touch-target absolute right-2 top-2 h-9 w-9 text-muted-foreground hover:text-destructive"
                           onClick={() => removeUniversity(university.id)}
                           aria-label={`${university.name} ကို နှိုင်းယှဉ်မှုမှ ဖယ်မယ်`}
                         >
                           <X className="h-4 w-4" />
                         </Button>
-                        <div className="mb-3 flex h-20 items-center justify-center overflow-hidden rounded-xl bg-muted/40">
+                        <div className="mb-3 flex h-20 items-center justify-center overflow-hidden rounded-xl bg-muted/40 sm:h-24">
                           {university.imageUrl ? (
                             <img
                               src={university.imageUrl}

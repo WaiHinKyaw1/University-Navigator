@@ -131,7 +131,7 @@ function Pagination({
       <button
         onClick={() => onChange(page - 1)}
         disabled={page === 1}
-        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -139,14 +139,14 @@ function Pagination({
       {visible.map((p, i, arr) => (
         <span key={p} className="flex items-center gap-1.5">
           {i > 0 && arr[i - 1] !== p - 1 && (
-            <span className="text-gray-400 text-sm px-1">…</span>
+            <span className="px-1 text-sm text-muted-foreground">…</span>
           )}
           <button
             onClick={() => onChange(p)}
             className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
               p === page
-                ? "bg-primary text-white shadow-sm"
-                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "border border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-primary"
             }`}
           >
             {p}
@@ -157,7 +157,7 @@ function Pagination({
       <button
         onClick={() => onChange(page + 1)}
         disabled={page === totalPages}
-        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -367,14 +367,14 @@ export default function AdminUniversities() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Universities</h1>
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Universities</h1>
                 <Badge variant="secondary">{response?.total ?? 0} universities</Badge>
               </div>
               <p className="text-muted-foreground">
                 Manage the directory of universities.
               </p>
             </div>
-            <Button onClick={openCreate} className="cursor-pointer w-full sm:w-auto">
+            <Button onClick={openCreate} className="min-h-10 w-full cursor-pointer sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add University
             </Button>

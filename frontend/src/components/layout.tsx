@@ -128,7 +128,7 @@ export function Layout({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between mx-auto">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
               <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-primary p-1.5">
@@ -138,7 +138,7 @@ export function Layout({
                   <GraduationCap className="h-6 w-6 text-primary-foreground" />
                 )}
               </div>
-              <span className="inline-block font-bold text-xl text-primary">
+              <span className="inline-block max-w-[11rem] truncate font-bold text-base sm:text-xl text-primary">
                 {projectName}
               </span>
             </Link>
@@ -156,7 +156,7 @@ export function Layout({
                       user?.role === "admin" ? "/admin/profile" : "/profile"
                     }
                   >
-                    <button className="flex items-center gap-2 rounded-full px-3 py-2 hover:bg-muted transition">
+                    <button className="touch-target flex items-center gap-2 rounded-full px-2 sm:px-3 py-2 hover:bg-muted transition">
                       <img
                         src={user.avatarUrl || "/default-avatar.png"}
                         alt="profile"
@@ -189,7 +189,7 @@ export function Layout({
             </div>
             <Button
               variant="ghost"
-              className="md:hidden px-2"
+              className="touch-target md:hidden px-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -202,8 +202,8 @@ export function Layout({
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-b border-border bg-background p-4 flex flex-col gap-4">
-            <nav className="flex flex-col gap-4">
+          <div className="md:hidden max-h-[calc(100svh-4rem)] overflow-y-auto border-b border-border bg-background p-4 safe-area-pb flex flex-col gap-4">
+            <nav className="flex flex-col gap-1" onClick={() => setMobileMenuOpen(false)}>
               <NavLinks />
             </nav>
             <div className="pt-4 border-t flex flex-col gap-3">
@@ -269,7 +269,7 @@ export function Layout({
 
       {!noFooter && (
         <footer className="border-t bg-muted/40 py-5 md:py-8 mt-auto">
-          <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
+          <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4 sm:px-6 text-center md:text-left text-sm text-muted-foreground">
             <div>
                               <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
                 {siteSettings?.logoUrl ? (
@@ -284,7 +284,7 @@ export function Layout({
               </p>
 
             </div>
-            <div className="flex gap-4">
+            <div className="flex max-w-full flex-wrap justify-center gap-x-4 gap-y-2">
               <Link
                 href="/universities"
                 className="hover:text-foreground transition-colors"
