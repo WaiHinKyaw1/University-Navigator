@@ -44,67 +44,54 @@ router.post("/score/calculate", optionalAuth, async (req, res): Promise<void> =>
     majorsByUniversity.set(row.universityId, existing);
   }
 
-  const results = allUnis.map((uni) => {
-    const majors = majorsByUniversity.get(uni.id) ?? [];
-    const eligible = score >= uni.minScore;
-    const gap = score - uni.minScore;
-    const matchedMajors = majors.filter((major) => selectedMajorIds.includes(major.id));
-    const majorMatch = matchedMajors.length > 0;
+  // Only include universities the student can actually enter.
+  const eligibleUnis = allUnis.filter((uni) => score >= uni.minScore);
 
-    let matchScore = 0;
-    if (eligible) {
-      // Prefer universities near the student's score, while still rewarding eligibility.
-      matchScore = Math.max(0, 100 - Math.abs(score - uni.minScore) * 0.5);
-    } else {
-      // Keep nearby options visible as stretch recommendations.
-      matchScore = Math.max(0, 50 - Math.abs(gap) * 2);
-    }
+  const results = eligibleUnis
+    .map((uni) => {
+      const majors = majorsByUniversity.get(uni.id) ?? [];
+      const eligible = true;
+      const gap = score - uni.minScore;
+      const matchedMajors = majors.filter((major) => selectedMajorIds.includes(major.id));
+      const majorMatch = matchedMajors.length > 0;
 
-    if (majorMatch) {
-      matchScore += eligible ? 15 : 8;
-    }
+      // Score universities closest to the student's total most highly.
+      let matchScore = Math.max(0, 100 - Math.abs(gap) * 0.5);
+      if (majorMatch) {
+        matchScore += 15;
+      }
 
-    const recommendationReasons: string[] = [];
-    if (eligible) {
-      recommendationReasons.push("သင်ရမှတ်ဖြင့် ဝင်ခွင့်အနိမ့်ဆုံးရမှတ်ကို ဖြည့်မီသည်");
-    } else {
-      recommendationReasons.push(`ဝင်ခွင့်ရရန် ${Math.abs(gap)} မှတ် လိုအပ်သေးသည်`);
-    }
-    if (majorMatch) {
-      const majorNames = matchedMajors
-        .map((major) => major.nameEn || major.name)
-        .slice(0, 2)
-        .join(", ");
-      recommendationReasons.push(`သင်ရွေးထားသော ဘာသာရပ်နှင့် ကိုက်ညီသည်: ${majorNames}`);
-    } else if (selectedMajorIds.length > 0) {
-      recommendationReasons.push("ရွေးထားသော ဘာသာရပ်များ မတွေ့ပါ; အခြားဘာသာရပ်များကိုလည်း စစ်ဆေးပါ");
-    }
-    if (eligible && Math.abs(gap) <= 30) {
-      recommendationReasons.push("သင့်ရမှတ်နှင့် ဝင်ခွင့်ဖြတ်မှတ် နီးစပ်သော ရွေးချယ်မှုဖြစ်သည်");
-    }
+      const recommendationReasons: string[] = [];
+      recommendationReasons.push("သင့်ရမှတ်ဖြင့် ဝင်ခွင့်အနိမ့်ဆုံးရမှတ်ကို ဖြည့်မီသည်");
+      if (majorMatch) {
+        const majorNames = matchedMajors
+          .map((major) => major.nameEn || major.name)
+          .slice(0, 2)
+          .join(", ");
+        recommendationReasons.push(`သင်ရွေးထားသော ဘာသာရပ်နှင့် ကိုက်ညီသည်: ${majorNames}`);
+      }
+      if (gap <= 30) {
+        recommendationReasons.push("သင့်ရမှတ်နှင့် ဝင်ခွင့်ဖြတ်မှတ် နီးစပ်သော ရွေးချယ်မှုဖြစ်သည်");
+      }
 
-    const recommendationTier = majorMatch && eligible
-      ? "strong"
-      : eligible
-        ? "eligible"
-        : Math.abs(gap) <= 30
-          ? "near"
-          : "stretch";
+      const recommendationTier = majorMatch ? "strong" : "eligible";
 
-    return {
-      university: { ...uni, majors },
-      matchScore: Math.min(100, Math.round(matchScore)),
-      eligible,
-      gap,
-      majorMatch,
-      recommendationTier,
-      recommendationReasons,
-    };
-  });
+      return {
+        university: { ...uni, majors },
+        matchScore: Math.min(100, Math.round(matchScore)),
+        eligible,
+        gap,
+        majorMatch,
+        recommendationTier,
+        recommendationReasons,
+      };
+    })
+    // When subject interests are chosen, only keep universities offering those majors.
+    .filter((r) => (selectedMajorIds.length > 0 ? r.majorMatch : true));
 
   results.sort((a, b) => {
-    if (a.eligible && !b.eligible) return -1;
-    if (!a.eligible && b.eligible) return 1;
+    // Exact major matches first, then by match score.
+    if (a.majorMatch !== b.majorMatch) return a.majorMatch ? -1 : 1;
     return b.matchScore - a.matchScore;
   });
 

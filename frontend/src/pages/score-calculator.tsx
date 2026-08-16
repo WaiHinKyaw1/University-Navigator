@@ -304,14 +304,9 @@ function ResultCard({
 
   return (
     <div
-      className={`rounded-2xl border overflow-hidden transition-all hover:shadow-md ${eligible
-        ? "border-primary/30 bg-card shadow-sm"
-        : "border-border bg-muted/30"
-        }`}
+      className="rounded-2xl border border-primary/30 bg-card overflow-hidden transition-all hover:shadow-md shadow-sm"
     >
-      <div
-        className={`h-1 w-full ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-muted-foreground/30"}`}
-      />
+              <div className="h-1 w-full bg-gradient-to-r from-primary to-emerald-400" />
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -356,15 +351,10 @@ function ResultCard({
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-orange-300"}`}
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              {!eligible && (
-                <p className="text-[11px] text-orange-600 font-medium">
-                  ဝင်ခွင့်ရရန် {gap} မှတ် ပိုလိုသေး
-                </p>
-              )}
               {recommendationReasons && recommendationReasons.length > 0 && (
                 <div className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3">
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-primary">
@@ -381,15 +371,9 @@ function ResultCard({
           </div>
 
           <div className="flex flex-col items-end gap-2 shrink-0">
-            {eligible ? (
-              <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-sm bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-                <CheckCircle2 className="h-3.5 w-3.5" /> ဝင်ခွင့်ရ
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground">
-                <XCircle className="h-3.5 w-3.5" /> မဝင်နိုင်သေး
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-sm bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+              <CheckCircle2 className="h-3.5 w-3.5" /> ဝင်ခွင့်ရ
+            </div>
             <Link href={`/universities/${uni.id}`}>
               <span
                 className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer transition-colors ${eligible
@@ -532,15 +516,10 @@ export default function ScoreCalculator() {
     const eligible = allUniversities.filter(
       (u) => u.minScore != null && u.minScore <= sliderTotal,
     );
-    const notEligible = allUniversities
-      .filter((u) => u.minScore != null && u.minScore > sliderTotal)
-      .sort((a, b) => a.minScore - b.minScore)
-      .slice(0, 8);
     return [
       ...eligible
         .sort((a, b) => b.minScore - a.minScore)
         .map((u) => ({ uni: u, eligible: true })),
-      ...notEligible.map((u) => ({ uni: u, eligible: false })),
     ];
   }, [sliderTotal, allUniversities, inputMode]);
 
@@ -557,9 +536,6 @@ export default function ScoreCalculator() {
 
   const subjectEligible =
     filteredSubjectResults.filter((r: any) => r.eligible) ?? [];
-  const subjectNotEligible =
-    filteredSubjectResults.filter((r: any) => !r.eligible) ?? [];
-
   const sliderEligibleCount = sliderResults.filter((r) => r.eligible).length;
 
   return (
@@ -807,9 +783,6 @@ export default function ScoreCalculator() {
                       <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full">
                         ✓ {subjectEligible.length} ကျောင်း
                       </span>
-                      <span className="text-xs font-semibold bg-gray-100 text-gray-500 px-3 py-1 rounded-full">
-                        ✗ {subjectNotEligible.length} ကျောင်း
-                      </span>
                     </div>
                   </div>
 
@@ -834,28 +807,6 @@ export default function ScoreCalculator() {
                     </div>
                   )}
 
-                  {subjectNotEligible.length > 0 && (
-                    <div className="space-y-3">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-gray-500">
-                        <XCircle className="h-4 w-4 text-gray-400" />{" "}
-                        မဝင်နိုင်သေးသော တက္ကသိုလ်များ
-                      </p>
-                      {subjectNotEligible
-                        .slice(0, 6)
-                        .map((m: any, i: number) => (
-                          <ResultCard
-                            key={i}
-                            uni={m.university}
-                            userTotal={subjectTotal}
-                            eligible={false}
-                            matchScore={m.matchScore}
-                            majorMatch={m.majorMatch}
-                            recommendationTier={m.recommendationTier}
-                            recommendationReasons={m.recommendationReasons}
-                          />
-                        ))}
-                    </div>
-                  )}
                 </div>
               )}
             </>
@@ -899,24 +850,6 @@ export default function ScoreCalculator() {
                     </div>
                   )}
 
-                  {sliderResults.filter((r) => !r.eligible).length > 0 && (
-                    <div className="space-y-3">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-gray-500">
-                        <XCircle className="h-4 w-4 text-gray-400" /> နီးစပ်သော
-                        တက္ကသိုလ်များ ({sliderTotal} + မှတ် ပိုလိုသည်)
-                      </p>
-                      {sliderResults
-                        .filter((r) => !r.eligible)
-                        .map(({ uni }, i) => (
-                          <ResultCard
-                            key={i}
-                            uni={uni}
-                            userTotal={sliderTotal}
-                            eligible={false}
-                          />
-                        ))}
-                    </div>
-                  )}
 
                   {sliderEligibleCount === 0 && (
                     <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
