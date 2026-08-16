@@ -185,7 +185,7 @@ function TotalScoreSlider({
   const scorePct = Math.round((value / 600) * 100);
   const PRIMARY = "hsl(161, 80%, 25%)";
   const label =
-    value < 320
+    value < 240
       ? { text: "ဝင်ခွင့်ရမှတ် မရောက်သေး", color: "text-red-500" }
       : value < 380
         ? { text: "ကျောင်းအချို့ ဝင်ခွင့်ရနိုင်", color: "text-orange-500" }
@@ -261,10 +261,10 @@ function TotalScoreSlider({
           <span>600</span>
         </div>
       </div>
-
       <p className={`text-sm text-center font-medium ${label.color}`}>
         {label.text}
       </p>
+
     </div>
   );
 }
@@ -719,7 +719,7 @@ export default function ScoreCalculator() {
                 <p className="text-center text-sm font-medium text-muted-foreground">
                   {isFailedExam
                     ? <span className="text-red-500 font-bold">❌ ဘာသာရပ်တစ်ခုခု ၄၀ အောက်ရရှိပါက တက္ကသိုလ်ဝင်ခွင့် မရနိုင်ပါ</span>
-                    : subjectTotal < 350
+                    : subjectTotal < 240
                     ? "🔴 ဝင်ခွင့်ရမှတ် မရောက်သေး"
                     : subjectTotal < 400
                       ? "🟡 ကောင်းသည်"
