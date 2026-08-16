@@ -1151,6 +1151,18 @@ components:
           description: Minimum total score required for admission
         description:
           type: ["string", "null"]
+        admissionRequirements:
+          type: ["string", "null"]
+          description: Detailed admission requirements when available
+        applicationProcess:
+          type: ["string", "null"]
+          description: Application steps when available
+        duration:
+          type: ["string", "null"]
+          description: Typical program duration when available
+        careerOutcomes:
+          type: ["string", "null"]
+          description: Career outcome information when available
         website:
           type: ["string", "null"]
         imageUrl:

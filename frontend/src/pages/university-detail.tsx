@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import {
+  useGetSiteSettings,
   useGetUniversity,
   getGetUniversityQueryKey,
 } from "@workspace/api-client-react";
@@ -22,6 +23,10 @@ import {
   Sparkles,
   BookOpen,
   TrendingUp,
+  ExternalLink,
+  Mail,
+  Map,
+  Phone,
 } from "lucide-react";
 
 export default function UniversityDetail() {
@@ -40,6 +45,7 @@ export default function UniversityDetail() {
       queryKey: getGetUniversityQueryKey(id),
     },
   });
+  const { data: siteSettings } = useGetSiteSettings();
 
   if (isLoading) {
     return (
@@ -81,12 +87,12 @@ export default function UniversityDetail() {
       </Layout>
     );
   }
-  console.log(selectedMajor);
-
   const toMyanmarNumber = (number: number) => {
     const digits = "၀၁၂၃၄၅၆၇၈၉";
     return number.toString().replace(/\d/g, (d) => digits[Number(d)]);
   };
+  const mapSearch = [uni.city, uni.state, "Myanmar"].filter(Boolean).join(", ");
+  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapSearch)}`;
 
   return (
     <Layout>
@@ -150,6 +156,59 @@ export default function UniversityDetail() {
                       "No description available for this university."}
                   </p>
                 </div>
+
+                {(uni.admissionRequirements ||
+                  uni.applicationProcess ||
+                  uni.duration ||
+                  uni.careerOutcomes) && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold mb-3 border-b pb-2">
+                      Admission & Outcomes
+                    </h3>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {uni.admissionRequirements && (
+                        <div className="rounded-xl border border-border/60 bg-muted/30 p-4 sm:col-span-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
+                            Admission Requirements
+                          </p>
+                          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                            {uni.admissionRequirements}
+                          </p>
+                        </div>
+                      )}
+                      {uni.applicationProcess && (
+                        <div className="rounded-xl border border-border/60 bg-muted/30 p-4 sm:col-span-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
+                            Application Process
+                          </p>
+                          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                            {uni.applicationProcess}
+                          </p>
+                        </div>
+                      )}
+                      {uni.duration && (
+                        <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
+                            Typical Duration
+                          </p>
+                          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                            {uni.duration}
+                          </p>
+                        </div>
+                      )}
+                      {uni.careerOutcomes && (
+                        <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
+                            Career Outcomes
+                          </p>
+                          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                            {uni.careerOutcomes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <h3 className="text-lg font-bold mb-3 border-b pb-2 flex items-center justify-between">
@@ -235,6 +294,16 @@ export default function UniversityDetail() {
                           {uni.city ? `${uni.city}, ` : ""}
                           {uni.state}
                         </span>
+                        <a
+                          href={mapHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          <Map className="h-3.5 w-3.5" />
+                          Open in Maps
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
                       </div>
                     </div>
 
@@ -272,8 +341,46 @@ export default function UniversityDetail() {
                         </span>
                       </div>
                     </div>
+                    {uni.duration && (
+                      <div className="flex gap-3">
+                        <div className="bg-primary/10 p-2 rounded shrink-0">
+                          <Clock className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground block">
+                            Typical Duration
+                          </span>
+                          <span className="text-sm font-medium">
+                            {uni.duration}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
+                {(siteSettings?.contactEmail || siteSettings?.contactPhone) && (
+                  <div className="rounded-xl border border-border/60 bg-card p-5 space-y-3">
+                    <h3 className="font-bold border-b pb-2">Contact</h3>
+                    {siteSettings.contactEmail && (
+                      <a
+                        href={`mailto:${siteSettings.contactEmail}`}
+                        className="flex items-center gap-3 text-sm text-foreground hover:text-primary hover:underline break-all"
+                      >
+                        <Mail className="h-4 w-4 shrink-0 text-primary" />
+                        {siteSettings.contactEmail}
+                      </a>
+                    )}
+                    {siteSettings.contactPhone && (
+                      <a
+                        href={`tel:${siteSettings.contactPhone}`}
+                        className="flex items-center gap-3 text-sm text-foreground hover:text-primary hover:underline"
+                      >
+                        <Phone className="h-4 w-4 shrink-0 text-primary" />
+                        {siteSettings.contactPhone}
+                      </a>
+                    )}
+                  </div>
+                )}
                 <div>
                   <FavoriteButton universityId={uni.id} />
                 </div>

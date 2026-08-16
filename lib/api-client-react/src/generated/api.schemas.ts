@@ -117,6 +117,14 @@ export interface University {
   /** @nullable */
   description?: string | null;
   /** @nullable */
+  admissionRequirements?: string | null;
+  /** @nullable */
+  applicationProcess?: string | null;
+  /** @nullable */
+  duration?: string | null;
+  /** @nullable */
+  careerOutcomes?: string | null;
+  /** @nullable */
   website?: string | null;
   /** @nullable */
   imageUrl?: string | null;
