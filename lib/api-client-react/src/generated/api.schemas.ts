@@ -30,8 +30,8 @@ export interface SiteSettings {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
-  maintenanceMode: boolean;
-  maintenanceMessage: string;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
   updatedAt: string;
 }
 
@@ -116,13 +116,25 @@ export interface University {
   minScore: number;
   /** @nullable */
   description?: string | null;
-  /** @nullable */
+  /**
+     * Detailed admission requirements when available
+     * @nullable
+     */
   admissionRequirements?: string | null;
-  /** @nullable */
+  /**
+     * Application steps when available
+     * @nullable
+     */
   applicationProcess?: string | null;
-  /** @nullable */
+  /**
+     * Typical program duration when available
+     * @nullable
+     */
   duration?: string | null;
-  /** @nullable */
+  /**
+     * Career outcome information when available
+     * @nullable
+     */
   careerOutcomes?: string | null;
   /** @nullable */
   website?: string | null;
@@ -156,6 +168,73 @@ export interface UniversityListResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+export type UniversityQualityIssueSeverity = typeof UniversityQualityIssueSeverity[keyof typeof UniversityQualityIssueSeverity];
+
+
+export const UniversityQualityIssueSeverity = {
+  error: 'error',
+  warning: 'warning',
+} as const;
+
+export interface UniversityQualityIssue {
+  universityId: number;
+  universityName: string;
+  universityNameEn: string;
+  severity: UniversityQualityIssueSeverity;
+  code: string;
+  message: string;
+  fields: string[];
+}
+
+export interface UniversityQualitySummary {
+  total: number;
+  complete: number;
+  incomplete: number;
+  duplicateGroups: number;
+  issueCount: number;
+  errorCount: number;
+  warningCount: number;
+  issues: UniversityQualityIssue[];
+}
+
+export interface UniversityCsvInput {
+  /** @minLength 1 */
+  csv: string;
+}
+
+export type UniversityImportPreviewRowValues = {[key: string]: string};
+
+export interface UniversityImportPreviewRow {
+  rowNumber: number;
+  values: UniversityImportPreviewRowValues;
+  missingRequired: string[];
+  invalidFields: string[];
+  /** @nullable */
+  duplicateOf?: number | null;
+  /** @nullable */
+  duplicateReason?: string | null;
+}
+
+export interface UniversityImportPreview {
+  totalRows: number;
+  validRows: number;
+  duplicateRows: number;
+  invalidRows: number;
+  rows: UniversityImportPreviewRow[];
+}
+
+export interface UniversityImportResult {
+  inserted: number;
+  skipped: number;
+  skippedRows: UniversityImportPreviewRow[];
+}
+
+export interface Favorite {
+  favoriteId: number;
+  savedAt: string;
+  university: University;
 }
 
 export interface MajorInput {
@@ -218,6 +297,19 @@ export interface ScoreInput {
   preferredMajorIds?: number[];
 }
 
+/**
+ * Explainable recommendation category
+ */
+export type ScoreMatchRecommendationTier = typeof ScoreMatchRecommendationTier[keyof typeof ScoreMatchRecommendationTier];
+
+
+export const ScoreMatchRecommendationTier = {
+  strong: 'strong',
+  eligible: 'eligible',
+  near: 'near',
+  stretch: 'stretch',
+} as const;
+
 export interface ScoreMatch {
   university: University;
   /** How well the student's score matches (0-100) */
@@ -229,11 +321,11 @@ export interface ScoreMatch {
      */
   gap?: number | null;
   /** Whether one or more selected preferred majors are offered */
-  majorMatch: boolean;
+  majorMatch?: boolean;
   /** Explainable recommendation category */
-  recommendationTier: 'strong' | 'eligible' | 'near' | 'stretch';
+  recommendationTier?: ScoreMatchRecommendationTier;
   /** Human-readable reasons for the recommendation */
-  recommendationReasons: string[];
+  recommendationReasons?: string[];
 }
 
 export type ChatbotHistoryMessageRole = typeof ChatbotHistoryMessageRole[keyof typeof ChatbotHistoryMessageRole];
@@ -439,10 +531,31 @@ state?: string;
 majorId?: number;
 page?: number;
 limit?: number;
+/**
+ * Return only fields needed for list cards and lightweight selectors
+ */
 compact?: boolean;
-sortBy?: 'name' | 'minScore' | 'type' | 'state';
-sortOrder?: 'asc' | 'desc';
+sortBy?: ListUniversitiesSortBy;
+sortOrder?: ListUniversitiesSortOrder;
 };
+
+export type ListUniversitiesSortBy = typeof ListUniversitiesSortBy[keyof typeof ListUniversitiesSortBy];
+
+
+export const ListUniversitiesSortBy = {
+  name: 'name',
+  minScore: 'minScore',
+  type: 'type',
+  state: 'state',
+} as const;
+
+export type ListUniversitiesSortOrder = typeof ListUniversitiesSortOrder[keyof typeof ListUniversitiesSortOrder];
+
+
+export const ListUniversitiesSortOrder = {
+  asc: 'asc',
+  desc: 'desc',
+} as const;
 
 export type ListNewsParams = {
 page?: number;

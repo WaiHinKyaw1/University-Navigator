@@ -35,6 +35,7 @@ import type {
   ChatbotMessageInput,
   ChatbotResponse,
   ErrorResponse,
+  Favorite,
   HealthStatus,
   ListAuditLogsParams,
   ListNewsParams,
@@ -60,8 +61,12 @@ import type {
   StudentSummary,
   TrendPoint,
   University,
+  UniversityCsvInput,
+  UniversityImportPreview,
+  UniversityImportResult,
   UniversityInput,
   UniversityListResponse,
+  UniversityQualitySummary,
   User,
   UserListResponse
 } from './api.schemas';
@@ -458,7 +463,7 @@ export const getListUniversitiesUrl = (params?: ListUniversitiesParams,) => {
 }
 
 /**
- * @summary List all universities with optional filters
+ * @summary List all universities with optional filters and sorting
  */
 export const listUniversities = async (params?: ListUniversitiesParams, options?: RequestInit): Promise<UniversityListResponse> => {
 
@@ -505,7 +510,7 @@ export type ListUniversitiesQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List all universities with optional filters
+ * @summary List all universities with optional filters and sorting
  */
 
 export function useListUniversities<TData = Awaited<ReturnType<typeof listUniversities>>, TError = ErrorType<unknown>>(
@@ -594,6 +599,300 @@ export const useCreateUniversity = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateUniversityMutationOptions(options));
+    }
+
+export const getGetUniversityQualityReportUrl = () => {
+
+
+
+
+  return `/api/admin/universities/data-quality`
+}
+
+/**
+ * @summary Get university data-quality report (admin only)
+ */
+export const getUniversityQualityReport = async ( options?: RequestInit): Promise<UniversityQualitySummary> => {
+
+  return customFetch<UniversityQualitySummary>(getGetUniversityQualityReportUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUniversityQualityReportQueryKey = () => {
+    return [
+    `/api/admin/universities/data-quality`
+    ] as const;
+    }
+
+
+export const getGetUniversityQualityReportQueryOptions = <TData = Awaited<ReturnType<typeof getUniversityQualityReport>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUniversityQualityReport>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUniversityQualityReportQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUniversityQualityReport>>> = ({ signal }) => getUniversityQualityReport({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUniversityQualityReport>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUniversityQualityReportQueryResult = NonNullable<Awaited<ReturnType<typeof getUniversityQualityReport>>>
+export type GetUniversityQualityReportQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get university data-quality report (admin only)
+ */
+
+export function useGetUniversityQualityReport<TData = Awaited<ReturnType<typeof getUniversityQualityReport>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUniversityQualityReport>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUniversityQualityReportQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getExportUniversitiesCsvUrl = () => {
+
+
+
+
+  return `/api/admin/universities/export.csv`
+}
+
+/**
+ * @summary Export universities as CSV (admin only)
+ */
+export const exportUniversitiesCsv = async ( options?: RequestInit): Promise<string> => {
+
+  return customFetch<string>(getExportUniversitiesCsvUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportUniversitiesCsvQueryKey = () => {
+    return [
+    `/api/admin/universities/export.csv`
+    ] as const;
+    }
+
+
+export const getExportUniversitiesCsvQueryOptions = <TData = Awaited<ReturnType<typeof exportUniversitiesCsv>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportUniversitiesCsv>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportUniversitiesCsvQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportUniversitiesCsv>>> = ({ signal }) => exportUniversitiesCsv({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportUniversitiesCsv>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportUniversitiesCsvQueryResult = NonNullable<Awaited<ReturnType<typeof exportUniversitiesCsv>>>
+export type ExportUniversitiesCsvQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Export universities as CSV (admin only)
+ */
+
+export function useExportUniversitiesCsv<TData = Awaited<ReturnType<typeof exportUniversitiesCsv>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportUniversitiesCsv>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportUniversitiesCsvQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getPreviewUniversitiesCsvUrl = () => {
+
+
+
+
+  return `/api/admin/universities/import/preview`
+}
+
+/**
+ * @summary Preview additive university CSV import (admin only)
+ */
+export const previewUniversitiesCsv = async (universityCsvInput: UniversityCsvInput, options?: RequestInit): Promise<UniversityImportPreview> => {
+
+  return customFetch<UniversityImportPreview>(getPreviewUniversitiesCsvUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(universityCsvInput)
+  }
+);}
+
+
+
+
+export const getPreviewUniversitiesCsvMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewUniversitiesCsv>>, TError,{data: BodyType<UniversityCsvInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof previewUniversitiesCsv>>, TError,{data: BodyType<UniversityCsvInput>}, TContext> => {
+
+const mutationKey = ['previewUniversitiesCsv'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewUniversitiesCsv>>, {data: BodyType<UniversityCsvInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  previewUniversitiesCsv(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PreviewUniversitiesCsvMutationResult = NonNullable<Awaited<ReturnType<typeof previewUniversitiesCsv>>>
+    export type PreviewUniversitiesCsvMutationBody = BodyType<UniversityCsvInput>
+    export type PreviewUniversitiesCsvMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Preview additive university CSV import (admin only)
+ */
+export const usePreviewUniversitiesCsv = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewUniversitiesCsv>>, TError,{data: BodyType<UniversityCsvInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof previewUniversitiesCsv>>,
+        TError,
+        {data: BodyType<UniversityCsvInput>},
+        TContext
+      > => {
+      return useMutation(getPreviewUniversitiesCsvMutationOptions(options));
+    }
+
+export const getImportUniversitiesCsvUrl = () => {
+
+
+
+
+  return `/api/admin/universities/import`
+}
+
+/**
+ * @summary Add valid non-duplicate universities from CSV (admin only)
+ */
+export const importUniversitiesCsv = async (universityCsvInput: UniversityCsvInput, options?: RequestInit): Promise<UniversityImportResult> => {
+
+  return customFetch<UniversityImportResult>(getImportUniversitiesCsvUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(universityCsvInput)
+  }
+);}
+
+
+
+
+export const getImportUniversitiesCsvMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importUniversitiesCsv>>, TError,{data: BodyType<UniversityCsvInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importUniversitiesCsv>>, TError,{data: BodyType<UniversityCsvInput>}, TContext> => {
+
+const mutationKey = ['importUniversitiesCsv'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importUniversitiesCsv>>, {data: BodyType<UniversityCsvInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  importUniversitiesCsv(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportUniversitiesCsvMutationResult = NonNullable<Awaited<ReturnType<typeof importUniversitiesCsv>>>
+    export type ImportUniversitiesCsvMutationBody = BodyType<UniversityCsvInput>
+    export type ImportUniversitiesCsvMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add valid non-duplicate universities from CSV (admin only)
+ */
+export const useImportUniversitiesCsv = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importUniversitiesCsv>>, TError,{data: BodyType<UniversityCsvInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importUniversitiesCsv>>,
+        TError,
+        {data: BodyType<UniversityCsvInput>},
+        TContext
+      > => {
+      return useMutation(getImportUniversitiesCsvMutationOptions(options));
     }
 
 export const getGetUniversityUrl = (id: number,) => {
@@ -812,6 +1111,223 @@ export const useDeleteUniversity = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteUniversityMutationOptions(options));
+    }
+
+export const getListFavoritesUrl = () => {
+
+
+
+
+  return `/api/favorites`
+}
+
+/**
+ * @summary List the current user's saved universities
+ */
+export const listFavorites = async ( options?: RequestInit): Promise<Favorite[]> => {
+
+  return customFetch<Favorite[]>(getListFavoritesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListFavoritesQueryKey = () => {
+    return [
+    `/api/favorites`
+    ] as const;
+    }
+
+
+export const getListFavoritesQueryOptions = <TData = Awaited<ReturnType<typeof listFavorites>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFavorites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFavoritesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFavorites>>> = ({ signal }) => listFavorites({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFavorites>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListFavoritesQueryResult = NonNullable<Awaited<ReturnType<typeof listFavorites>>>
+export type ListFavoritesQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List the current user's saved universities
+ */
+
+export function useListFavorites<TData = Awaited<ReturnType<typeof listFavorites>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFavorites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListFavoritesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateFavoriteUrl = (universityId: number,) => {
+
+
+
+
+  return `/api/favorites/${universityId}`
+}
+
+/**
+ * @summary Save a university for the current user
+ */
+export const createFavorite = async (universityId: number, options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getCreateFavoriteUrl(universityId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateFavoriteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFavorite>>, TError,{universityId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createFavorite>>, TError,{universityId: number}, TContext> => {
+
+const mutationKey = ['createFavorite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFavorite>>, {universityId: number}> = (props) => {
+          const {universityId} = props ?? {};
+
+          return  createFavorite(universityId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateFavoriteMutationResult = NonNullable<Awaited<ReturnType<typeof createFavorite>>>
+
+    export type CreateFavoriteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Save a university for the current user
+ */
+export const useCreateFavorite = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFavorite>>, TError,{universityId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createFavorite>>,
+        TError,
+        {universityId: number},
+        TContext
+      > => {
+      return useMutation(getCreateFavoriteMutationOptions(options));
+    }
+
+export const getDeleteFavoriteUrl = (universityId: number,) => {
+
+
+
+
+  return `/api/favorites/${universityId}`
+}
+
+/**
+ * @summary Remove a university from the current user's Favorites
+ */
+export const deleteFavorite = async (universityId: number, options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getDeleteFavoriteUrl(universityId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteFavoriteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFavorite>>, TError,{universityId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteFavorite>>, TError,{universityId: number}, TContext> => {
+
+const mutationKey = ['deleteFavorite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteFavorite>>, {universityId: number}> = (props) => {
+          const {universityId} = props ?? {};
+
+          return  deleteFavorite(universityId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteFavoriteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteFavorite>>>
+
+    export type DeleteFavoriteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Remove a university from the current user's Favorites
+ */
+export const useDeleteFavorite = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFavorite>>, TError,{universityId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteFavorite>>,
+        TError,
+        {universityId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteFavoriteMutationOptions(options));
     }
 
 export const getListMajorsUrl = () => {

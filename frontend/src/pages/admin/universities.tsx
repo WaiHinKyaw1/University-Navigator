@@ -48,12 +48,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
+  Download,
+  FileUp,
   ArrowDownAZ,
   ArrowUpAZ,
   SlidersHorizontal,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getCitiesForState,
   isMyanmarState,
@@ -62,6 +67,13 @@ import {
   MYANMAR_UNION_TERRITORIES,
 } from "@/lib/myanmar-locations";
 import { uploadImage } from "@/lib/upload-image-api";
+import {
+  downloadUniversityCsv,
+  getUniversityQualityReport,
+  importUniversityCsv,
+  previewUniversityCsv,
+  type UniversityImportPreview,
+} from "@/lib/university-data-quality-api";
 
 type UniversityForm = {
   name: string;
@@ -183,6 +195,11 @@ export default function AdminUniversities() {
     name: string;
   } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isPreviewingCsv, setIsPreviewingCsv] = useState(false);
+  const [isImportingCsv, setIsImportingCsv] = useState(false);
+  const [csvName, setCsvName] = useState("");
+  const [csvText, setCsvText] = useState("");
+  const [csvPreview, setCsvPreview] = useState<UniversityImportPreview | null>(null);
   const queryClient = useQueryClient();
 
   const { data: response, isLoading } = useListUniversities({
@@ -195,6 +212,11 @@ export default function AdminUniversities() {
     sortOrder,
   });
   const { data: majors } = useListMajors();
+  const qualityQuery = useQuery({
+    queryKey: ["/api/admin/universities/data-quality"],
+    queryFn: getUniversityQualityReport,
+    staleTime: 30_000,
+  });
 
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["/api/universities"] });
@@ -301,6 +323,63 @@ export default function AdminUniversities() {
       );
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+
+  const handleCsvFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      toast.error("Please choose a CSV file");
+      return;
+    }
+    if (file.size > 2_000_000) {
+      toast.error("CSV file must be 2 MB or smaller");
+      return;
+    }
+    try {
+      setCsvName(file.name);
+      setCsvText(await file.text());
+      setCsvPreview(null);
+      setIsPreviewingCsv(true);
+      const preview = await previewUniversityCsv(await file.text());
+      setCsvPreview(preview);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not preview CSV");
+      setCsvName("");
+      setCsvText("");
+    } finally {
+      setIsPreviewingCsv(false);
+    }
+  };
+
+  const handleCsvImport = async () => {
+    if (!csvText || !csvPreview || csvPreview.validRows === 0) return;
+    try {
+      setIsImportingCsv(true);
+      const result = await importUniversityCsv(csvText);
+      toast.success(`${result.inserted} new universit${result.inserted === 1 ? "y" : "ies"} imported; existing records were not changed`);
+      setCsvPreview(null);
+      setCsvName("");
+      setCsvText("");
+      await Promise.all([
+        refresh(),
+        qualityQuery.refetch(),
+      ]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setIsImportingCsv(false);
+    }
+  };
+
+  const handleCsvExport = async () => {
+    try {
+      await downloadUniversityCsv();
+      toast.success("University CSV exported");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Export failed");
     }
   };
 
@@ -491,6 +570,132 @@ export default function AdminUniversities() {
             </div>
           </div>
         </div>
+
+        <Card>
+          <CardContent className="space-y-4 p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-base font-semibold">Data quality</h2>
+                <p className="text-sm text-muted-foreground">
+                  Review missing details and duplicate identities before publishing updates.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-9"
+                  onClick={() => void qualityQuery.refetch()}
+                  disabled={qualityQuery.isFetching}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${qualityQuery.isFetching ? "animate-spin" : ""}`} />
+                  Refresh report
+                </Button>
+                <Button type="button" variant="outline" className="min-h-9" onClick={() => void handleCsvExport()}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export CSV
+                </Button>
+                <Button type="button" variant="outline" className="relative min-h-9 overflow-hidden">
+                  <FileUp className="mr-2 h-4 w-4" />
+                  Import CSV
+                  <Input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={handleCsvFile}
+                    disabled={isPreviewingCsv || isImportingCsv}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    aria-label="Import university CSV"
+                  />
+                </Button>
+              </div>
+            </div>
+
+            {qualityQuery.isLoading ? (
+              <div className="h-20 animate-pulse rounded-lg bg-muted" />
+            ) : qualityQuery.error ? (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                Could not load the data-quality report. Check your admin session and try again.
+              </div>
+            ) : qualityQuery.data ? (
+              <>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <p className="text-xs text-muted-foreground">Total records</p>
+                    <p className="mt-1 text-xl font-semibold">{qualityQuery.data.total}</p>
+                  </div>
+                  <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                    <p className="text-xs text-muted-foreground">Complete</p>
+                    <p className="mt-1 flex items-center gap-1 text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4" /> {qualityQuery.data.complete}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                    <p className="text-xs text-muted-foreground">Warnings</p>
+                    <p className="mt-1 text-xl font-semibold text-amber-600 dark:text-amber-400">{qualityQuery.data.warningCount}</p>
+                  </div>
+                  <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                    <p className="text-xs text-muted-foreground">Errors / duplicates</p>
+                    <p className="mt-1 flex items-center gap-1 text-xl font-semibold text-destructive">
+                      <AlertTriangle className="h-4 w-4" /> {qualityQuery.data.errorCount} / {qualityQuery.data.duplicateGroups}
+                    </p>
+                  </div>
+                </div>
+                {qualityQuery.data.issues.length > 0 && (
+                  <div className="space-y-2 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">Priority issues</p>
+                      <span className="text-xs text-muted-foreground">{qualityQuery.data.issueCount} total</span>
+                    </div>
+                    <div className="space-y-2">
+                      {qualityQuery.data.issues.slice(0, 5).map((issue, index) => (
+                        <div key={`${issue.universityId}-${issue.code}-${index}`} className="flex items-start gap-2 text-sm">
+                          {issue.severity === "error" ? (
+                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                          ) : (
+                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                          )}
+                          <span className="min-w-0 text-muted-foreground">
+                            <span className="font-medium text-foreground">{issue.universityNameEn || issue.universityName}</span>{" "}
+                            {issue.message}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : null}
+
+            {isPreviewingCsv && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-muted-foreground">
+                Checking {csvName || "CSV"} for missing fields and duplicates…
+              </div>
+            )}
+            {csvPreview && (
+              <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Preview: {csvName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {csvPreview.validRows} safe new rows · {csvPreview.duplicateRows} duplicates · {csvPreview.invalidRows} invalid rows
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    className="min-h-9"
+                    onClick={() => void handleCsvImport()}
+                    disabled={isImportingCsv || csvPreview.validRows === 0}
+                  >
+                    {isImportingCsv ? "Importing…" : `Add ${csvPreview.validRows} safe rows`}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Import is additive only: duplicate or invalid rows are skipped, and existing records are never updated or deleted.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardContent className="p-0">

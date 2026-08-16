@@ -7,6 +7,12 @@ import {
 } from "@workspace/db";
 import { asc, desc, eq, ilike, or, and, sql, inArray } from "drizzle-orm";
 import { requireAdmin, optionalAuth } from "../middlewares/auth";
+import {
+  getUniversityQualityIssues,
+  parseUniversityCsv,
+  serializeUniversitiesCsv,
+  validateImportRows,
+} from "../lib/university-data-quality";
 
 const router: IRouter = Router();
 
@@ -102,6 +108,164 @@ async function attachMajorSummaries<T extends { id: number }>(universities: T[])
     majors: majorsByUniversity.get(uni.id) ?? [],
   }));
 }
+
+router.get(
+  "/admin/universities/data-quality",
+  requireAdmin,
+  async (_req, res): Promise<void> => {
+    const universities = await db.select().from(universitiesTable);
+    const majorCounts = await db
+      .select({
+        universityId: universityMajorsTable.universityId,
+        count: sql<number>`count(*)`,
+      })
+      .from(universityMajorsTable)
+      .groupBy(universityMajorsTable.universityId);
+    const counts = new Map(majorCounts.map((row) => [row.universityId, Number(row.count)]));
+    res.json(getUniversityQualityIssues(universities, counts));
+  },
+);
+
+router.get(
+  "/admin/universities/export.csv",
+  requireAdmin,
+  async (_req, res): Promise<void> => {
+    const universities = await db.select().from(universitiesTable).orderBy(asc(universitiesTable.name));
+    const universityIds = universities.map((university) => university.id);
+    const links = universityIds.length > 0
+      ? await db
+          .select({ universityId: universityMajorsTable.universityId, majorId: universityMajorsTable.majorId })
+          .from(universityMajorsTable)
+          .where(inArray(universityMajorsTable.universityId, universityIds))
+      : [];
+    const majorIdsByUniversity = new Map<number, number[]>();
+    for (const link of links) {
+      const ids = majorIdsByUniversity.get(link.universityId) ?? [];
+      ids.push(link.majorId);
+      majorIdsByUniversity.set(link.universityId, ids);
+    }
+    const csv = serializeUniversitiesCsv(
+      universities.map((university) => ({
+        ...university,
+        majorIds: majorIdsByUniversity.get(university.id) ?? [],
+      })),
+    );
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename=universities-${new Date().toISOString().slice(0, 10)}.csv`);
+    res.send(csv);
+  },
+);
+
+router.post(
+  "/admin/universities/import/preview",
+  requireAdmin,
+  async (req, res): Promise<void> => {
+    const csv = typeof req.body?.csv === "string" ? req.body.csv : "";
+    if (!csv.trim()) {
+      res.status(400).json({ error: "CSV content is required" });
+      return;
+    }
+    if (Buffer.byteLength(csv, "utf8") > 2_000_000) {
+      res.status(413).json({ error: "CSV file is too large; maximum size is 2 MB" });
+      return;
+    }
+    try {
+      const rows = parseUniversityCsv(csv);
+      const existing = await db
+        .select({ id: universitiesTable.id, name: universitiesTable.name, nameEn: universitiesTable.nameEn, abbreviation: universitiesTable.abbreviation })
+        .from(universitiesTable);
+      const validatedRows = validateImportRows(rows, existing);
+      res.json({
+        totalRows: validatedRows.length,
+        validRows: validatedRows.filter((row) => row.missingRequired.length === 0 && row.invalidFields.length === 0 && !row.duplicateOf).length,
+        duplicateRows: validatedRows.filter((row) => Boolean(row.duplicateOf)).length,
+        invalidRows: validatedRows.filter((row) => row.missingRequired.length > 0 || row.invalidFields.length > 0).length,
+        rows: validatedRows,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid CSV" });
+    }
+  },
+);
+
+router.post(
+  "/admin/universities/import",
+  requireAdmin,
+  async (req, res): Promise<void> => {
+    const csv = typeof req.body?.csv === "string" ? req.body.csv : "";
+    if (!csv.trim()) {
+      res.status(400).json({ error: "CSV content is required" });
+      return;
+    }
+    if (Buffer.byteLength(csv, "utf8") > 2_000_000) {
+      res.status(413).json({ error: "CSV file is too large; maximum size is 2 MB" });
+      return;
+    }
+    try {
+      const rows = parseUniversityCsv(csv);
+      const existing = await db
+        .select({ id: universitiesTable.id, name: universitiesTable.name, nameEn: universitiesTable.nameEn, abbreviation: universitiesTable.abbreviation })
+        .from(universitiesTable);
+      const validatedRows = validateImportRows(rows, existing);
+      const importableRows = validatedRows.filter(
+        (row) => row.missingRequired.length === 0 && row.invalidFields.length === 0 && !row.duplicateOf,
+      );
+      const allMajorIds = Array.from(
+        new Set(
+          importableRows.flatMap((row) => row.values.majorIds.split("|").map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0)),
+        ),
+      );
+      const existingMajors = allMajorIds.length > 0
+        ? await db.select({ id: majorsTable.id }).from(majorsTable).where(inArray(majorsTable.id, allMajorIds))
+        : [];
+      const majorIdSet = new Set(existingMajors.map((major) => major.id));
+      for (const row of importableRows) {
+        const requestedMajorIds = row.values.majorIds.split("|").map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0);
+        if (requestedMajorIds.some((majorId) => !majorIdSet.has(majorId))) {
+          row.invalidFields.push("majorIds");
+        }
+      }
+      const safeRows = importableRows.filter((row) => row.invalidFields.length === 0);
+      const insertedIds = await db.transaction(async (tx) => {
+        const ids: number[] = [];
+        for (const row of safeRows) {
+          const [inserted] = await tx
+            .insert(universitiesTable)
+            .values({
+              name: row.values.name.trim(),
+              nameEn: row.values.nameEn.trim(),
+              abbreviation: row.values.abbreviation.trim() || undefined,
+              type: row.values.type.trim(),
+              state: row.values.state.trim(),
+              city: row.values.city.trim(),
+              minScore: Number(row.values.minScore),
+              description: row.values.description.trim() || undefined,
+              admissionRequirements: row.values.admissionRequirements.trim() || undefined,
+              applicationProcess: row.values.applicationProcess.trim() || undefined,
+              duration: row.values.duration.trim() || undefined,
+              careerOutcomes: row.values.careerOutcomes.trim() || undefined,
+              website: row.values.website.trim() || undefined,
+              imageUrl: row.values.imageUrl.trim() || undefined,
+            })
+            .returning({ id: universitiesTable.id });
+          ids.push(inserted.id);
+          const majorIds = row.values.majorIds.split("|").map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0);
+          if (majorIds.length > 0) {
+            await tx.insert(universityMajorsTable).values(majorIds.map((majorId) => ({ universityId: inserted.id, majorId })));
+          }
+        }
+        return ids;
+      });
+      res.status(201).json({
+        inserted: insertedIds.length,
+        skipped: rows.length - insertedIds.length,
+        skippedRows: validatedRows.filter((row) => !safeRows.includes(row)),
+      });
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Import failed" });
+    }
+  },
+);
 
 router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
   const {

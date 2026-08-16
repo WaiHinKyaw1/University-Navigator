@@ -99,9 +99,9 @@ export const ListUniversitiesQueryParams = zod.object({
   "majorId": zod.coerce.number().optional(),
   "page": zod.coerce.number().optional(),
   "limit": zod.coerce.number().optional(),
-  "compact": zod.coerce.boolean().optional(),
-  "sortBy": zod.enum(["name", "minScore", "type", "state"]).optional(),
-  "sortOrder": zod.enum(["asc", "desc"]).optional()
+  "compact": zod.coerce.boolean().optional().describe('Return only fields needed for list cards and lightweight selectors'),
+  "sortBy": zod.enum(['name', 'minScore', 'type', 'state']).optional(),
+  "sortOrder": zod.enum(['asc', 'desc']).optional()
 })
 
 export const ListUniversitiesResponse = zod.object({
@@ -115,10 +115,10 @@ export const ListUniversitiesResponse = zod.object({
   "city": zod.string().nullish(),
   "minScore": zod.number().describe('Minimum total score required for admission'),
   "description": zod.string().nullish(),
-  "admissionRequirements": zod.string().nullish(),
-  "applicationProcess": zod.string().nullish(),
-  "duration": zod.string().nullish(),
-  "careerOutcomes": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
   "website": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "majors": zod.array(zod.object({
@@ -165,10 +165,10 @@ export const CreateUniversityResponse = zod.object({
   "city": zod.string().nullish(),
   "minScore": zod.number().describe('Minimum total score required for admission'),
   "description": zod.string().nullish(),
-  "admissionRequirements": zod.string().nullish(),
-  "applicationProcess": zod.string().nullish(),
-  "duration": zod.string().nullish(),
-  "careerOutcomes": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
   "website": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "majors": zod.array(zod.object({
@@ -181,6 +181,85 @@ export const CreateUniversityResponse = zod.object({
   "careerPaths": zod.string().nullish()
 })).optional(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get university data-quality report (admin only)
+ */
+export const GetUniversityQualityReportResponse = zod.object({
+  "total": zod.number(),
+  "complete": zod.number(),
+  "incomplete": zod.number(),
+  "duplicateGroups": zod.number(),
+  "issueCount": zod.number(),
+  "errorCount": zod.number(),
+  "warningCount": zod.number(),
+  "issues": zod.array(zod.object({
+  "universityId": zod.number(),
+  "universityName": zod.string(),
+  "universityNameEn": zod.string(),
+  "severity": zod.enum(['error', 'warning']),
+  "code": zod.string(),
+  "message": zod.string(),
+  "fields": zod.array(zod.string())
+}))
+})
+
+
+/**
+ * @summary Export universities as CSV (admin only)
+ */
+export const ExportUniversitiesCsvResponse = zod.unknown()
+
+
+/**
+ * @summary Preview additive university CSV import (admin only)
+ */
+
+
+
+export const PreviewUniversitiesCsvBody = zod.object({
+  "csv": zod.string().min(1)
+})
+
+export const PreviewUniversitiesCsvResponse = zod.object({
+  "totalRows": zod.number(),
+  "validRows": zod.number(),
+  "duplicateRows": zod.number(),
+  "invalidRows": zod.number(),
+  "rows": zod.array(zod.object({
+  "rowNumber": zod.number(),
+  "values": zod.record(zod.string(), zod.string()),
+  "missingRequired": zod.array(zod.string()),
+  "invalidFields": zod.array(zod.string()),
+  "duplicateOf": zod.number().nullish(),
+  "duplicateReason": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary Add valid non-duplicate universities from CSV (admin only)
+ */
+
+
+
+export const ImportUniversitiesCsvBody = zod.object({
+  "csv": zod.string().min(1)
+})
+
+export const ImportUniversitiesCsvResponse = zod.object({
+  "inserted": zod.number(),
+  "skipped": zod.number(),
+  "skippedRows": zod.array(zod.object({
+  "rowNumber": zod.number(),
+  "values": zod.record(zod.string(), zod.string()),
+  "missingRequired": zod.array(zod.string()),
+  "invalidFields": zod.array(zod.string()),
+  "duplicateOf": zod.number().nullish(),
+  "duplicateReason": zod.string().nullish()
+}))
 })
 
 
@@ -201,10 +280,10 @@ export const GetUniversityResponse = zod.object({
   "city": zod.string().nullish(),
   "minScore": zod.number().describe('Minimum total score required for admission'),
   "description": zod.string().nullish(),
-  "admissionRequirements": zod.string().nullish(),
-  "applicationProcess": zod.string().nullish(),
-  "duration": zod.string().nullish(),
-  "careerOutcomes": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
   "website": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "majors": zod.array(zod.object({
@@ -251,10 +330,10 @@ export const UpdateUniversityResponse = zod.object({
   "city": zod.string().nullish(),
   "minScore": zod.number().describe('Minimum total score required for admission'),
   "description": zod.string().nullish(),
-  "admissionRequirements": zod.string().nullish(),
-  "applicationProcess": zod.string().nullish(),
-  "duration": zod.string().nullish(),
-  "careerOutcomes": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
   "website": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "majors": zod.array(zod.object({
@@ -278,6 +357,67 @@ export const DeleteUniversityParams = zod.object({
 })
 
 export const DeleteUniversityResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary List the current user's saved universities
+ */
+export const ListFavoritesResponseItem = zod.object({
+  "favoriteId": zod.number(),
+  "savedAt": zod.coerce.date(),
+  "university": zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Myanmar name'),
+  "nameEn": zod.string().describe('English name'),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string().describe('government | private | technical | medical | education'),
+  "state": zod.string().describe('State\/Region in Myanmar'),
+  "city": zod.string().nullish(),
+  "minScore": zod.number().describe('Minimum total score required for admission'),
+  "description": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majors": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.coerce.date()
+})
+})
+export const ListFavoritesResponse = zod.array(ListFavoritesResponseItem)
+
+
+/**
+ * @summary Save a university for the current user
+ */
+export const CreateFavoriteParams = zod.object({
+  "universityId": zod.coerce.number()
+})
+
+export const CreateFavoriteResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Remove a university from the current user's Favorites
+ */
+export const DeleteFavoriteParams = zod.object({
+  "universityId": zod.coerce.number()
+})
+
+export const DeleteFavoriteResponse = zod.object({
   "message": zod.string()
 })
 
@@ -451,10 +591,10 @@ export const CalculateScoreResponseItem = zod.object({
   "city": zod.string().nullish(),
   "minScore": zod.number().describe('Minimum total score required for admission'),
   "description": zod.string().nullish(),
-  "admissionRequirements": zod.string().nullish(),
-  "applicationProcess": zod.string().nullish(),
-  "duration": zod.string().nullish(),
-  "careerOutcomes": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
   "website": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "majors": zod.array(zod.object({
@@ -471,9 +611,9 @@ export const CalculateScoreResponseItem = zod.object({
   "matchScore": zod.number().describe('How well the student\'s score matches (0-100)'),
   "eligible": zod.boolean(),
   "gap": zod.number().nullish().describe('Score gap if not eligible (positive means eligible, negative means gap)'),
-  "majorMatch": zod.boolean().describe('Whether one or more selected preferred majors are offered'),
-  "recommendationTier": zod.enum(['strong', 'eligible', 'near', 'stretch']).describe('Explainable recommendation category'),
-  "recommendationReasons": zod.array(zod.string()).describe('Human-readable reasons for the recommendation')
+  "majorMatch": zod.boolean().optional().describe('Whether one or more selected preferred majors are offered'),
+  "recommendationTier": zod.enum(['strong', 'eligible', 'near', 'stretch']).optional().describe('Explainable recommendation category'),
+  "recommendationReasons": zod.array(zod.string()).optional().describe('Human-readable reasons for the recommendation')
 })
 export const CalculateScoreResponse = zod.array(CalculateScoreResponseItem)
 
@@ -999,8 +1139,8 @@ export const GetSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
-  "maintenanceMode": zod.boolean(),
-  "maintenanceMessage": zod.string(),
+  "maintenanceMode": zod.boolean().optional(),
+  "maintenanceMessage": zod.string().optional(),
   "updatedAt": zod.coerce.date()
 })
 
@@ -1033,8 +1173,8 @@ export const UpdateSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
-  "maintenanceMode": zod.boolean(),
-  "maintenanceMessage": zod.string(),
+  "maintenanceMode": zod.boolean().optional(),
+  "maintenanceMessage": zod.string().optional(),
   "updatedAt": zod.coerce.date()
 })
 

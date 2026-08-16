@@ -205,6 +205,70 @@ paths:
               schema:
                 $ref: "#/components/schemas/University"
 
+  /admin/universities/data-quality:
+    get:
+      operationId: getUniversityQualityReport
+      tags: [admin]
+      summary: Get university data-quality report (admin only)
+      responses:
+        "200":
+          description: Data-quality summary and issues
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UniversityQualitySummary"
+
+  /admin/universities/export.csv:
+    get:
+      operationId: exportUniversitiesCsv
+      tags: [admin]
+      summary: Export universities as CSV (admin only)
+      responses:
+        "200":
+          description: University CSV export
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /admin/universities/import/preview:
+    post:
+      operationId: previewUniversitiesCsv
+      tags: [admin]
+      summary: Preview additive university CSV import (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UniversityCsvInput"
+      responses:
+        "200":
+          description: CSV validation preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UniversityImportPreview"
+
+  /admin/universities/import:
+    post:
+      operationId: importUniversitiesCsv
+      tags: [admin]
+      summary: Add valid non-duplicate universities from CSV (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UniversityCsvInput"
+      responses:
+        "201":
+          description: Import result; existing rows are never updated or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UniversityImportResult"
+
   /universities/{id}:
     get:
       operationId: getUniversity
@@ -1313,6 +1377,112 @@ components:
           type: integer
         limit:
           type: integer
+
+    UniversityQualityIssue:
+      type: object
+      required: [universityId, universityName, universityNameEn, severity, code, message, fields]
+      properties:
+        universityId:
+          type: integer
+        universityName:
+          type: string
+        universityNameEn:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning]
+        code:
+          type: string
+        message:
+          type: string
+        fields:
+          type: array
+          items:
+            type: string
+
+    UniversityQualitySummary:
+      type: object
+      required: [total, complete, incomplete, duplicateGroups, issueCount, errorCount, warningCount, issues]
+      properties:
+        total:
+          type: integer
+        complete:
+          type: integer
+        incomplete:
+          type: integer
+        duplicateGroups:
+          type: integer
+        issueCount:
+          type: integer
+        errorCount:
+          type: integer
+        warningCount:
+          type: integer
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/UniversityQualityIssue"
+
+    UniversityCsvInput:
+      type: object
+      required: [csv]
+      properties:
+        csv:
+          type: string
+          minLength: 1
+
+    UniversityImportPreviewRow:
+      type: object
+      required: [rowNumber, values, missingRequired, invalidFields]
+      properties:
+        rowNumber:
+          type: integer
+        values:
+          type: object
+          additionalProperties:
+            type: string
+        missingRequired:
+          type: array
+          items:
+            type: string
+        invalidFields:
+          type: array
+          items:
+            type: string
+        duplicateOf:
+          type: [integer, "null"]
+        duplicateReason:
+          type: [string, "null"]
+
+    UniversityImportPreview:
+      type: object
+      required: [totalRows, validRows, duplicateRows, invalidRows, rows]
+      properties:
+        totalRows:
+          type: integer
+        validRows:
+          type: integer
+        duplicateRows:
+          type: integer
+        invalidRows:
+          type: integer
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/UniversityImportPreviewRow"
+
+    UniversityImportResult:
+      type: object
+      required: [inserted, skipped, skippedRows]
+      properties:
+        inserted:
+          type: integer
+        skipped:
+          type: integer
+        skippedRows:
+          type: array
+          items:
+            $ref: "#/components/schemas/UniversityImportPreviewRow"
 
     Favorite:
       type: object
