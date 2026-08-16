@@ -159,7 +159,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className={`${sidebarOpen ? "w-64" : "w-[72px]"} transition-all duration-300 border-r bg-card hidden md:block overflow-y-auto shrink-0`}>
+        <aside className={`${sidebarOpen ? "w-64" : "w-[72px]"} transition-all duration-300 border-r bg-card hidden md:block shrink-0 sticky top-16 self-start h-[calc(100vh-4rem)] overflow-y-auto`}>
           <div className="p-4 space-y-2">
             {!sidebarOpen ? (
               <div className="h-4" />
@@ -205,6 +205,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <NavItem href="/admin/profile" icon={UserCog} label="Admin Profile" collapsed={!sidebarOpen} />
           </div>
         </aside>
+        {/* spacer so the sticky sidebar does not visually merge with the scrollable main content on taller pages */}
 
         <main className="flex-1 overflow-y-auto bg-muted/10 p-4 md:p-6 lg:p-8">
           {children}

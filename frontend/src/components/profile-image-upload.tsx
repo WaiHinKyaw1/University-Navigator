@@ -65,12 +65,24 @@ export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: P
 
         body: formData,
       });
-      console.log(response.status);
-      const data = await response.json();
-      console.log(data);
+      // Parse defensively: if the backend is not deployed behind this domain,
+      // /api/* returns the SPA HTML (fallback), and a raw response.json() would
+      // surface a confusing parse error instead of a meaningful message.
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : null;
 
       if (!response.ok) {
-        throw new Error(data.error || "Upload failed");
+        throw new Error(
+          data?.error ||
+            (response.status === 200
+              ? "Upload endpoint not available. Please contact support."
+              : `Upload failed (status ${response.status})`),
+        );
+      }
+      if (!data?.avatarUrl) {
+        throw new Error("Upload failed");
       }
 
       // update parent state
@@ -99,13 +111,18 @@ export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: P
     try {
       const token = localStorage.getItem("token");
 
-      await fetch("/api/auth/profile/image", {
+      const response = await fetch("/api/auth/profile/image", {
         method: "DELETE",
 
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!response.ok || !contentType.includes("application/json")) {
+        throw new Error("Remove failed");
+      }
 
       updateUser({
         avatarUrl: null,
