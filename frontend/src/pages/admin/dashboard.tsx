@@ -131,7 +131,7 @@ export default function AdminDashboard() {
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                         itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
-                      <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
@@ -159,7 +159,7 @@ export default function AdminDashboard() {
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                         cursor={{ fill: 'hsl(var(--muted))' }}
                       />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                         {majorDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
