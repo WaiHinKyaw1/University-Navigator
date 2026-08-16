@@ -99,6 +99,7 @@ export const ListUniversitiesQueryParams = zod.object({
   "majorId": zod.coerce.number().optional(),
   "page": zod.coerce.number().optional(),
   "limit": zod.coerce.number().optional(),
+  "compact": zod.coerce.boolean().optional(),
   "sortBy": zod.enum(["name", "minScore", "type", "state"]).optional(),
   "sortOrder": zod.enum(["asc", "desc"]).optional()
 })

@@ -426,7 +426,10 @@ export default function ScoreCalculator() {
   }, [calculateMutation.data, setResults]);
 
   // For slider mode — fetch all universities, filter client-side
-  const { data: allUnisResponse } = useListUniversities({});
+  const { data: allUnisResponse } = useListUniversities({
+    compact: true,
+    limit: 1000,
+  });
   const allUniversities: any[] = (allUnisResponse as any)?.universities ?? [];
 
   const subjects = useMemo(() => {

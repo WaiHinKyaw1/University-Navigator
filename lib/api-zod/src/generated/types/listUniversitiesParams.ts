@@ -13,4 +13,5 @@ state?: string;
 majorId?: number;
 page?: number;
 limit?: number;
+compact?: boolean;
 };

@@ -425,6 +425,7 @@ state?: string;
 majorId?: number;
 page?: number;
 limit?: number;
+compact?: boolean;
 sortBy?: 'name' | 'minScore' | 'type' | 'state';
 sortOrder?: 'asc' | 'desc';
 };

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import FavoriteButton from "@/components/favorite-button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  getListUniversitiesQueryOptions,
   useGetSiteSettings,
   useListUniversities,
   type University,
@@ -112,9 +114,11 @@ function UniversityCard({
 
       <div className="relative h-32 overflow-hidden bg-gray-50">
         {university.imageUrl ? (
-          <img
+            <img
             src={university.imageUrl}
             alt={university.name}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
@@ -287,17 +291,23 @@ export default function Universities() {
     clearUniversities,
   } = useCompare();
 
+  const queryClient = useQueryClient();
   const { data: siteSettings } = useGetSiteSettings();
-  const { data: response, isLoading, isFetching, isError, refetch } =
-    useListUniversities({
+  const listParams = useMemo(
+    () => ({
       search: search || undefined,
       type: activeCategory === "all" ? undefined : activeCategory,
       state: activeState === "all" ? undefined : activeState,
       page,
       limit: PAGE_SIZE,
-      sortBy: "name",
-      sortOrder: "asc",
-    });
+      compact: true,
+      sortBy: "name" as const,
+      sortOrder: "asc" as const,
+    }),
+    [activeCategory, activeState, page, search],
+  );
+  const { data: response, isLoading, isFetching, isError, refetch } =
+    useListUniversities(listParams);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -310,7 +320,16 @@ export default function Universities() {
 
   const universities = response?.universities ?? [];
   const total = response?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
   const academicYear = `ပညာသင်နှစ် ${siteSettings?.academicYear ?? "၂၀၂၅-၂၀၂၆"}`;
+
+  useEffect(() => {
+    if (page >= totalPages) return;
+
+    void queryClient.prefetchQuery(
+      getListUniversitiesQueryOptions({ ...listParams, page: page + 1 }),
+    );
+  }, [getListUniversitiesQueryOptions, listParams, page, queryClient, totalPages]);
 
   const resetFilters = () => {
     setSearchInput("");
