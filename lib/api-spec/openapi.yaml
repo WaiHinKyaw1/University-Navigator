@@ -42,7 +42,7 @@ paths:
     get:
       operationId: healthCheck
       tags: [health]
-      summary: Health check
+      summary: Liveness health check
       responses:
         "200":
           description: Healthy
@@ -50,6 +50,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /readyz:
+    get:
+      operationId: readinessCheck
+      tags: [health]
+      summary: Database readiness check
+      responses:
+        "200":
+          description: Application and database are ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
+        "503":
+          description: Dependency is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
 
   # ── AUTH ──────────────────────────────────────────────────────────────────
   /auth/register:
@@ -101,12 +120,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many login attempts
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/logout:
     post:
       operationId: logout
       tags: [auth]
-      summary: Logout
+      summary: Logout and revoke the current session
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: Logged out
@@ -1158,6 +1189,17 @@ components:
       required:
         - status
 
+    ReadinessStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        database:
+          type: string
+          enum: [ok, error]
+      required: [status, database]
+
     ErrorResponse:
       type: object
       properties:
@@ -1240,7 +1282,7 @@ components:
           format: email
         password:
           type: string
-          minLength: 6
+          minLength: 8
     LoginInput:
       type: object
       required: [email, password]

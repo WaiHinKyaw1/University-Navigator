@@ -9,6 +9,27 @@ export interface HealthStatus {
   status: string;
 }
 
+export type ReadinessStatusStatus = typeof ReadinessStatusStatus[keyof typeof ReadinessStatusStatus];
+
+
+export const ReadinessStatusStatus = {
+  ready: 'ready',
+  not_ready: 'not_ready',
+} as const;
+
+export type ReadinessStatusDatabase = typeof ReadinessStatusDatabase[keyof typeof ReadinessStatusDatabase];
+
+
+export const ReadinessStatusDatabase = {
+  ok: 'ok',
+  error: 'error',
+} as const;
+
+export interface ReadinessStatus {
+  status: ReadinessStatusStatus;
+  database: ReadinessStatusDatabase;
+}
+
 export interface ErrorResponse {
   error: string;
 }
@@ -57,7 +78,7 @@ export interface RegisterInput {
   /** @minLength 2 */
   name: string;
   email: string;
-  /** @minLength 6 */
+  /** @minLength 8 */
   password: string;
 }
 

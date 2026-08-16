@@ -10,6 +10,11 @@ import fs from "node:fs";
 
 const app: Express = express();
 
+app.disable("x-powered-by");
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
+
 ensureUploadDirs();
 
 app.use(
@@ -31,9 +36,40 @@ app.use(
     },
   }),
 );
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const configuredOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: configuredOrigins.length
+      ? (origin, callback) => {
+          if (!origin || configuredOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+          }
+          callback(new Error("Origin is not allowed by CORS"));
+        }
+      : true,
+    credentials: false,
+  }),
+);
+app.use((_, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "1mb" }));
+app.use(express.urlencoded({
+  extended: true,
+  limit: process.env.FORM_BODY_LIMIT || "1mb",
+}));
 
 // Use process.cwd() which always resolves to backend/ when running `npm run dev`
 const uploadsDir = path.join(process.cwd(), "uploads");

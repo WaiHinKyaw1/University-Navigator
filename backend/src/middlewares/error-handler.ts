@@ -35,7 +35,11 @@ export function errorHandler(
   }
 
   const message =
-    error instanceof Error ? error.message : "Something went wrong";
+    process.env.NODE_ENV === "production"
+      ? "Internal server error. Please try again later."
+      : error instanceof Error
+        ? error.message
+        : "Something went wrong";
 
   res.status(500).json({ error: message });
 }

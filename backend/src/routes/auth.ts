@@ -1,15 +1,27 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { signToken, requireAuth, requireAdmin } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 import { imageUpload } from "../lib/uploads";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../lib/mail";
 import { sendResetPasswordEmail } from "../lib/mail";
+import {
+  createAuthRateLimit,
+  isValidResetToken,
+  normalizeEmail,
+  normalizeName,
+  validatePassword,
+} from "../lib/auth-security";
 
 const router: IRouter = Router();
+
+const registerRateLimit = createAuthRateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+const loginRateLimit = createAuthRateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const resetRequestRateLimit = createAuthRateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+const resetPasswordRateLimit = createAuthRateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
 
 function isDatabaseError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -38,15 +50,21 @@ function handleAuthDatabaseError(
   res.status(500).json({ error: `Unable to ${action}. Please try again.` });
 }
 
-router.post("/auth/register", async (req, res): Promise<void> => {
-  const { name, email, password } = req.body;
-  const verificationToken = crypto.randomBytes(32).toString("hex");
+router.post("/auth/register", registerRateLimit, async (req, res): Promise<void> => {
+  const name = normalizeName(req.body?.name);
+  const email = normalizeEmail(req.body?.email);
+  const password = typeof req.body?.password === "string" ? req.body.password : null;
+  const passwordError = validatePassword(password);
 
-  const verificationTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
-  if (!name || !email || !password) {
-    res.status(400).json({ error: "Missing required fields" });
+  if (!name || !email || passwordError) {
+    res.status(400).json({
+      error: passwordError || "Name and a valid email are required",
+    });
     return;
   }
+
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  const verificationTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
   try {
     const [existing] = await db
@@ -58,7 +76,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       return;
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
     const [user] = await db
       .insert(usersTable)
       .values({
@@ -92,10 +110,11 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/auth/login", async (req, res): Promise<void> => {
-  const { email, password } = req.body;
+router.post("/auth/login", loginRateLimit, async (req, res): Promise<void> => {
+  const email = normalizeEmail(req.body?.email);
+  const password = typeof req.body?.password === "string" ? req.body.password : null;
   if (!email || !password) {
-    res.status(400).json({ error: "Missing email or password" });
+    res.status(400).json({ error: "Email and password are required" });
     return;
   }
 
@@ -127,7 +146,11 @@ router.post("/auth/login", async (req, res): Promise<void> => {
       return;
     }
 
-    const token = signToken({ userId: user.id, role: user.role });
+    const token = signToken({
+      userId: user.id,
+      role: user.role,
+      sessionVersion: user.sessionVersion,
+    });
     res.json({
       user: {
         id: user.id,
@@ -145,8 +168,16 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/auth/logout", async (_req, res): Promise<void> => {
-  res.json({ message: "Logged out successfully" });
+router.post("/auth/logout", requireAuth, async (req, res): Promise<void> => {
+  try {
+    await db
+      .update(usersTable)
+      .set({ sessionVersion: sql`${usersTable.sessionVersion} + 1` })
+      .where(eq(usersTable.id, req.user!.id));
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    handleAuthDatabaseError(res, error, "log out");
+  }
 });
 
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
@@ -174,10 +205,11 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.put("/auth/profile", requireAuth, async (req, res): Promise<void> => {
-  const { name, email } = req.body;
-  if (!name || !email) {
+  const normalizedName = normalizeName(req.body?.name);
+  const normalizedEmail = normalizeEmail(req.body?.email);
+  if (!normalizedName || !normalizedEmail) {
     res.status(400).json({
-      error: "Name and email are required",
+      error: "A valid name and email are required",
     });
     return;
   }
@@ -185,7 +217,7 @@ router.put("/auth/profile", requireAuth, async (req, res): Promise<void> => {
     const [existingUser] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email));
+      .where(eq(usersTable.email, normalizedEmail));
 
     if (existingUser && existingUser.id !== req.user!.id) {
       res.status(400).json({
@@ -196,8 +228,8 @@ router.put("/auth/profile", requireAuth, async (req, res): Promise<void> => {
     const [updatedUser] = await db
       .update(usersTable)
       .set({
-        name,
-        email,
+        name: normalizedName,
+        email: normalizedEmail,
       })
       .where(eq(usersTable.id, req.user!.id))
       .returning();
@@ -227,18 +259,17 @@ router.put(
   "/auth/change-password",
   requireAuth,
   async (req, res): Promise<void> => {
-    const { currentPassword, newPassword } = req.body;
+    const currentPassword = typeof req.body?.currentPassword === "string"
+      ? req.body.currentPassword
+      : null;
+    const newPassword = typeof req.body?.newPassword === "string"
+      ? req.body.newPassword
+      : null;
+    const passwordError = validatePassword(newPassword);
 
-    if (!currentPassword || !newPassword) {
+    if (!currentPassword || passwordError) {
       res.status(400).json({
-        error: "Current password and new password are required",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      res.status(400).json({
-        error: "New password must be at least 6 characters",
+        error: passwordError || "Current password and new password are required",
       });
       return;
     }
@@ -269,12 +300,13 @@ router.put(
       }
 
       // Hash new password
-      const newPasswordHash = await bcrypt.hash(newPassword, 10);
+      const newPasswordHash = await bcrypt.hash(newPassword, 12);
 
       await db
         .update(usersTable)
         .set({
           passwordHash: newPasswordHash,
+          sessionVersion: sql`${usersTable.sessionVersion} + 1`,
         })
         .where(eq(usersTable.id, req.user!.id));
 
@@ -343,12 +375,12 @@ router.get("/auth/verify-email", async (req, res): Promise<void> => {
     `);
 });
 
-router.post("/auth/forgot-password", async (req, res): Promise<void> => {
-  const { email } = req.body;
+router.post("/auth/forgot-password", resetRequestRateLimit, async (req, res): Promise<void> => {
+  const email = normalizeEmail(req.body?.email);
 
   if (!email) {
     res.status(400).json({
-      error: "Email required",
+      error: "A valid email is required",
     });
     return;
   }
@@ -382,7 +414,7 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
     await sendResetPasswordEmail(user.email, user.name, token);
 
     res.json({
-      message: "Password reset email sent",
+      message: "If email exists, reset link has been sent",
     });
   } catch (error) {
     logger.error(error);
@@ -393,12 +425,14 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/auth/reset-password", async (req, res): Promise<void> => {
-  const { token, password } = req.body;
+router.post("/auth/reset-password", resetPasswordRateLimit, async (req, res): Promise<void> => {
+  const token = req.body?.token;
+  const password = req.body?.password;
+  const passwordError = validatePassword(password);
 
-  if (!token || !password) {
+  if (!isValidResetToken(token) || passwordError) {
     res.status(400).json({
-      error: "Invalid request",
+      error: passwordError || "Invalid reset request",
     });
 
     return;
@@ -428,15 +462,13 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
-
+    const passwordHash = await bcrypt.hash(password, 12);
   await db
     .update(usersTable)
     .set({
       passwordHash,
-
+      sessionVersion: sql`${usersTable.sessionVersion} + 1`,
       resetPasswordToken: null,
-
       resetPasswordTokenExpiresAt: null,
     })
 

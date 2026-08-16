@@ -9,10 +9,19 @@ import * as zod from 'zod';
 
 
 /**
- * @summary Health check
+ * @summary Liveness health check
  */
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
+})
+
+
+/**
+ * @summary Database readiness check
+ */
+export const ReadinessCheckResponse = zod.object({
+  "status": zod.enum(['ready', 'not_ready']),
+  "database": zod.enum(['ok', 'error'])
 })
 
 
@@ -21,7 +30,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const registerBodyNameMin = 2;
 
-export const registerBodyPasswordMin = 6;
+export const registerBodyPasswordMin = 8;
 
 
 
@@ -68,7 +77,7 @@ export const LoginResponse = zod.object({
 
 
 /**
- * @summary Logout
+ * @summary Logout and revoke the current session
  */
 export const LogoutResponse = zod.object({
   "message": zod.string()

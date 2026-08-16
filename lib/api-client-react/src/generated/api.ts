@@ -53,6 +53,7 @@ import type {
   PeerChatMessage,
   PeerQuestionInput,
   PeerReplyInput,
+  ReadinessStatus,
   RegisterInput,
   ScoreInput,
   ScoreMatch,
@@ -92,7 +93,7 @@ export const getHealthCheckUrl = () => {
 }
 
 /**
- * @summary Health check
+ * @summary Liveness health check
  */
 export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus> => {
 
@@ -139,7 +140,7 @@ export type HealthCheckQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Health check
+ * @summary Liveness health check
  */
 
 export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
@@ -148,6 +149,83 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getReadinessCheckUrl = () => {
+
+
+
+
+  return `/api/readyz`
+}
+
+/**
+ * @summary Database readiness check
+ */
+export const readinessCheck = async ( options?: RequestInit): Promise<ReadinessStatus> => {
+
+  return customFetch<ReadinessStatus>(getReadinessCheckUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadinessCheckQueryKey = () => {
+    return [
+    `/api/readyz`
+    ] as const;
+    }
+
+
+export const getReadinessCheckQueryOptions = <TData = Awaited<ReturnType<typeof readinessCheck>>, TError = ErrorType<ReadinessStatus>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof readinessCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadinessCheckQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readinessCheck>>> = ({ signal }) => readinessCheck({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readinessCheck>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ReadinessCheckQueryResult = NonNullable<Awaited<ReturnType<typeof readinessCheck>>>
+export type ReadinessCheckQueryError = ErrorType<ReadinessStatus>
+
+
+/**
+ * @summary Database readiness check
+ */
+
+export function useReadinessCheck<TData = Awaited<ReturnType<typeof readinessCheck>>, TError = ErrorType<ReadinessStatus>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof readinessCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getReadinessCheckQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -309,7 +387,7 @@ export const getLogoutUrl = () => {
 }
 
 /**
- * @summary Logout
+ * @summary Logout and revoke the current session
  */
 export const logout = async ( options?: RequestInit): Promise<MessageResponse> => {
 
@@ -357,7 +435,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type LogoutMutationError = ErrorType<unknown>
 
     /**
- * @summary Logout
+ * @summary Logout and revoke the current session
  */
 export const useLogout = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
