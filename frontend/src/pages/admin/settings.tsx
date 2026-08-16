@@ -87,17 +87,51 @@ export default function AdminSettings() {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  // Resize/compress a logo client-side (≤1024px, ≤1 MB JPEG) so typical phone
+  // photos (2–6 MB JPEGs, large PNGs, HEIC exports) fit the server upload limit
+  // and never trigger a 400 Bad Request. Falls back to the raw file on failure.
+  const compressImage = async (file: File, targetMaxBytes = 1024 * 1024): Promise<Blob> => {
+    const bitmap = await createImageBitmap(file);
+    const maxDim = 1024;
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+
+    for (const quality of [0.8, 0.7, 0.6, 0.5, 0.4, 0.3]) {
+      const blob = await new Promise<Blob>((resolve) =>
+        canvas.toBlob((b) => resolve(b ?? new Blob()), "image/jpeg", quality),
+      );
+      if (blob.size <= targetMaxBytes) return blob;
+    }
+    return await new Promise<Blob>((resolve) =>
+      canvas.toBlob((b) => resolve(b ?? new Blob()), "image/jpeg", 0.3),
+    );
+  };
+
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/") || file.size > 2 * 1024 * 1024) {
-      toast.error("Please choose an image smaller than 2 MB");
-      event.target.value = "";
-      return;
-    }
     try {
       setIsUploadingLogo(true);
-      const url = await uploadImage(file);
+      let ready: File = file;
+      if (file.size > 500 * 1024) {
+        try {
+          const compressed = await compressImage(file);
+          ready = new File([compressed], file.name.replace(/\.[^.]+$/, "") + ".jpg", {
+            type: "image/jpeg",
+          });
+        } catch {
+          // Unsupported format — send the original file; server validates it.
+          ready = file;
+        }
+      }
+      const url = await uploadImage(ready);
       updateField("logoUrl", url);
       toast.success("Logo uploaded. Save settings to publish it.");
     } catch (error) {

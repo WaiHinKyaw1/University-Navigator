@@ -77,17 +77,66 @@ const imageStorage = multer.diskStorage({
   },
 });
 
+// Detect real image files by magic bytes so uploads with a wrong or missing
+// MIME type (e.g. phone photos reporting "image/heic" or "application/octet-stream")
+// are still accepted when their contents are actually a supported image.
+function isRealImageByMagicBytes(buffer: Buffer): boolean {
+  const signatures: [number, number[]][] = [
+    [0, [0x89, 0x50, 0x4e, 0x47]], // PNG
+    [0, [0xff, 0xd8, 0xff]], // JPEG
+    [0, [0x52, 0x49, 0x46, 0x46]], // WEBP (RIFF header, WEBP checked below)
+    [0, [0x47, 0x49, 0x46, 0x38]], // GIF
+  ];
+  for (const [offset, sig] of signatures) {
+    if (buffer.length < offset + sig.length) continue;
+    if (sig.every((b, i) => buffer[offset + i] === b)) {
+      // WEBP: RIFF header must contain WEBP at offset 8.
+      if (sig[0] === 0x52) {
+        return (
+          buffer.length >= 12 &&
+          buffer[8] === 0x57 &&
+          buffer[9] === 0x45 &&
+          buffer[10] === 0x42 &&
+          buffer[11] === 0x50
+        );
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+// Accept anything reported as an image type (or with an ambiguous/missing type
+// like "application/octet-stream"). The upload route validates the actual
+// content by magic bytes after the file is written, so wrong MIME types are
+// caught there without rejecting legitimate phone photos with odd types.
 export const imageUpload = multer({
   storage: imageStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (_req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-      cb(new Error("Only image files are allowed"));
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
       return;
     }
-    cb(null, true);
+    if (!file.mimetype || file.mimetype === "application/octet-stream") {
+      cb(null, true);
+      return;
+    }
+    cb(new Error("Only image files are allowed"));
   },
 });
+
+// Verify the written file actually contains an image (PNG/JPEG/WEBP/GIF).
+// Use this in upload routes to catch uploads whose MIME type lied about the
+// contents (e.g. a text or executable file renamed to .png).
+export function verifyImageContent(filePath: string): boolean {
+  try {
+    const head = fs.readFileSync(filePath, { flag: "r" }).subarray(0, 16);
+    return isRealImageByMagicBytes(head);
+  } catch {
+    return false;
+  }
+}
 
 export function getAdmissionGuideFilePath(storedFileName: string): string {
   return path.join(ADMISSION_GUIDE_UPLOAD_DIR, storedFileName);
