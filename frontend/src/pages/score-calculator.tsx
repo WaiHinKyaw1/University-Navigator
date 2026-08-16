@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout";
 import {
   useCalculateScore,
+  useListMajors,
   useListUniversities,
 } from "@workspace/api-client-react";
 import {
@@ -274,10 +275,18 @@ function ResultCard({
   uni,
   userTotal,
   eligible,
+  matchScore,
+  majorMatch,
+  recommendationTier,
+  recommendationReasons,
 }: {
   uni: any;
   userTotal: number;
   eligible: boolean;
+  matchScore?: number;
+  majorMatch?: boolean;
+  recommendationTier?: string;
+  recommendationReasons?: string[];
 }) {
   const required = uni.minScore ?? 0;
   const gap = required - userTotal;
@@ -356,6 +365,18 @@ function ResultCard({
                   ဝင်ခွင့်ရရန် {gap} မှတ် ပိုလိုသေး
                 </p>
               )}
+              {recommendationReasons && recommendationReasons.length > 0 && (
+                <div className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-primary">
+                    <span>{recommendationTier === "strong" ? "အထူးသင့်တော်" : recommendationTier === "near" ? "နီးစပ်သော ရွေးချယ်မှု" : "ကိုက်ညီမှု ရှင်းလင်းချက်"}</span>
+                    {typeof matchScore === "number" && <span className="rounded-full bg-primary/10 px-2 py-0.5">{matchScore}%</span>}
+                    {majorMatch && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">ဘာသာရပ်ကိုက်ညီ</span>}
+                  </div>
+                  <ul className="mt-1.5 space-y-1 text-[11px] text-muted-foreground">
+                    {recommendationReasons.slice(0, 3).map((reason) => <li key={reason}>• {reason}</li>)}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
@@ -411,6 +432,9 @@ export default function ScoreCalculator() {
     sliderTotal,
     setSliderTotal,
 
+    preferredMajorIds,
+    setPreferredMajorIds,
+
     hasSearched,
     setHasSearched,
 
@@ -419,6 +443,7 @@ export default function ScoreCalculator() {
   } = useScoreStore();
 
   const calculateMutation = useCalculateScore();
+  const { data: majorListResponse, isLoading: isMajorsLoading } = useListMajors();
   useEffect(() => {
     if (calculateMutation.data) {
       setResults(calculateMutation.data as any[]);
@@ -431,6 +456,7 @@ export default function ScoreCalculator() {
     limit: 1000,
   });
   const allUniversities: any[] = (allUnisResponse as any)?.universities ?? [];
+  const majorOptions: any[] = ((majorListResponse as any[]) ?? []).slice(0, 24);
 
   const subjects = useMemo(() => {
     if (stream === "science") {
@@ -475,6 +501,16 @@ export default function ScoreCalculator() {
     setHasSearched(false);
     calculateMutation.reset();
   };
+  const togglePreferredMajor = (majorId: number) => {
+    if (!preferredMajorIds.includes(majorId) && preferredMajorIds.length >= 3) return;
+    const next = preferredMajorIds.includes(majorId)
+      ? preferredMajorIds.filter((id) => id !== majorId)
+      : [...preferredMajorIds, majorId];
+    setPreferredMajorIds(next);
+    setHasSearched(false);
+    calculateMutation.reset();
+  };
+
   const handleSubjectSearch = () => {
     setHasSearched(true);
     const subjectData: Record<string, number> = {};
@@ -482,7 +518,11 @@ export default function ScoreCalculator() {
       subjectData[s.id] = Number(scores[s.id]) || 0;
     });
     calculateMutation.mutate({
-      data: { totalScore: subjectTotal, subjects: subjectData as any },
+      data: {
+        totalScore: subjectTotal,
+        subjects: subjectData as any,
+        preferredMajorIds: preferredMajorIds.length > 0 ? preferredMajorIds : undefined,
+      },
     });
   };
 
@@ -563,6 +603,42 @@ export default function ScoreCalculator() {
               စုစုပေါင်းဖြင့် ရှာမည်
             </button>
           </div>
+
+          {/* Preferred major preferences */}
+          <section className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-card-foreground">စိတ်ဝင်စားသော ဘာသာရပ်များ</h2>
+                <p className="mt-1 text-xs text-muted-foreground">အများဆုံး ၃ ခုရွေးပါ။ ရွေးချယ်မှုများကို ရလဒ်အစီအစဉ်တွင် ထည့်သွင်းစဉ်းစားမည်။</p>
+              </div>
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{preferredMajorIds.length}/3</span>
+            </div>
+            {isMajorsLoading ? (
+              <div className="h-10 animate-pulse rounded-xl bg-muted" />
+            ) : majorOptions.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3">
+                {majorOptions.map((major) => {
+                  const selected = preferredMajorIds.includes(major.id);
+                  const disabled = !selected && preferredMajorIds.length >= 3;
+                  return (
+                    <button
+                      key={major.id}
+                      type="button"
+                      onClick={() => togglePreferredMajor(major.id)}
+                      disabled={disabled}
+                      aria-pressed={selected}
+                      className={`touch-target rounded-xl border px-3 py-2 text-left text-xs transition-colors ${selected ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:bg-muted"} ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+                    >
+                      <span className="block font-semibold">{major.name}</span>
+                      <span className="mt-0.5 block truncate text-[10px] opacity-80">{major.nameEn}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">ဘာသာရပ်စာရင်း မရရှိသေးပါ။ ရမှတ်အပေါ်မူတည်၍ ရှာဖွေနိုင်ပါသည်။</p>
+            )}
+          </section>
 
           {/* ── SUBJECT MODE ── */}
           {inputMode === "subjects" && (
@@ -749,6 +825,10 @@ export default function ScoreCalculator() {
                           uni={m.university}
                           userTotal={subjectTotal}
                           eligible
+                          matchScore={m.matchScore}
+                          majorMatch={m.majorMatch}
+                          recommendationTier={m.recommendationTier}
+                          recommendationReasons={m.recommendationReasons}
                         />
                       ))}
                     </div>
@@ -768,6 +848,10 @@ export default function ScoreCalculator() {
                             uni={m.university}
                             userTotal={subjectTotal}
                             eligible={false}
+                            matchScore={m.matchScore}
+                            majorMatch={m.majorMatch}
+                            recommendationTier={m.recommendationTier}
+                            recommendationReasons={m.recommendationReasons}
                           />
                         ))}
                     </div>

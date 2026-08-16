@@ -228,6 +228,12 @@ export interface ScoreMatch {
      * @nullable
      */
   gap?: number | null;
+  /** Whether one or more selected preferred majors are offered */
+  majorMatch: boolean;
+  /** Explainable recommendation category */
+  recommendationTier: 'strong' | 'eligible' | 'near' | 'stretch';
+  /** Human-readable reasons for the recommendation */
+  recommendationReasons: string[];
 }
 
 export type ChatbotHistoryMessageRole = typeof ChatbotHistoryMessageRole[keyof typeof ChatbotHistoryMessageRole];

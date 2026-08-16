@@ -470,7 +470,10 @@ export const CalculateScoreResponseItem = zod.object({
 }),
   "matchScore": zod.number().describe('How well the student\'s score matches (0-100)'),
   "eligible": zod.boolean(),
-  "gap": zod.number().nullish().describe('Score gap if not eligible (positive means eligible, negative means gap)')
+  "gap": zod.number().nullish().describe('Score gap if not eligible (positive means eligible, negative means gap)'),
+  "majorMatch": zod.boolean().describe('Whether one or more selected preferred majors are offered'),
+  "recommendationTier": zod.enum(['strong', 'eligible', 'near', 'stretch']).describe('Explainable recommendation category'),
+  "recommendationReasons": zod.array(zod.string()).describe('Human-readable reasons for the recommendation')
 })
 export const CalculateScoreResponse = zod.array(CalculateScoreResponseItem)
 

@@ -1438,6 +1438,18 @@ components:
         gap:
           type: ["number", "null"]
           description: Score gap if not eligible (positive means eligible, negative means gap)
+        majorMatch:
+          type: boolean
+          description: Whether one or more selected preferred majors are offered
+        recommendationTier:
+          type: string
+          enum: [strong, eligible, near, stretch]
+          description: Explainable recommendation category
+        recommendationReasons:
+          type: array
+          items:
+            type: string
+          description: Human-readable reasons for the recommendation
 
     # ── CHATBOT ───────────────────────────────────────────────────────────
     ChatbotMessageInput:
