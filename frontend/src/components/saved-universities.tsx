@@ -1,95 +1,93 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useFavorites } from "@/hooks/use-favorites";
+import { Building2, Heart, MapPin, Trash2 } from "lucide-react";
 import { Link } from "wouter";
-import { HeartOff } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SavedUniversities() {
-  const [universities, setUniversities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { favorites, isLoading, isError, removeFavorite } = useFavorites();
 
-  useEffect(() => {
-    loadSaved();
-  }, []);
-
-  const loadSaved = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch("/api/favorites", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      setUniversities(data);
-    } catch {
-      toast.error("Failed loading saved universities");
-    } finally {
-      setLoading(false);
-    }
+  const handleRemove = (universityId: number) => {
+    removeFavorite.mutate(universityId, {
+      onSuccess: () => toast.success("Favorites မှ ဖယ်ရှားပြီးပါပြီ"),
+      onError: () => toast.error("Favorites မှ ဖယ်ရှား၍ မရပါ"),
+    });
   };
-
-  const removeFavorite = async (id: number) => {
-    try {
-      const token = localStorage.getItem("token");
-
-      await fetch(`/api/favorites/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setUniversities((prev) => prev.filter((item) => item.id !== id));
-
-      toast.success("Removed from saved");
-    } catch {
-      toast.error("Remove failed");
-    }
-  };
-
-  if (loading) return <p>Loading...</p>;
 
   return (
-    <div className="mt-6 border rounded-xl p-6 bg-card">
-      <h2 className="text-xl font-bold mb-4">Saved Universities</h2>
+    <section className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Heart className="h-4 w-4 fill-current text-rose-500" />
+            <h2 className="text-lg font-semibold text-foreground">Saved Universities</h2>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">နောက်မှ ပြန်ကြည့်ရန် သိမ်းထားသော တက္ကသိုလ်များ</p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/favorites">အားလုံးကြည့်မယ်</Link>
+        </Button>
+      </div>
 
-      {universities.length === 0 ? (
-        <p className="text-muted-foreground">No saved universities</p>
-      ) : (
+      {isLoading ? (
         <div className="space-y-3">
-          {universities.map((uni) => (
-            <div
-              key={uni.id}
-              className="
-flex justify-between items-center
-border rounded-lg p-4
-"
-            >
-              <div>
-                <Link
-                  href={`/universities/${uni.id}`}
-                  className="font-semibold hover:text-primary"
-                >
-                  {uni.name}
-                </Link>
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="flex items-center gap-3 rounded-xl border border-border p-3">
+              <Skeleton className="h-12 w-14 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-3 w-1/3" />
               </div>
-
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => removeFavorite(uni.id)}
-              >
-                <HeartOff className="h-4 w-4 mr-2" />
-                Unsave
-              </Button>
             </div>
           ))}
         </div>
+      ) : isError ? (
+        <p className="rounded-xl bg-destructive/5 p-4 text-sm text-destructive">Favorites ရယူ၍ မရပါ။ ခဏအကြာတွင် ပြန်လည်ကြိုးစားပါ။</p>
+      ) : favorites.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border p-8 text-center">
+          <Building2 className="mx-auto mb-3 h-9 w-9 text-muted-foreground/40" />
+          <p className="font-medium text-foreground">သိမ်းထားတာ မရှိသေးပါ</p>
+          <p className="mt-1 text-sm text-muted-foreground">Universities စာမျက်နှာမှ တက္ကသိုလ်များကို Favorites ထဲသို့ သိမ်းနိုင်ပါတယ်။</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {favorites.slice(0, 4).map((favorite) => {
+            const university = favorite.university;
+            return (
+              <div key={favorite.favoriteId} className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-muted/40">
+                <div className="flex h-12 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                  {university.imageUrl ? (
+                    <img src={university.imageUrl} alt={university.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Building2 className="h-5 w-5 text-muted-foreground/50" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Link href={`/universities/${university.id}`} className="line-clamp-1 text-sm font-semibold text-foreground hover:text-primary">
+                    {university.name}
+                  </Link>
+                  <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    {university.city || university.state} · {university.minScore} မှတ်
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemove(university.id)}
+                  disabled={removeFavorite.isPending}
+                  className="shrink-0 text-muted-foreground hover:text-rose-500"
+                  aria-label="Remove from favorites"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
       )}
-    </div>
+    </section>
   );
 }

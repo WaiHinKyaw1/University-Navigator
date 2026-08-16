@@ -1,4 +1,4 @@
-import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,6 +11,8 @@ export const siteSettingsTable = pgTable("site_settings", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   welcomeMessage: text("welcome_message"),
+  maintenanceMode: boolean("maintenance_mode").notNull().default(false),
+  maintenanceMessage: text("maintenance_message").notNull().default("We are making a few improvements. Please check back soon."),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow()

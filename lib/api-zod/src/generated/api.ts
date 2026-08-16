@@ -28,8 +28,7 @@ export const registerBodyPasswordMin = 6;
 export const RegisterBody = zod.object({
   "name": zod.string().min(registerBodyNameMin),
   "email": zod.string().email(),
-  "password": zod.string().min(registerBodyPasswordMin),
-  "grade": zod.string().describe('G-10, G-11, G-12')
+  "password": zod.string().min(registerBodyPasswordMin)
 })
 
 export const RegisterResponse = zod.object({
@@ -38,7 +37,6 @@ export const RegisterResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().describe('student | admin'),
-  "grade": zod.string().nullish(),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date()
@@ -61,7 +59,6 @@ export const LoginResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().describe('student | admin'),
-  "grade": zod.string().nullish(),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date()
@@ -86,7 +83,6 @@ export const GetMeResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().describe('student | admin'),
-  "grade": zod.string().nullish(),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date()
@@ -94,7 +90,7 @@ export const GetMeResponse = zod.object({
 
 
 /**
- * @summary List all universities with optional filters
+ * @summary List all universities with optional filters and sorting
  */
 export const ListUniversitiesQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
@@ -102,7 +98,10 @@ export const ListUniversitiesQueryParams = zod.object({
   "state": zod.coerce.string().optional(),
   "majorId": zod.coerce.number().optional(),
   "page": zod.coerce.number().optional(),
-  "limit": zod.coerce.number().optional()
+  "limit": zod.coerce.number().optional(),
+  "compact": zod.coerce.boolean().optional(),
+  "sortBy": zod.enum(["name", "minScore", "type", "state"]).optional(),
+  "sortOrder": zod.enum(["asc", "desc"]).optional()
 })
 
 export const ListUniversitiesResponse = zod.object({
@@ -502,7 +501,6 @@ export const ListChatRoomsResponseItem = zod.object({
   "participants": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "grade": zod.string().nullable(),
   "avatarUrl": zod.string().nullish()
 })),
   "lastMessage": zod.string().nullish(),
@@ -525,7 +523,6 @@ export const CreateChatRoomResponse = zod.object({
   "participants": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "grade": zod.string().nullable(),
   "avatarUrl": zod.string().nullish()
 })),
   "lastMessage": zod.string().nullish(),
@@ -877,7 +874,6 @@ export const ListUsersResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().describe('student | admin'),
-  "grade": zod.string().nullish(),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date()
@@ -900,7 +896,6 @@ export const GetUserResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().describe('student | admin'),
-  "grade": zod.string().nullish(),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date()
@@ -924,7 +919,6 @@ export const BanUserResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().describe('student | admin'),
-  "grade": zod.string().nullish(),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date()
@@ -1002,6 +996,8 @@ export const GetSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
+  "maintenanceMode": zod.boolean(),
+  "maintenanceMessage": zod.string(),
   "updatedAt": zod.coerce.date()
 })
 
@@ -1020,7 +1016,9 @@ export const UpdateSiteSettingsBody = zod.object({
   "academicYear": zod.string().min(1),
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
-  "welcomeMessage": zod.string().nullish()
+  "welcomeMessage": zod.string().nullish(),
+  "maintenanceMode": zod.boolean().optional(),
+  "maintenanceMessage": zod.string().optional()
 })
 
 export const UpdateSiteSettingsResponse = zod.object({
@@ -1032,6 +1030,8 @@ export const UpdateSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
+  "maintenanceMode": zod.boolean(),
+  "maintenanceMessage": zod.string(),
   "updatedAt": zod.coerce.date()
 })
 
@@ -1046,7 +1046,6 @@ export const ListStudentsQueryParams = zod.object({
 export const ListStudentsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
-  "grade": zod.string().nullable(),
   "avatarUrl": zod.string().nullish()
 })
 export const ListStudentsResponse = zod.array(ListStudentsResponseItem)

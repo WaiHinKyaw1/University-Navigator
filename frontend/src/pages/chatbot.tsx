@@ -126,43 +126,43 @@ export default function Chatbot() {
   return (
     <Layout noFooter>
       <div className="flex flex-col" style={{ height: "calc(100dvh - 64px)" }}>
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">တက္ကသိုလ် လမ်းညွှန်</p>
-              <p className="text-[11px] text-gray-400">တက္ကသိုလ် · မေဂျာ · Career Guide</p>
+              <p className="text-sm font-bold leading-tight text-foreground">တက္ကသိုလ် လမ်းညွှန်</p>
+              <p className="text-[11px] text-muted-foreground">တက္ကသိုလ် · မေဂျာ · Career Guide</p>
             </div>
           </div>
           <button
             onClick={handleNewConversation}
-            className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-primary bg-gray-100 hover:bg-primary/10 px-3 py-2 rounded-xl transition-colors"
+            className="touch-target flex items-center gap-1.5 rounded-xl bg-muted px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             စကားဝိုင်းသစ်
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-gray-50/50 px-4 py-4 space-y-3">
+        <div className="flex-1 space-y-3 overflow-y-auto bg-muted/20 px-4 py-4">
           {messages.map((msg, idx) => (
             <div key={msg.id || idx} className={`flex items-end gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
               <div
-                className={`shrink-0 h-7 w-7 rounded-full flex items-center justify-center mb-0.5 ${msg.role === "user" ? "bg-primary" : "bg-white border border-gray-200"
+                className={`shrink-0 h-7 w-7 rounded-full flex items-center justify-center mb-0.5 ${msg.role === "user" ? "bg-primary" : "bg-card border border-border"
                   }`}
               >
                 {msg.role === "user" ? (
-                  <UserIcon className="h-3.5 w-3.5 text-white" />
+                  <UserIcon className="h-3.5 w-3.5 text-primary-foreground" />
                 ) : (
-                  <Bot className="h-3.5 w-3.5 text-gray-500" />
+                  <Bot className="h-3.5 w-3.5 text-muted-foreground" />
                 )}
               </div>
 
               <div
                 className={`max-w-[78%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl ${msg.role === "user"
-                  ? "bg-primary text-white rounded-br-sm"
-                  : "bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-100"
+                  ? "rounded-br-sm bg-primary text-primary-foreground"
+                  : "rounded-bl-sm border border-border bg-card text-card-foreground shadow-sm"
                   }`}
               >
                 {msg.role === "assistant" ? (
@@ -176,14 +176,14 @@ export default function Chatbot() {
 
           {sendMutation.isPending && (
             <div className="flex items-end gap-2">
-              <div className="shrink-0 h-7 w-7 rounded-full bg-white border border-gray-200 flex items-center justify-center mb-0.5">
-                <Bot className="h-3.5 w-3.5 text-gray-500" />
+              <div className="mb-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card">
+                <Bot className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-              <div className="bg-white border border-gray-100 shadow-sm px-4 py-3 rounded-2xl rounded-bl-sm flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3 shadow-sm">
                 {[0, 160, 320].map((d) => (
                   <div
                     key={d}
-                    className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"
+                    className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40"
                     style={{ animationDelay: `${d}ms` }}
                   />
                 ))}
@@ -197,7 +197,7 @@ export default function Chatbot() {
                 <button
                   key={chip.label}
                   onClick={() => sendMessage(chip.msg)}
-                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-white hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-colors text-gray-700 font-medium shadow-sm"
+                  className="touch-target rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
                 >
                   {chip.label}
                 </button>
@@ -208,7 +208,7 @@ export default function Chatbot() {
           <div ref={bottomRef} />
         </div>
 
-        <div className="shrink-0 bg-white border-t border-gray-100 px-4 py-3">
+        <div className="shrink-0 border-t border-border bg-background px-4 py-3">
           <div className="max-w-2xl mx-auto">
             <form onSubmit={handleSubmit} className="flex gap-2">
               <Input
@@ -216,7 +216,7 @@ export default function Chatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="တက္ကသိုလ်၊ မေဂျာ၊ career အကြောင်း မေးပါ..."
-                className="flex-1 h-12 rounded-2xl bg-gray-50 border-gray-200 focus:bg-white"
+                className="h-12 flex-1 rounded-2xl border-input bg-muted/40 focus:bg-background"
                 disabled={sendMutation.isPending}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -228,7 +228,7 @@ export default function Chatbot() {
               <Button
                 type="submit"
                 disabled={!input.trim() || sendMutation.isPending}
-                className="h-12 w-12 rounded-2xl shrink-0"
+                className="h-12 w-12 shrink-0 rounded-2xl"
                 size="icon"
               >
                 <Send className="h-4 w-4" />

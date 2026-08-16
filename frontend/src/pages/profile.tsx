@@ -64,27 +64,27 @@ export default function Profile() {
 
   return (
     <Layout>
-      <div className="container mx-auto max-w-xl py-10">
-        <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+      <div className="container mx-auto max-w-xl px-4 py-6 sm:px-6 sm:py-10">
+        <h1 className="mb-6 text-2xl font-bold text-foreground sm:text-3xl">My Profile</h1>
         <ProfileImageUpload
           avatarUrl={avatarUrl}
           onUploaded={(url) => setAvatarUrl(url)}
         />
 
-        <div className="space-y-5 border rounded-xlp-6 p-6">
+        <div className="space-y-5 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-6">
           <div>
-            <label>Name</label>
+            <label className="mb-2 block text-sm font-medium text-foreground">Name</label>
 
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
           <div>
-            <label>Email</label>
+            <label className="mb-2 block text-sm font-medium text-foreground">Email</label>
 
             <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
 
-          <Button onClick={handleSave} disabled={loading}>
+          <Button className="min-h-10 w-full sm:w-auto" onClick={handleSave} disabled={loading}>
             {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>

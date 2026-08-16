@@ -1,38 +1,51 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
+import { CompareProvider } from "@/hooks/use-compare";
 import NotFound from "@/pages/not-found";
 
-import Home from "@/pages/home";
-import Login from "@/pages/login";
-import Register from "@/pages/register";
-import Universities from "@/pages/universities";
-import UniversityDetail from "@/pages/university-detail";
-import ScoreCalculator from "@/pages/score-calculator";
-import Chatbot from "@/pages/chatbot";
-import Chat from "@/pages/chat";
-import News from "@/pages/news";
-import AdmissionGuide from "@/pages/admission-guide";
+const Home = lazy(() => import("@/pages/home"));
+const Login = lazy(() => import("@/pages/login"));
+const Register = lazy(() => import("@/pages/register"));
+const Universities = lazy(() => import("@/pages/universities"));
+const Favorites = lazy(() => import("@/pages/favorites"));
+const Compare = lazy(() => import("@/pages/compare"));
+const UniversityDetail = lazy(() => import("@/pages/university-detail"));
+const ScoreCalculator = lazy(() => import("@/pages/score-calculator"));
+const Chatbot = lazy(() => import("@/pages/chatbot"));
+const Chat = lazy(() => import("@/pages/chat"));
+const News = lazy(() => import("@/pages/news"));
+const AdmissionGuide = lazy(() => import("@/pages/admission-guide"));
 
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminUsers from "@/pages/admin/users";
-import AdminUniversities from "@/pages/admin/universities";
-import AdminMajors from "@/pages/admin/majors";
-import AdminCategories from "@/pages/admin/categories";
-import AdminNews from "@/pages/admin/news";
-import AdminAdmissionGuide from "@/pages/admin/admission-guide";
-import AdminAudit from "@/pages/admin/audit";
-import AdminChatMonitor from "@/pages/admin/chat-monitor";
-import Profile from "@/pages/profile";
-import AdminProfile from "@/pages/admin/admin-profile";
-import AdminSettings from "@/pages/admin/settings";
-import VerifyEmail from "@/pages/verify-email";
-import ResetPassword from "./pages/reset-password";
-import ForgotPassword from "./pages/forgot-password";
+const AdminDashboard = lazy(() => import("@/pages/admin/dashboard"));
+const AdminUsers = lazy(() => import("@/pages/admin/users"));
+const AdminUniversities = lazy(() => import("@/pages/admin/universities"));
+const AdminMajors = lazy(() => import("@/pages/admin/majors"));
+const AdminCategories = lazy(() => import("@/pages/admin/categories"));
+const AdminNews = lazy(() => import("@/pages/admin/news"));
+const AdminAdmissionGuide = lazy(() => import("@/pages/admin/admission-guide"));
+const AdminAudit = lazy(() => import("@/pages/admin/audit"));
+const AdminChatMonitor = lazy(() => import("@/pages/admin/chat-monitor"));
+const Profile = lazy(() => import("@/pages/profile"));
+const AdminProfile = lazy(() => import("@/pages/admin/admin-profile"));
+const AdminSettings = lazy(() => import("@/pages/admin/settings"));
+const VerifyEmail = lazy(() => import("@/pages/verify-email"));
+const ResetPassword = lazy(() => import("./pages/reset-password"));
+const ForgotPassword = lazy(() => import("./pages/forgot-password"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function Router() {
   return (
@@ -41,6 +54,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/universities" component={Universities} />
+      <Route path="/favorites" component={Favorites} />
+      <Route path="/compare" component={Compare} />
       <Route path="/universities/:id" component={UniversityDetail} />
       <Route path="/score" component={ScoreCalculator} />
       <Route path="/news" component={News} />
@@ -73,12 +88,22 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <CompareProvider>
+          <TooltipProvider>
+            <Suspense
+              fallback={
+                <div className="flex min-h-screen items-center justify-center bg-gray-50 text-sm text-gray-500">
+                  Loading…
+                </div>
+              }
+            >
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <Router />
+              </WouterRouter>
+            </Suspense>
+            <Toaster />
+          </TooltipProvider>
+        </CompareProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

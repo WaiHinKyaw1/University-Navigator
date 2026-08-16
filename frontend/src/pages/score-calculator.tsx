@@ -130,13 +130,13 @@ function ScoreInput({
   const isFailed = value !== "" && Number(value) < 40;
 
   return (
-    <div className={`bg-white rounded-2xl border ${isFailed ? "border-red-300 shadow-red-100" : "border-gray-100"} shadow-sm p-4 flex flex-col gap-2.5 transition-colors`}>
+    <div className={`flex flex-col gap-2.5 rounded-2xl border p-4 shadow-sm transition-colors ${isFailed ? "border-red-300 bg-red-50/50 shadow-red-100 dark:bg-red-950/20" : "border-border bg-card"}`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-bold text-gray-800 text-sm leading-tight">
+          <p className="text-sm font-bold leading-tight text-card-foreground">
             {subject.label}
           </p>
-          <p className="text-[11px] text-gray-400 mt-0.5">{subject.labelEn}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{subject.labelEn}</p>
         </div>
         <div className="flex flex-col items-end">
           <input
@@ -149,12 +149,12 @@ function ScoreInput({
               if (v === "" || (Number(v) >= 0 && Number(v) <= 100)) onChange(v);
             }}
             placeholder="—"
-            className={`w-14 h-11 rounded-xl border-2 ${isFailed ? "border-red-300 focus:border-red-500 bg-red-50 text-red-700" : "border-gray-200 focus:border-primary bg-gray-50 text-gray-900"} focus:outline-none text-center text-xl font-black transition-colors`}
+            className={`h-11 w-14 rounded-xl border-2 text-center text-xl font-black transition-colors focus:outline-none ${isFailed ? "border-red-300 bg-red-50 text-red-700 focus:border-red-500 dark:bg-red-950/30" : "border-input bg-muted/40 text-foreground focus:border-primary"}`}
           />
           {isFailed && <p className="text-[10px] text-red-500 font-bold mt-1">ကျရှုံး</p>}
         </div>
       </div>
-      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
         <div
           className={`h-full rounded-full transition-all duration-300 ${isFailed ? "bg-red-400" : subject.color}`}
           style={{ width: `${pct}%` }}
@@ -198,15 +198,15 @@ function TotalScoreSlider({
             };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+    <div className="space-y-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-sm text-gray-500">စုစုပေါင်း ရမှတ် ရွေးချယ်ရန်</p>
+          <p className="text-sm text-muted-foreground">စုစုပေါင်း ရမှတ် ရွေးချယ်ရန်</p>
           <div className="flex items-end gap-1.5 mt-1">
             <span className="text-6xl font-black text-primary leading-none tabular-nums">
               {value}
             </span>
-            <span className="text-gray-400 text-xl mb-1.5">/ 600</span>
+            <span className="mb-1.5 text-xl text-muted-foreground">/ 600</span>
           </div>
         </div>
         <div className="text-right">
@@ -252,7 +252,7 @@ function TotalScoreSlider({
             border: none;
           }
         `}</style>
-        <div className="flex justify-between text-[11px] text-gray-400 mt-2">
+        <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
           <span>240</span>
           <span>330</span>
           <span>420</span>
@@ -296,18 +296,18 @@ function ResultCard({
   return (
     <div
       className={`rounded-2xl border overflow-hidden transition-all hover:shadow-md ${eligible
-        ? "border-primary/30 bg-white shadow-sm"
-        : "border-gray-200 bg-gray-50/60"
+        ? "border-primary/30 bg-card shadow-sm"
+        : "border-border bg-muted/30"
         }`}
     >
       <div
-        className={`h-1 w-full ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-gray-200"}`}
+        className={`h-1 w-full ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-muted-foreground/30"}`}
       />
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-bold text-gray-900 text-base leading-tight">
+              <h3 className="text-base font-bold leading-tight text-card-foreground">
                 {uni.name}
               </h3>
               {uni.abbreviation && (
@@ -316,36 +316,36 @@ function ResultCard({
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {uni.nameEn}
             </p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               {uni.state && (
-                <span className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                   📍 {uni.state}
                 </span>
               )}
               {uni.type && (
-                <span className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                   {TYPE_LABELS[uni.type] ?? uni.type}
                 </span>
               )}
-              <span className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                 🎓 ၂၀၂၆ ခုနှစ်
               </span>
             </div>
 
             {/* Progress bar toward cutoff */}
             <div className="mt-3 space-y-1">
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>
-                  သင်ရမှတ်: <b className="text-gray-800">{userTotal}</b>
+                  သင်ရမှတ်: <b className="text-card-foreground">{userTotal}</b>
                 </span>
                 <span>
-                  လိုအပ်မှတ်: <b className="text-gray-800">{required}</b>
+                  လိုအပ်မှတ်: <b className="text-card-foreground">{required}</b>
                 </span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-orange-300"}`}
                   style={{ width: `${pct}%` }}
@@ -365,7 +365,7 @@ function ResultCard({
                 <CheckCircle2 className="h-3.5 w-3.5" /> ဝင်ခွင့်ရ
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-gray-400 font-medium text-sm bg-gray-100 px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground">
                 <XCircle className="h-3.5 w-3.5" /> မဝင်နိုင်သေး
               </div>
             )}
@@ -426,7 +426,10 @@ export default function ScoreCalculator() {
   }, [calculateMutation.data, setResults]);
 
   // For slider mode — fetch all universities, filter client-side
-  const { data: allUnisResponse } = useListUniversities({});
+  const { data: allUnisResponse } = useListUniversities({
+    compact: true,
+    limit: 1000,
+  });
   const allUniversities: any[] = (allUnisResponse as any)?.universities ?? [];
 
   const subjects = useMemo(() => {
@@ -521,20 +524,20 @@ export default function ScoreCalculator() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50/50">
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-4xl space-y-5 px-4 py-6 sm:py-8">
           {/* Header */}
           <div className="text-center space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
               ဝင်ခွင့်ရမှတ် စစ်ဆေးရန်
             </h1>
-            <p className="text-gray-500 text-sm">
+            <p className="text-sm text-muted-foreground">
               G-12 ရမှတ်ထည့်ပြီး တက္ကသိုလ်ဝင်ခွင့် စစ်ဆေးပါ
             </p>
           </div>
 
           {/* Input mode toggle */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
+          <div className="flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
             <button
               onClick={() => {
                 setInputMode("subjects");
@@ -543,7 +546,7 @@ export default function ScoreCalculator() {
               }}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${inputMode === "subjects"
                 ? "bg-primary text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-50"
+                : "text-muted-foreground hover:bg-muted"
                 }`}
             >
               <PenLine className="h-4 w-4" />
@@ -553,7 +556,7 @@ export default function ScoreCalculator() {
               onClick={() => setInputMode("slider")}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${inputMode === "slider"
                 ? "bg-primary text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-50"
+                : "text-muted-foreground hover:bg-muted"
                 }`}
             >
               <SlidersHorizontal className="h-4 w-4" />
@@ -565,12 +568,12 @@ export default function ScoreCalculator() {
           {inputMode === "subjects" && (
             <>
               {/* Stream selector */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
+              <div className="flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
                 <button
                   onClick={() => handleStreamChange("science")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${stream === "science"
                     ? "bg-primary/10 text-primary"
-                    : "text-gray-500 hover:bg-gray-50"
+                    : "text-muted-foreground hover:bg-muted"
                     }`}
                 >
                   <FlaskConical className="h-4 w-4" /> သိပ္ပံ (Science)
@@ -579,7 +582,7 @@ export default function ScoreCalculator() {
                   onClick={() => handleStreamChange("arts")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${stream === "arts"
                     ? "bg-primary/10 text-primary"
-                    : "text-gray-500 hover:bg-gray-50"
+                    : "text-muted-foreground hover:bg-muted"
                     }`}
                 >
                   <BookOpen className="h-4 w-4" /> ဝိဇ္ဇာ (Arts)
@@ -589,12 +592,12 @@ export default function ScoreCalculator() {
               {/* Science 6th subject choice */}
               {stream === "science" && (
                 <div className="space-y-2">
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
+                  <div className="flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
                     <button
                       onClick={() => handleScienceSixthChange("biology")}
                       className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${scienceSixth === "biology"
                         ? "bg-teal-50 text-teal-700 border border-teal-200"
-                        : "text-gray-500 hover:bg-gray-50"
+                        : "text-muted-foreground hover:bg-muted"
                         }`}
                     >
                       ဇီဝဗေဒ (Biology)
@@ -603,14 +606,14 @@ export default function ScoreCalculator() {
                       onClick={() => handleScienceSixthChange("economics")}
                       className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${scienceSixth === "economics"
                         ? "bg-rose-50 text-rose-700 border border-rose-200"
-                        : "text-gray-500 hover:bg-gray-50"
+                        : "text-muted-foreground hover:bg-muted"
                         }`}
                     >
                       ဘောဂ (Economics)
                     </button>
                   </div>
                   {scienceSixth === "economics" && (
-                    <p className="text-[12px] text-gray-500 px-1">
+                    <p className="px-1 text-[12px] text-muted-foreground">
                       မှတ်ချက်: ဘောဂ ရွေးထားပါက <b>ဆေးတက္ကသိုလ်</b> များကို
                       ရလဒ်တွင် မပြပါ။
                     </p>
@@ -619,7 +622,7 @@ export default function ScoreCalculator() {
               )}
 
               {/* Subject input grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3">
                 {subjects.map((subject) => (
                   <ScoreInput
                     key={`${stream}-${subject.id}`}
@@ -636,15 +639,15 @@ export default function ScoreCalculator() {
               </div>
 
               {/* Total summary */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+              <div className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">စုစုပေါင်း ရမှတ်</p>
+                    <p className="text-sm text-muted-foreground">စုစုပေါင်း ရမှတ်</p>
                     <div className="flex items-end gap-1.5 mt-1">
                       <span className="text-5xl font-black text-primary leading-none tabular-nums">
                         {subjectTotal}
                       </span>
-                      <span className="text-gray-400 text-lg mb-1">
+                      <span className="mb-1 text-lg text-muted-foreground">
                         / {maxPossible}
                       </span>
                     </div>
@@ -655,13 +658,13 @@ export default function ScoreCalculator() {
                     </span>
                   </div>
                 </div>
-                <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-3 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
                     style={{ width: `${subjectPct}%` }}
                   />
                 </div>
-                <p className="text-center text-sm font-medium text-gray-500">
+                <p className="text-center text-sm font-medium text-muted-foreground">
                   {isFailedExam
                     ? <span className="text-red-500 font-bold">❌ ဘာသာရပ်တစ်ခုခု ၄၀ အောက်ရရှိပါက တက္ကသိုလ်ဝင်ခွင့် မရနိုင်ပါ</span>
                     : subjectTotal < 350
@@ -678,7 +681,7 @@ export default function ScoreCalculator() {
               <button
                 onClick={handleSubjectSearch}
                 disabled={subjectTotal === 0 || isFailedExam || calculateMutation.isPending}
-                className="w-full py-4 rounded-2xl bg-primary text-white font-bold text-base shadow-md hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="touch-target flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
               >
                 {calculateMutation.isPending ? (
                   <>
@@ -699,11 +702,11 @@ export default function ScoreCalculator() {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse"
+                      className="animate-pulse rounded-2xl border border-border bg-card p-5"
                     >
-                      <div className="h-5 bg-gray-100 rounded w-1/2 mb-2" />
-                      <div className="h-3 bg-gray-100 rounded w-1/3 mb-4" />
-                      <div className="h-2 bg-gray-100 rounded w-full" />
+                      <div className="mb-2 h-5 w-1/2 rounded bg-muted" />
+                      <div className="mb-4 h-3 w-1/3 rounded bg-muted" />
+                      <div className="h-2 w-full rounded bg-muted" />
                     </div>
                   ))}
                 </div>
@@ -711,7 +714,7 @@ export default function ScoreCalculator() {
 
               {/* Subject mode results */}
               {isFailedExam ? (
-                <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-center space-y-3 mt-4">
+                <div className="mt-4 space-y-3 rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:bg-red-950/20">
                   <XCircle className="mx-auto h-12 w-12 text-red-500" />
                   <h3 className="text-lg font-bold text-red-700">တက္ကသိုလ်တက်ရောက်ရန် မအောင်မြင်ပါ</h3>
                   <p className="text-sm text-red-600">
@@ -721,7 +724,7 @@ export default function ScoreCalculator() {
               ) : subjectResults && !calculateMutation.isPending && (
                 <div className="space-y-6 mt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-gray-900 text-lg">
+                    <h2 className="text-lg font-bold text-foreground">
                       ရလဒ်များ
                     </h2>
                     <div className="flex gap-2">
@@ -783,7 +786,7 @@ export default function ScoreCalculator() {
               {allUniversities.length > 0 && (
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-gray-900 text-lg">
+                    <h2 className="text-lg font-bold text-foreground">
                       ရလဒ်များ
                     </h2>
                     <div className="flex gap-2">

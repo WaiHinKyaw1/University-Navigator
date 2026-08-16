@@ -19,5 +19,7 @@ export interface SiteSettings {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
   updatedAt: Date;
 }

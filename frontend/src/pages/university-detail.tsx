@@ -50,7 +50,7 @@ export default function UniversityDetail() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-8 max-w-4xl mx-auto">
+        <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
           <Skeleton className="h-8 w-32 mb-8" />
           <div className="space-y-8">
             <Skeleton className="h-64 w-full rounded-2xl" />
@@ -96,7 +96,7 @@ export default function UniversityDetail() {
 
   return (
     <Layout>
-      <div className="container py-8 max-w-4xl mx-auto">
+      <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         <Button variant="ghost" asChild className="mb-6 -ml-4">
           <Link href="/universities">
             <ChevronLeft className="mr-2 h-4 w-4" /> Back to Universities
@@ -116,7 +116,7 @@ export default function UniversityDetail() {
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            <div className="absolute bottom-6 left-6 right-6 text-white">
+            <div className="absolute bottom-4 left-4 right-4 text-white sm:bottom-6 sm:left-6 sm:right-6">
               <div className="flex flex-wrap gap-2 mb-3">
                 <Badge
                   variant="secondary"
@@ -133,7 +133,7 @@ export default function UniversityDetail() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold mb-1">
+              <h1 className="text-2xl font-bold leading-tight sm:text-4xl">
                 {uni.name}
               </h1>
               {uni.nameEn && (
@@ -144,7 +144,7 @@ export default function UniversityDetail() {
             </div>
           </div>
 
-          <div className="p-6 md:p-8">
+          <div className="p-4 sm:p-6 md:p-8">
             <div className="grid md:grid-cols-3 gap-8">
               <div className="md:col-span-2 space-y-8">
                 <div>
@@ -218,7 +218,7 @@ export default function UniversityDetail() {
                     </Badge>
                   </h3>
                   {uni.majors && uni.majors.length > 0 ? (
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {uni.majors.map((major) => (
                         <div
                           key={major.id}
@@ -391,7 +391,7 @@ export default function UniversityDetail() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto p-6 md:p-8 rounded-l-3xl border-l shadow-2xl">
+        <SheetContent className="w-full overflow-y-auto rounded-l-3xl border-l p-4 shadow-2xl sm:max-w-xl sm:p-6 md:p-8">
           {selectedMajor &&
             (() => {
               let parsedCareers = [];
@@ -430,7 +430,7 @@ export default function UniversityDetail() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex flex-col justify-center">
                       <span className="text-[11px] font-semibold text-primary/80 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" /> Study Duration
@@ -465,7 +465,7 @@ export default function UniversityDetail() {
                         {parsedCareers.map((cp: any, idx: number) => (
                           <div
                             key={idx}
-                            className="bg-background border rounded-2xl p-5 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group"
+                            className="group relative overflow-hidden rounded-2xl border bg-background p-4 transition-shadow duration-300 hover:shadow-md sm:p-5"
                           >
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 

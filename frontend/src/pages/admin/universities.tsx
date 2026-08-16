@@ -48,6 +48,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
+  ArrowDownAZ,
+  ArrowUpAZ,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -59,7 +62,6 @@ import {
   MYANMAR_UNION_TERRITORIES,
 } from "@/lib/myanmar-locations";
 import { uploadImage } from "@/lib/upload-image-api";
-import Universities from "../universities";
 
 type UniversityForm = {
   name: string;
@@ -97,6 +99,13 @@ const UNIVERSITY_TYPES = [
   "education",
 ];
 const pageSize = 10;
+const SORT_OPTIONS = [
+  { value: "name", label: "Name" },
+  { value: "minScore", label: "Min score" },
+  { value: "type", label: "Type" },
+  { value: "state", label: "State/region" },
+] as const;
+type SortBy = (typeof SORT_OPTIONS)[number]["value"];
 
 function Pagination({
   page,
@@ -122,7 +131,7 @@ function Pagination({
       <button
         onClick={() => onChange(page - 1)}
         disabled={page === 1}
-        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -130,14 +139,14 @@ function Pagination({
       {visible.map((p, i, arr) => (
         <span key={p} className="flex items-center gap-1.5">
           {i > 0 && arr[i - 1] !== p - 1 && (
-            <span className="text-gray-400 text-sm px-1">…</span>
+            <span className="px-1 text-sm text-muted-foreground">…</span>
           )}
           <button
             onClick={() => onChange(p)}
             className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
               p === page
-                ? "bg-primary text-white shadow-sm"
-                : "border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "border border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-primary"
             }`}
           >
             {p}
@@ -148,7 +157,7 @@ function Pagination({
       <button
         onClick={() => onChange(page + 1)}
         disabled={page === totalPages}
-        className="h-9 w-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -158,11 +167,16 @@ function Pagination({
 
 export default function AdminUniversities() {
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [sortBy, setSortBy] = useState<SortBy>("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUniversity, setEditingUniversity] = useState<University | null>(
     null,
   );
   const [form, setForm] = useState<UniversityForm>(emptyForm);
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof UniversityForm, string>>>({});
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
@@ -172,8 +186,13 @@ export default function AdminUniversities() {
   const queryClient = useQueryClient();
 
   const { data: response, isLoading } = useListUniversities({
-    search: search || undefined,
-    limit: 1000,
+    search: search.trim() || undefined,
+    type: typeFilter || undefined,
+    state: stateFilter || undefined,
+    page,
+    limit: pageSize,
+    sortBy,
+    sortOrder,
   });
   const { data: majors } = useListMajors();
 
@@ -216,9 +235,18 @@ export default function AdminUniversities() {
     },
   });
 
+  const updateFormField = <K extends keyof UniversityForm>(
+    field: K,
+    value: UniversityForm[K],
+  ) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setFormErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
   const openCreate = () => {
     setEditingUniversity(null);
     setForm(emptyForm);
+    setFormErrors({});
     setModalOpen(true);
   };
 
@@ -237,6 +265,7 @@ export default function AdminUniversities() {
       imageUrl: uni.imageUrl || "",
       majorIds: uni.majors?.map((m) => m.id) ?? [],
     });
+    setFormErrors({});
     setModalOpen(true);
   };
 
@@ -276,28 +305,33 @@ export default function AdminUniversities() {
   };
 
   const handleSubmit = () => {
-    if (
-      !form.name.trim() ||
-      !form.nameEn.trim() ||
-      !form.type ||
-      !form.state ||
-      !form.city ||
-      !form.minScore
-    ) {
-      toast.error(
-        "Name, English name, type, state, city, and min score are required",
-      );
-      return;
+    const nextErrors: Partial<Record<keyof UniversityForm, string>> = {};
+    if (!form.name.trim()) nextErrors.name = "Myanmar name is required";
+    if (!form.nameEn.trim()) nextErrors.nameEn = "English name is required";
+    if (!form.type) nextErrors.type = "Select a university type";
+    if (!form.state || !isMyanmarState(form.state)) {
+      nextErrors.state = "Select a valid state/region";
     }
-
-    if (!isMyanmarState(form.state)) {
-      toast.error("Please select a valid state/region");
-      return;
-    }
+    if (!form.city) nextErrors.city = "Select a city";
 
     const minScore = parseFloat(form.minScore);
-    if (isNaN(minScore)) {
-      toast.error("Min score must be a valid number");
+    if (!form.minScore.trim()) {
+      nextErrors.minScore = "Minimum score is required";
+    } else if (!Number.isFinite(minScore) || minScore < 0) {
+      nextErrors.minScore = "Enter a valid score of 0 or higher";
+    }
+
+    if (form.website.trim()) {
+      try {
+        new URL(form.website.trim());
+      } catch {
+        nextErrors.website = "Enter a valid URL, including https://";
+      }
+    }
+
+    setFormErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error("Please fix the highlighted fields before saving");
       return;
     }
 
@@ -326,37 +360,135 @@ export default function AdminUniversities() {
     if (!deleteTarget) return;
     deleteMutation.mutate({ id: deleteTarget.id });
   };
-  const paginated = useMemo(
-    () =>
-      response?.universities.slice((page - 1) * pageSize, page * pageSize) ??
-      [],
-    [response, page],
-  );
-
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Universities</h1>
-            <p className="text-muted-foreground">
-              Manage the directory of universities.
-            </p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                className="pl-9 bg-card"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Universities</h1>
+                <Badge variant="secondary">{response?.total ?? 0} universities</Badge>
+              </div>
+              <p className="text-muted-foreground">
+                Manage the directory of universities.
+              </p>
             </div>
-            <Button onClick={openCreate} className="cursor-pointer">
+            <Button onClick={openCreate} className="min-h-10 w-full cursor-pointer sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add University
             </Button>
+          </div>
+
+          <div className="grid gap-3 rounded-lg border bg-card p-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="relative sm:col-span-2 lg:col-span-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or abbreviation"
+                aria-label="Search universities"
+                className="pl-9"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <Select
+              value={typeFilter || "all"}
+              onValueChange={(value) => {
+                setTypeFilter(value === "all" ? "" : value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger aria-label="Filter by university type">
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                {UNIVERSITY_TYPES.map((type) => (
+                  <SelectItem key={type} value={type} className="capitalize">
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={stateFilter || "all"}
+              onValueChange={(value) => {
+                setStateFilter(value === "all" ? "" : value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger aria-label="Filter by state or region">
+                <SelectValue placeholder="All states/regions" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[360px] overflow-y-auto">
+                <SelectItem value="all">All states/regions</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>တိုင်းဒေသကြီး</SelectLabel>
+                  {MYANMAR_REGIONS.map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>ပြည်နယ်</SelectLabel>
+                  {MYANMAR_STATE_DIVISIONS.map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>ပြည်ထောင်စုနယ်မြေ</SelectLabel>
+                  {MYANMAR_UNION_TERRITORIES.map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2">
+              <Select
+                value={sortBy}
+                onValueChange={(value) => {
+                  setSortBy(value as SortBy);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger aria-label="Sort universities by" className="flex-1">
+                  <SlidersHorizontal className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      Sort by {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={`Sort ${sortOrder === "asc" ? "descending" : "ascending"}`}
+                title={`Sort ${sortOrder === "asc" ? "descending" : "ascending"}`}
+                onClick={() => {
+                  setSortOrder((current) => (current === "asc" ? "desc" : "asc"));
+                  setPage(1);
+                }}
+              >
+                {sortOrder === "asc" ? (
+                  <ArrowDownAZ className="h-4 w-4" />
+                ) : (
+                  <ArrowUpAZ className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -374,25 +506,31 @@ export default function AdminUniversities() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center py-8 text-muted-foreground"
-                    >
-                      Loading...
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={`skeleton-${index}`}>
+                      <TableCell>
+                        <div className="space-y-2">
+                          <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                          <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                        </div>
+                      </TableCell>
+                      <TableCell><div className="h-6 w-20 animate-pulse rounded-full bg-muted" /></TableCell>
+                      <TableCell><div className="h-4 w-32 animate-pulse rounded bg-muted" /></TableCell>
+                      <TableCell><div className="h-4 w-12 animate-pulse rounded bg-muted" /></TableCell>
+                      <TableCell><div className="ml-auto h-8 w-20 animate-pulse rounded bg-muted" /></TableCell>
+                    </TableRow>
+                  ))
                 ) : response?.universities.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      No universities found.
+                      No universities found. Try changing the search or filters.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginated.map((uni) => (
+                  response?.universities.map((uni) => (
                     <TableRow key={uni.id}>
                       <TableCell>
                         <div className="font-medium">{uni.name}</div>
@@ -415,6 +553,7 @@ export default function AdminUniversities() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
+                          aria-label={`Edit ${uni.nameEn || uni.name}`}
                           onClick={() => openEdit(uni)}
                         >
                           <Edit className="h-4 w-4" />
@@ -423,6 +562,7 @@ export default function AdminUniversities() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          aria-label={`Delete ${uni.nameEn || uni.name}`}
                           onClick={() =>
                             setDeleteTarget({
                               id: uni.id,
@@ -443,7 +583,7 @@ export default function AdminUniversities() {
         </Card>
         <Pagination
           page={page}
-          total={response?.universities.length ?? 0}
+          total={response?.total ?? 0}
           pageSize={pageSize}
           onChange={(p) => {
             setPage(p);
@@ -460,38 +600,40 @@ export default function AdminUniversities() {
             </DialogHeader>
             <div className="scrollbar-hide grid flex-1 gap-4 overflow-y-auto overflow-x-hidden px-6 py-2">
               <div className="grid gap-2">
-                <Label htmlFor="uni-name">Name (Myanmar)</Label>
+                <Label htmlFor="uni-name">Name (Myanmar) <span className="text-destructive">*</span></Label>
                 <Input
                   id="uni-name"
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  aria-invalid={Boolean(formErrors.name)}
+                  onChange={(e) => updateFormField("name", e.target.value)}
                 />
+                {formErrors.name && <p className="text-xs text-destructive">{formErrors.name}</p>}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="uni-name-en">English Name</Label>
+                <Label htmlFor="uni-name-en">English Name <span className="text-destructive">*</span></Label>
                 <Input
                   id="uni-name-en"
                   value={form.nameEn}
-                  onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
+                  aria-invalid={Boolean(formErrors.nameEn)}
+                  onChange={(e) => updateFormField("nameEn", e.target.value)}
                 />
+                {formErrors.nameEn && <p className="text-xs text-destructive">{formErrors.nameEn}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="uni-abbreviation">Abbreviation</Label>
                 <Input
                   id="uni-abbreviation"
                   value={form.abbreviation}
-                  onChange={(e) =>
-                    setForm({ ...form, abbreviation: e.target.value })
-                  }
+                  onChange={(e) => updateFormField("abbreviation", e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Type</Label>
+                <Label>Type <span className="text-destructive">*</span></Label>
                 <Select
                   value={form.type}
-                  onValueChange={(type) => setForm({ ...form, type })}
+                  onValueChange={(type) => updateFormField("type", type)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger aria-invalid={Boolean(formErrors.type)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -506,17 +648,19 @@ export default function AdminUniversities() {
                     ))}
                   </SelectContent>
                 </Select>
+                {formErrors.type && <p className="text-xs text-destructive">{formErrors.type}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label>State/Region</Label>
+                  <div className="grid gap-2">
+                  <Label>State/Region <span className="text-destructive">*</span></Label>
                   <Select
                     value={form.state}
-                    onValueChange={(state) =>
-                      setForm({ ...form, state, city: "" })
-                    }
+                    onValueChange={(state) => {
+                      updateFormField("state", state);
+                      updateFormField("city", "");
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-invalid={Boolean(formErrors.state)}>
                       <SelectValue placeholder="Select state/region" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-y-auto">
@@ -546,16 +690,17 @@ export default function AdminUniversities() {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                  {formErrors.state && <p className="text-xs text-destructive">{formErrors.state}</p>}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>City</Label>
+                  <Label>City <span className="text-destructive">*</span></Label>
                   <Select
                     value={form.city}
-                    onValueChange={(city) => setForm({ ...form, city })}
+                    onValueChange={(city) => updateFormField("city", city)}
                     disabled={!form.state}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-invalid={Boolean(formErrors.city)}>
                       <SelectValue
                         placeholder={
                           form.state ? "Select city" : "Select state first"
@@ -570,18 +715,20 @@ export default function AdminUniversities() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {formErrors.city && <p className="text-xs text-destructive">{formErrors.city}</p>}
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="uni-min-score">Min Score</Label>
+                <Label htmlFor="uni-min-score">Min Score <span className="text-destructive">*</span></Label>
                 <Input
                   id="uni-min-score"
                   type="number"
+                  min="0"
                   value={form.minScore}
-                  onChange={(e) =>
-                    setForm({ ...form, minScore: e.target.value })
-                  }
+                  aria-invalid={Boolean(formErrors.minScore)}
+                  onChange={(e) => updateFormField("minScore", e.target.value)}
                 />
+                {formErrors.minScore && <p className="text-xs text-destructive">{formErrors.minScore}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="uni-description">Description</Label>
@@ -589,20 +736,20 @@ export default function AdminUniversities() {
                   id="uni-description"
                   value={form.description}
                   className="h-36"
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
+                  onChange={(e) => updateFormField("description", e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="uni-website">Website</Label>
                 <Input
                   id="uni-website"
+                  type="url"
+                  placeholder="https://example.edu.mm"
                   value={form.website}
-                  onChange={(e) =>
-                    setForm({ ...form, website: e.target.value })
-                  }
+                  aria-invalid={Boolean(formErrors.website)}
+                  onChange={(e) => updateFormField("website", e.target.value)}
                 />
+                {formErrors.website && <p className="text-xs text-destructive">{formErrors.website}</p>}
               </div>
               <div className="grid gap-2">
                 <Label>University Image</Label>

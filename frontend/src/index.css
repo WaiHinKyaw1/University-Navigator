@@ -183,6 +183,7 @@
     font-family: var(--app-font-sans);
     font-feature-settings: "kern" 1, "liga" 1;
     font-variant-ligatures: common-ligatures;
+    overflow-x: hidden;
   }
 
   :lang(my) {
@@ -192,6 +193,19 @@
 }
 
 @layer utilities {
+  .safe-area-pb {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-area-pt {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .touch-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

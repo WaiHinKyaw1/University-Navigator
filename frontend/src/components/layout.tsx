@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, Menu, X, User as UserIcon } from "lucide-react";
+import { GraduationCap, Heart, LogOut, Menu, X, User as UserIcon, Wrench, GitCompareArrows } from "lucide-react";
 import { useState } from "react";
 import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
@@ -20,6 +20,8 @@ export function Layout({
   const { data: siteSettings } = useGetSiteSettings();
   const projectName = siteSettings?.projectName || "MM Uni Finder";
   const tagline = siteSettings?.tagline || "Guiding Myanmar students to their future.";
+  const maintenanceMode = siteSettings?.maintenanceMode === true;
+  const maintenanceExempt = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"].some((path) => location.startsWith(path));
 
   const logoutMutation = useLogout({
     mutation: {
@@ -35,6 +37,27 @@ export function Layout({
     logoutMutation.mutate();
   };
 
+  if (maintenanceMode && user?.role !== "admin" && !maintenanceExempt) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+        <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            {siteSettings?.logoUrl ? (
+              <img src={siteSettings.logoUrl} alt={`${projectName} logo`} className="h-full w-full rounded-2xl object-contain p-2" />
+            ) : (
+              <Wrench className="h-7 w-7" />
+            )}
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">{projectName} is under maintenance</h1>
+          <p className="mt-3 text-muted-foreground">{siteSettings?.maintenanceMessage || "We are making a few improvements. Please check back soon."}</p>
+          <Button asChild variant="outline" className="mt-6">
+            <Link href="/login">Admin login</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const NavLinks = () => (
     <>
       <Link
@@ -42,6 +65,13 @@ export function Layout({
         className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/universities") ? "text-primary" : "text-muted-foreground"}`}
       >
         Universities
+      </Link>
+      <Link
+        href="/compare"
+        className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${location === "/compare" ? "text-primary" : "text-muted-foreground"}`}
+      >
+        <GitCompareArrows className="h-3.5 w-3.5" />
+        Compare
       </Link>
       <Link
         href="/score"
@@ -69,6 +99,15 @@ export function Layout({
       </Link>
       {user && (
         <Link
+          href="/favorites"
+          className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${location === "/favorites" ? "text-primary" : "text-muted-foreground"}`}
+        >
+          <Heart className="h-3.5 w-3.5" />
+          Favorites
+        </Link>
+      )}
+      {user && (
+        <Link
           href="/chat"
           className={`text-sm font-medium transition-colors hover:text-primary ${location === "/chat" ? "text-primary" : "text-muted-foreground"}`}
         >
@@ -89,7 +128,7 @@ export function Layout({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between mx-auto">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
               <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-primary p-1.5">
@@ -99,7 +138,7 @@ export function Layout({
                   <GraduationCap className="h-6 w-6 text-primary-foreground" />
                 )}
               </div>
-              <span className="inline-block font-bold text-xl text-primary">
+              <span className="inline-block max-w-[11rem] truncate font-bold text-base sm:text-xl text-primary">
                 {projectName}
               </span>
             </Link>
@@ -117,7 +156,7 @@ export function Layout({
                       user?.role === "admin" ? "/admin/profile" : "/profile"
                     }
                   >
-                    <button className="flex items-center gap-2 rounded-full px-3 py-2 hover:bg-muted transition">
+                    <button className="touch-target flex items-center gap-2 rounded-full px-2 sm:px-3 py-2 hover:bg-muted transition">
                       <img
                         src={user.avatarUrl || "/default-avatar.png"}
                         alt="profile"
@@ -150,7 +189,7 @@ export function Layout({
             </div>
             <Button
               variant="ghost"
-              className="md:hidden px-2"
+              className="touch-target md:hidden px-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -163,8 +202,8 @@ export function Layout({
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-b border-border bg-background p-4 flex flex-col gap-4">
-            <nav className="flex flex-col gap-4">
+          <div className="md:hidden max-h-[calc(100svh-4rem)] overflow-y-auto border-b border-border bg-background p-4 safe-area-pb flex flex-col gap-4">
+            <nav className="flex flex-col gap-1" onClick={() => setMobileMenuOpen(false)}>
               <NavLinks />
             </nav>
             <div className="pt-4 border-t flex flex-col gap-3">
@@ -230,7 +269,7 @@ export function Layout({
 
       {!noFooter && (
         <footer className="border-t bg-muted/40 py-5 md:py-8 mt-auto">
-          <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
+          <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4 sm:px-6 text-center md:text-left text-sm text-muted-foreground">
             <div>
                               <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
                 {siteSettings?.logoUrl ? (
@@ -245,12 +284,18 @@ export function Layout({
               </p>
 
             </div>
-            <div className="flex gap-4">
+            <div className="flex max-w-full flex-wrap justify-center gap-x-4 gap-y-2">
               <Link
                 href="/universities"
                 className="hover:text-foreground transition-colors"
               >
                 Universities
+              </Link>
+              <Link
+                href="/compare"
+                className="hover:text-foreground transition-colors"
+              >
+                Compare
               </Link>
               <Link
                 href="/score"

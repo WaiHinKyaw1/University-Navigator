@@ -20,4 +20,6 @@ export interface SiteSettingsInput {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
 }

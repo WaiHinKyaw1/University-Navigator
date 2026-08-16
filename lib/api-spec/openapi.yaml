@@ -14,6 +14,8 @@ tags:
     description: Authentication
   - name: universities
     description: University management
+  - name: favorites
+    description: Authenticated saved universities
   - name: majors
     description: Major / field of study management
   - name: categories
@@ -137,7 +139,7 @@ paths:
     get:
       operationId: listUniversities
       tags: [universities]
-      summary: List all universities with optional filters
+      summary: List all universities with optional filters and sorting
       parameters:
         - name: search
           in: query
@@ -163,6 +165,21 @@ paths:
           in: query
           schema:
             type: integer
+        - name: compact
+          in: query
+          description: Return only fields needed for list cards and lightweight selectors
+          schema:
+            type: boolean
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, minScore, type, state]
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
       responses:
         "200":
           description: List of universities
@@ -253,7 +270,83 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
-  # ── MAJORS ────────────────────────────────────────────────────────────────
+  # ── FAVORITES ────────────────────────────────────────────────────────────
+  /favorites:
+    get:
+      operationId: listFavorites
+      tags: [favorites]
+      summary: List the current user's saved universities
+      responses:
+        "200":
+          description: Saved universities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Favorite"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /favorites/{universityId}:
+    post:
+      operationId: createFavorite
+      tags: [favorites]
+      summary: Save a university for the current user
+      parameters:
+        - name: universityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteFavorite
+      tags: [favorites]
+      summary: Remove a university from the current user's Favorites
+      parameters:
+        - name: universityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── MAJORS ───────────────────────────────────────────────────────────────
   /majors:
     get:
       operationId: listMajors
@@ -1037,6 +1130,10 @@ components:
           type: ["string", "null"]
         welcomeMessage:
           type: ["string", "null"]
+        maintenanceMode:
+          type: boolean
+        maintenanceMessage:
+          type: string
         updatedAt:
           type: string
           format: date-time
@@ -1061,11 +1158,15 @@ components:
           type: ["string", "null"]
         welcomeMessage:
           type: ["string", "null"]
+        maintenanceMode:
+          type: boolean
+        maintenanceMessage:
+          type: string
 
     # ── AUTH ──────────────────────────────────────────────────────────────
     RegisterInput:
       type: object
-      required: [name, email, password, grade]
+      required: [name, email, password]
       properties:
         name:
           type: string
@@ -1076,10 +1177,6 @@ components:
         password:
           type: string
           minLength: 6
-        grade:
-          type: string
-          description: "G-10, G-11, G-12"
-
     LoginInput:
       type: object
       required: [email, password]
@@ -1112,8 +1209,6 @@ components:
         role:
           type: string
           description: "student | admin"
-        grade:
-          type: ["string", "null"]
         status:
           type: string
           description: "active | banned"
@@ -1218,6 +1313,18 @@ components:
           type: integer
         limit:
           type: integer
+
+    Favorite:
+      type: object
+      required: [favoriteId, savedAt, university]
+      properties:
+        favoriteId:
+          type: integer
+        savedAt:
+          type: string
+          format: date-time
+        university:
+          $ref: "#/components/schemas/University"
 
     # ── MAJOR ─────────────────────────────────────────────────────────────
     Major:
@@ -1475,14 +1582,12 @@ components:
 
     StudentSummary:
       type: object
-      required: [id, name, grade]
+      required: [id, name]
       properties:
         id:
           type: integer
         name:
           type: string
-        grade:
-          type: ["string", "null"]
         avatarUrl:
           type: ["string", "null"]
 

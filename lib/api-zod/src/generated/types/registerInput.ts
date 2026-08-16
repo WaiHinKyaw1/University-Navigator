@@ -12,6 +12,4 @@ export interface RegisterInput {
   email: string;
   /** @minLength 6 */
   password: string;
-  /** G-10, G-11, G-12 */
-  grade: string;
 }

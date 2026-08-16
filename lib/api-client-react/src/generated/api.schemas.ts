@@ -30,6 +30,8 @@ export interface SiteSettings {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
   updatedAt: string;
 }
 
@@ -47,6 +49,8 @@ export interface SiteSettingsInput {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
 }
 
 export interface RegisterInput {
@@ -55,8 +59,6 @@ export interface RegisterInput {
   email: string;
   /** @minLength 6 */
   password: string;
-  /** G-10, G-11, G-12 */
-  grade: string;
 }
 
 export interface LoginInput {
@@ -70,8 +72,6 @@ export interface User {
   email: string;
   /** student | admin */
   role: string;
-  /** @nullable */
-  grade?: string | null;
   /** active | banned */
   status: string;
   /** @nullable */
@@ -260,8 +260,6 @@ export interface StudentSummary {
   id: number;
   name: string;
   /** @nullable */
-  grade: string | null;
-  /** @nullable */
   avatarUrl?: string | null;
 }
 
@@ -435,6 +433,9 @@ state?: string;
 majorId?: number;
 page?: number;
 limit?: number;
+compact?: boolean;
+sortBy?: 'name' | 'minScore' | 'type' | 'state';
+sortOrder?: 'asc' | 'desc';
 };
 
 export type ListNewsParams = {

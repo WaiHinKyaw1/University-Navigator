@@ -5,7 +5,7 @@ import {
   universityMajorsTable,
   majorsTable,
 } from "@workspace/db";
-import { eq, ilike, or, and, sql, inArray } from "drizzle-orm";
+import { asc, desc, eq, ilike, or, and, sql, inArray } from "drizzle-orm";
 import { requireAdmin, optionalAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -57,6 +57,52 @@ async function attachMajorsToUniversities(
   }));
 }
 
+const compactUniversityColumns = {
+  id: universitiesTable.id,
+  name: universitiesTable.name,
+  nameEn: universitiesTable.nameEn,
+  abbreviation: universitiesTable.abbreviation,
+  type: universitiesTable.type,
+  state: universitiesTable.state,
+  city: universitiesTable.city,
+  minScore: universitiesTable.minScore,
+  description: universitiesTable.description,
+  website: universitiesTable.website,
+  imageUrl: universitiesTable.imageUrl,
+  createdAt: universitiesTable.createdAt,
+};
+
+async function attachMajorSummaries<T extends { id: number }>(universities: T[]) {
+  if (universities.length === 0) return [];
+
+  const universityIds = universities.map((u) => u.id);
+  const rows = await db
+    .select({
+      universityId: universityMajorsTable.universityId,
+      major: {
+        id: majorsTable.id,
+        name: majorsTable.name,
+        nameEn: majorsTable.nameEn,
+        category: majorsTable.category,
+      },
+    })
+    .from(universityMajorsTable)
+    .innerJoin(majorsTable, eq(universityMajorsTable.majorId, majorsTable.id))
+    .where(inArray(universityMajorsTable.universityId, universityIds));
+
+  const majorsByUniversity = new Map<number, typeof rows[number]["major"][]>();
+  for (const row of rows) {
+    const majors = majorsByUniversity.get(row.universityId) ?? [];
+    majors.push(row.major);
+    majorsByUniversity.set(row.universityId, majors);
+  }
+
+  return universities.map((uni) => ({
+    ...uni,
+    majors: majorsByUniversity.get(uni.id) ?? [],
+  }));
+}
+
 router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
   const {
     search,
@@ -64,10 +110,14 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
     state,
     page = "1",
     limit = "1000",
+    compact: compactParam,
+    sortBy = "name",
+    sortOrder = "asc",
   } = req.query as Record<string, string>;
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.min(1000, parseInt(limit, 10));
   const offset = (pageNum - 1) * limitNum;
+  const compact = compactParam === "true";
 
   const conditions = [];
   if (search) {
@@ -76,6 +126,8 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
         ilike(universitiesTable.name, `%${search}%`),
         ilike(universitiesTable.nameEn, `%${search}%`),
         ilike(universitiesTable.abbreviation, `%${search}%`),
+        ilike(universitiesTable.city, `%${search}%`),
+        ilike(universitiesTable.state, `%${search}%`),
       ),
     );
   }
@@ -83,6 +135,47 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
   if (state) conditions.push(eq(universitiesTable.state, state));
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  const sortColumns = {
+    name: universitiesTable.name,
+    minScore: universitiesTable.minScore,
+    type: universitiesTable.type,
+    state: universitiesTable.state,
+  } as const;
+  const sortColumn =
+    sortColumns[sortBy as keyof typeof sortColumns] ?? universitiesTable.name;
+  const orderBy = sortOrder === "desc" ? desc(sortColumn) : asc(sortColumn);
+
+  if (compact) {
+    const compactRows = await db
+      .select({
+        ...compactUniversityColumns,
+        totalCount: sql<number>`count(*) over()`,
+      })
+      .from(universitiesTable)
+      .where(whereClause)
+      .limit(limitNum)
+      .offset(offset)
+      .orderBy(orderBy, asc(universitiesTable.name));
+
+    let total = Number(compactRows[0]?.totalCount ?? 0);
+    if (compactRows.length === 0 && offset > 0) {
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(universitiesTable)
+        .where(whereClause);
+      total = Number(countResult.count);
+    }
+    const universities = compactRows.map(({ totalCount: _totalCount, ...uni }) => uni);
+    const withMajorSummaries = await attachMajorSummaries(universities);
+
+    res.json({
+      universities: withMajorSummaries,
+      total,
+      page: pageNum,
+      limit: limitNum,
+    });
+    return;
+  }
 
   const [countResult] = await db
     .select({ count: sql<number>`count(*)` })
@@ -95,7 +188,7 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
     .where(whereClause)
     .limit(limitNum)
     .offset(offset)
-    .orderBy(universitiesTable.name);
+    .orderBy(orderBy, asc(universitiesTable.name));
 
   const withMajors = await attachMajorsToUniversities(unis);
 
