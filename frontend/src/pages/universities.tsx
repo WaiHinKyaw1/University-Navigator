@@ -34,8 +34,12 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  GitCompareArrows,
+  X,
 } from "lucide-react";
 import { Link } from "wouter";
+import { toast } from "sonner";
+import { useCompare } from "@/hooks/use-compare";
 
 const PAGE_SIZE = 9;
 
@@ -92,9 +96,13 @@ const SCORE_COLOR = (score: number) =>
 function UniversityCard({
   university,
   academicYear,
+  isCompared,
+  onToggleCompare,
 }: {
   university: University;
   academicYear: string;
+  isCompared: boolean;
+  onToggleCompare: (university: University) => void;
 }) {
   return (
     <Card className="group flex flex-col overflow-hidden rounded-2xl border-gray-100 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
@@ -176,9 +184,20 @@ function UniversityCard({
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full rounded-xl" variant="outline" size="sm">
+      <CardFooter className="grid grid-cols-2 gap-2 p-4 pt-0">
+        <Button asChild className="rounded-xl" variant="outline" size="sm">
           <Link href={`/universities/${university.id}`}>အသေးစိတ် ကြည့်ရန်</Link>
+        </Button>
+        <Button
+          type="button"
+          className="rounded-xl"
+          variant={isCompared ? "default" : "secondary"}
+          size="sm"
+          onClick={() => onToggleCompare(university)}
+          aria-pressed={isCompared}
+        >
+          <GitCompareArrows className="mr-1.5 h-3.5 w-3.5" />
+          {isCompared ? "ရွေးပြီး" : "Compare"}
         </Button>
       </CardFooter>
     </Card>
@@ -259,6 +278,14 @@ export default function Universities() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeState, setActiveState] = useState("all");
   const [page, setPage] = useState(1);
+  const {
+    universities: compareUniversities,
+    isSelected,
+    canAdd,
+    addUniversity,
+    removeUniversity,
+    clearUniversities,
+  } = useCompare();
 
   const { data: siteSettings } = useGetSiteSettings();
   const { data: response, isLoading, isFetching, isError, refetch } =
@@ -291,6 +318,21 @@ export default function Universities() {
     setActiveCategory("all");
     setActiveState("all");
     setPage(1);
+  };
+
+  const handleToggleCompare = (university: University) => {
+    if (isSelected(university.id)) {
+      removeUniversity(university.id);
+      return;
+    }
+
+    if (!canAdd) {
+      toast.error("တက္ကသိုလ် ၄ ခုအထိသာ Compare လုပ်နိုင်ပါတယ်");
+      return;
+    }
+
+    addUniversity(university);
+    toast.success(`${university.name} ကို Compare စာရင်းထဲ ထည့်ပြီးပါပြီ`);
   };
 
   return (
@@ -399,6 +441,46 @@ export default function Universities() {
             )}
           </div>
 
+          {compareUniversities.length > 0 && (
+            <div className="sticky bottom-4 z-30 flex flex-col gap-3 rounded-2xl border border-primary/20 bg-background/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <GitCompareArrows className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground">
+                    Compare စာရင်း <Badge variant="secondary" className="ml-1">{compareUniversities.length}/4</Badge>
+                  </p>
+                  <div className="mt-1 flex max-w-full gap-1.5 overflow-x-auto">
+                    {compareUniversities.map((university) => (
+                      <button
+                        key={university.id}
+                        type="button"
+                        onClick={() => removeUniversity(university.id)}
+                        className="inline-flex max-w-48 shrink-0 items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground hover:border-destructive/40 hover:text-destructive"
+                        title="Compare စာရင်းမှ ဖယ်မယ်"
+                      >
+                        <span className="truncate">{university.name}</span>
+                        <X className="h-3 w-3 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button type="button" variant="ghost" size="sm" onClick={clearUniversities}>
+                  အားလုံးဖယ်မယ်
+                </Button>
+                <Button asChild size="sm" disabled={compareUniversities.length < 2}>
+                  <Link href="/compare">
+                    <GitCompareArrows className="mr-1.5 h-4 w-4" />
+                    Compare ကြည့်မယ်
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
+
           {isLoading ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((index) => (
@@ -439,6 +521,8 @@ export default function Universities() {
                     key={university.id}
                     university={university}
                     academicYear={academicYear}
+                    isCompared={isSelected(university.id)}
+                    onToggleCompare={handleToggleCompare}
                   />
                 ))}
               </div>

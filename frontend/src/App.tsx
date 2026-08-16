@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
+import { CompareProvider } from "@/hooks/use-compare";
 import NotFound from "@/pages/not-found";
 
 import Home from "@/pages/home";
@@ -10,6 +11,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Universities from "@/pages/universities";
 import Favorites from "@/pages/favorites";
+import Compare from "@/pages/compare";
 import UniversityDetail from "@/pages/university-detail";
 import ScoreCalculator from "@/pages/score-calculator";
 import Chatbot from "@/pages/chatbot";
@@ -43,6 +45,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/universities" component={Universities} />
       <Route path="/favorites" component={Favorites} />
+      <Route path="/compare" component={Compare} />
       <Route path="/universities/:id" component={UniversityDetail} />
       <Route path="/score" component={ScoreCalculator} />
       <Route path="/news" component={News} />
@@ -75,12 +78,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <CompareProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </CompareProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Heart, LogOut, Menu, X, User as UserIcon, Wrench } from "lucide-react";
+import { GraduationCap, Heart, LogOut, Menu, X, User as UserIcon, Wrench, GitCompareArrows } from "lucide-react";
 import { useState } from "react";
 import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
@@ -65,6 +65,13 @@ export function Layout({
         className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/universities") ? "text-primary" : "text-muted-foreground"}`}
       >
         Universities
+      </Link>
+      <Link
+        href="/compare"
+        className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${location === "/compare" ? "text-primary" : "text-muted-foreground"}`}
+      >
+        <GitCompareArrows className="h-3.5 w-3.5" />
+        Compare
       </Link>
       <Link
         href="/score"
@@ -283,6 +290,12 @@ export function Layout({
                 className="hover:text-foreground transition-colors"
               >
                 Universities
+              </Link>
+              <Link
+                href="/compare"
+                className="hover:text-foreground transition-colors"
+              >
+                Compare
               </Link>
               <Link
                 href="/score"
