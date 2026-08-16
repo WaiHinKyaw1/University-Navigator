@@ -195,7 +195,7 @@ export default function AdminDashboard() {
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <img
-                        src={user.avatarUrl || "/default-avatar.png"}
+                        src={user.avatarData || user.avatarUrl || "/default-avatar.png"}
                         alt={user.name}
                         className="h-9 w-9 rounded-full object-cover border"
                       />

@@ -1320,6 +1320,9 @@ components:
           description: "active | banned"
         avatarUrl:
           type: ["string", "null"]
+        avatarData:
+          type: ["string", "null"]
+          description: "Base64-encoded image data URL stored in the database"
         createdAt:
           type: string
           format: date-time
@@ -1997,7 +2000,38 @@ components:
           type: integer
         totalNewsArticles:
           type: integer
+        recentRegistrations:
+          type: integer
+          description: "New user registrations in the last 7 days"
+        totalFavorites:
+          type: integer
+        recentUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentUserStat"
 
+    RecentUserStat:
+      type: object
+      required: [id, name, email, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        avatarData:
+          type: ["string", "null"]
+          description: "Base64-encoded image data URL stored in the database"
+        createdAt:
+          type: string
+          format: date-time
     MajorStat:
       type: object
       required: [majorName, count]

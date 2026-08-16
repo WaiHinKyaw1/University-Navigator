@@ -181,6 +181,7 @@ router.get(
         role: usersTable.role,
         status: usersTable.status,
         avatarUrl: usersTable.avatarUrl,
+        avatarData: usersTable.avatarData,
         createdAt: usersTable.createdAt,
       })
       .from(usersTable)
@@ -207,6 +208,7 @@ router.get(
         role: u.role,
         status: u.status,
         avatarUrl: u.avatarUrl,
+        avatarData: u.avatarData,
         createdAt: u.createdAt,
       })),
       totalFavorites: Number(totalFavorites.count),

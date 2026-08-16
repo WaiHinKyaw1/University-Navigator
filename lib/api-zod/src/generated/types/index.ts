@@ -47,6 +47,7 @@ export * from './peerReplyInput';
 export * from './readinessStatus';
 export * from './readinessStatusDatabase';
 export * from './readinessStatusStatus';
+export * from './recentUserStat';
 export * from './registerInput';
 export * from './scoreInput';
 export * from './scoreInputSubjects';

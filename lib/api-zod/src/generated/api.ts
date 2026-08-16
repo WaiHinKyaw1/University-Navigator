@@ -48,6 +48,7 @@ export const RegisterResponse = zod.object({
   "role": zod.string().describe('student | admin'),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
   "createdAt": zod.coerce.date()
 }),
   "token": zod.string()
@@ -70,6 +71,7 @@ export const LoginResponse = zod.object({
   "role": zod.string().describe('student | admin'),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
   "createdAt": zod.coerce.date()
 }),
   "token": zod.string()
@@ -94,6 +96,7 @@ export const GetMeResponse = zod.object({
   "role": zod.string().describe('student | admin'),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
   "createdAt": zod.coerce.date()
 })
 
@@ -1028,6 +1031,7 @@ export const ListUsersResponse = zod.object({
   "role": zod.string().describe('student | admin'),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
   "createdAt": zod.coerce.date()
 })),
   "total": zod.number(),
@@ -1050,6 +1054,7 @@ export const GetUserResponse = zod.object({
   "role": zod.string().describe('student | admin'),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
   "createdAt": zod.coerce.date()
 })
 
@@ -1073,6 +1078,7 @@ export const BanUserResponse = zod.object({
   "role": zod.string().describe('student | admin'),
   "status": zod.string().describe('active | banned'),
   "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
   "createdAt": zod.coerce.date()
 })
 
@@ -1088,7 +1094,8 @@ export const GetAnalyticsOverviewResponse = zod.object({
   "activeUsers": zod.number(),
   "bannedUsers": zod.number(),
   "totalNewsArticles": zod.number().optional(),
-  "recentRegistrations": zod.number(),
+  "recentRegistrations": zod.number().optional().describe('New user registrations in the last 7 days'),
+  "totalFavorites": zod.number().optional(),
   "recentUsers": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -1096,9 +1103,9 @@ export const GetAnalyticsOverviewResponse = zod.object({
   "role": zod.string(),
   "status": zod.string(),
   "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
   "createdAt": zod.coerce.date()
-})),
-  "totalFavorites": zod.number()
+})).optional()
 })
 
 
@@ -1212,3 +1219,5 @@ export const ListStudentsResponseItem = zod.object({
   "avatarUrl": zod.string().nullish()
 })
 export const ListStudentsResponse = zod.array(ListStudentsResponseItem)
+
+

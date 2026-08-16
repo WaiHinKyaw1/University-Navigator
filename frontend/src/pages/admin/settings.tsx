@@ -262,7 +262,7 @@ export default function AdminSettings() {
             <Card>
               <CardHeader>
                 <CardTitle>Contact and welcome content</CardTitle>
-                <CardDescription>Optional content for public contact areas and future onboarding surfaces.</CardDescription>
+                <CardDescription>Contact email and phone appear in the Contact box on every University detail page. The welcome message is stored for the onboarding area shown on the home page.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">

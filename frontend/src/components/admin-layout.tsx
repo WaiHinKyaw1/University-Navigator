@@ -1,6 +1,5 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Layout } from "@/components/layout";
 import { useEffect, useState } from "react";
 import {
   GraduationCap,
@@ -11,7 +10,6 @@ import {
   Activity,
   MessageSquare,
   FileUp,
-  ArrowBigLeft,
   Tag,
   UserCog,
   Settings,
@@ -19,6 +17,16 @@ import {
   X,
 } from "lucide-react";
 
+/**
+ * Admin portal shell.
+ *
+ * Layout model (v2 — truly independent scroll regions):
+ * - The outer container is a fixed-height (100dvh) column: sticky header (4rem)
+ *   on top and a flex row below that fills the remaining space.
+ * - The sidebar lives in its own fixed-height column and scrolls by itself.
+ * - The main content area is a separate scroll region. The page body never
+ *   scrolls, so the sidebar and content can never "follow" each other.
+ */
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
@@ -71,10 +79,58 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const NavSections = ({ collapsed = false }: { collapsed?: boolean }) => (
+    <>
+      {!collapsed ? (
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          Overview
+        </div>
+      ) : (
+        <div className="h-4" />
+      )}
+      <NavItem href="/admin" icon={Activity} label="Dashboard" collapsed={collapsed} />
+
+      {!collapsed ? (
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
+          Management
+        </div>
+      ) : (
+        <div className="my-4 border-b border-border/50" />
+      )}
+      <NavItem href="/admin/users" icon={Users} label="Users" collapsed={collapsed} />
+      <NavItem href="/admin/universities" icon={Building2} label="Universities" collapsed={collapsed} />
+      <NavItem href="/admin/majors" icon={BookOpen} label="Majors" collapsed={collapsed} />
+      <NavItem href="/admin/categories" icon={Tag} label="Categories" collapsed={collapsed} />
+      <NavItem href="/admin/news" icon={FileText} label="News" collapsed={collapsed} />
+      <NavItem href="/admin/admission-guide" icon={FileUp} label="Admission PDF" collapsed={collapsed} />
+
+      {!collapsed ? (
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
+          Monitoring
+        </div>
+      ) : (
+        <div className="my-4 border-b border-border/50" />
+      )}
+      <NavItem href="/admin/chat-monitor" icon={MessageSquare} label="Chat Monitor" collapsed={collapsed} />
+      <NavItem href="/admin/audit" icon={Activity} label="Audit Logs" collapsed={collapsed} />
+
+      {!collapsed ? (
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
+          Profile
+        </div>
+      ) : (
+        <div className="my-4 border-b border-border/50" />
+      )}
+      <NavItem href="/admin/settings" icon={Settings} label="Settings" collapsed={collapsed} />
+      <NavItem href="/admin/profile" icon={UserCog} label="Admin Profile" collapsed={collapsed} />
+    </>
+  );
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="flex h-16 items-center justify-between px-6">
+    // Outer shell: fixed viewport height, column direction, NO page-level scroll.
+    <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
+      <header className="shrink-0 h-16 border-b bg-card flex items-center px-6 z-40">
+        <div className="flex h-full items-center justify-between w-full gap-3">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -105,7 +161,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">{user.name}</span>
-            <Link href="/" className="text-sm text-black font-bold">
+            <Link href="/" className="text-sm font-bold text-foreground">
               Back to App
             </Link>
           </div>
@@ -113,101 +169,22 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {mobileMenuOpen && (
-        <div className="md:hidden border-b bg-card px-6 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto shadow-sm">
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Overview
-          </div>
-          <NavItem href="/admin" icon={Activity} label="Dashboard" />
-
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
-            Management
-          </div>
-          <NavItem href="/admin/users" icon={Users} label="Users" />
-          <NavItem
-            href="/admin/universities"
-            icon={Building2}
-            label="Universities"
-          />
-          <NavItem href="/admin/majors" icon={BookOpen} label="Majors" />
-          <NavItem href="/admin/categories" icon={Tag} label="Categories" />
-          <NavItem href="/admin/news" icon={FileText} label="News" />
-          <NavItem
-            href="/admin/admission-guide"
-            icon={FileUp}
-            label="Admission PDF"
-          />
-
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
-            Monitoring
-          </div>
-          <NavItem
-            href="/admin/chat-monitor"
-            icon={MessageSquare}
-            label="Chat Monitor"
-          />
-          <NavItem href="/admin/audit" icon={Activity} label="Audit Logs" />
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
-            Profile
-          </div>
-          <NavItem href="/admin/settings" icon={Settings} label="Settings" />
-          <NavItem
-            href="/admin/profile"
-            icon={UserCog}
-            label="Admin Profile"
-          />
+        <div className="md:hidden shrink-0 border-b bg-card px-6 py-4 space-y-1 overflow-y-auto">
+          <NavSections />
         </div>
       )}
 
-      <div className="flex-1 flex overflow-hidden">
-        <aside className={`${sidebarOpen ? "w-64" : "w-[72px]"} transition-all duration-300 border-r bg-card hidden md:block shrink-0 sticky top-16 self-start h-[calc(100vh-4rem)] overflow-y-auto`}>
+      {/* Body row: sidebar column + independently scrollable content column */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        <aside
+          className={`${sidebarOpen ? "w-64" : "w-[72px]"} shrink-0 border-r bg-card hidden md:flex flex-col overflow-y-auto transition-[width] duration-300`}
+        >
           <div className="p-4 space-y-2">
-            {!sidebarOpen ? (
-              <div className="h-4" />
-            ) : (
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Overview
-              </div>
-            )}
-            <NavItem href="/admin" icon={Activity} label="Dashboard" collapsed={!sidebarOpen} />
-
-            {!sidebarOpen ? (
-              <div className="my-4 border-b border-border/50" />
-            ) : (
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
-                Management
-              </div>
-            )}
-            <NavItem href="/admin/users" icon={Users} label="Users" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/universities" icon={Building2} label="Universities" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/majors" icon={BookOpen} label="Majors" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/categories" icon={Tag} label="Categories" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/news" icon={FileText} label="News" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/admission-guide" icon={FileUp} label="Admission PDF" collapsed={!sidebarOpen} />
-
-            {!sidebarOpen ? (
-              <div className="my-4 border-b border-border/50" />
-            ) : (
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
-                Monitoring
-              </div>
-            )}
-            <NavItem href="/admin/chat-monitor" icon={MessageSquare} label="Chat Monitor" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/audit" icon={Activity} label="Audit Logs" collapsed={!sidebarOpen} />
-
-            {!sidebarOpen ? (
-              <div className="my-4 border-b border-border/50" />
-            ) : (
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
-                Profile
-              </div>
-            )}
-            <NavItem href="/admin/settings" icon={Settings} label="Settings" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/profile" icon={UserCog} label="Admin Profile" collapsed={!sidebarOpen} />
+            <NavSections collapsed={!sidebarOpen} />
           </div>
         </aside>
-        {/* spacer so the sticky sidebar does not visually merge with the scrollable main content on taller pages */}
 
-        <main className="flex-1 overflow-y-auto bg-muted/10 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto bg-muted/10 p-4 md:p-6 lg:p-8 min-w-0">
           {children}
         </main>
       </div>

@@ -5,6 +5,7 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
+import type { RecentUserStat } from './recentUserStat';
 
 export interface AnalyticsOverview {
   totalUsers: number;
@@ -14,4 +15,8 @@ export interface AnalyticsOverview {
   activeUsers: number;
   bannedUsers: number;
   totalNewsArticles?: number;
+  /** New user registrations in the last 7 days */
+  recentRegistrations?: number;
+  totalFavorites?: number;
+  recentUsers?: RecentUserStat[];
 }

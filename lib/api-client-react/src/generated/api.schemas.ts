@@ -97,6 +97,11 @@ export interface User {
   status: string;
   /** @nullable */
   avatarUrl?: string | null;
+  /**
+     * Base64-encoded image data URL stored in the database
+     * @nullable
+     */
+  avatarData?: string | null;
   createdAt: string;
 }
 
@@ -533,6 +538,11 @@ export interface RecentUserStat {
   status: string;
   /** @nullable */
   avatarUrl?: string | null;
+  /**
+     * Base64-encoded image data URL stored in the database
+     * @nullable
+     */
+  avatarData?: string | null;
   createdAt: string;
 }
 
@@ -544,9 +554,10 @@ export interface AnalyticsOverview {
   activeUsers: number;
   bannedUsers: number;
   totalNewsArticles?: number;
-  recentRegistrations: number;
-  recentUsers: RecentUserStat[];
-  totalFavorites: number;
+  /** New user registrations in the last 7 days */
+  recentRegistrations?: number;
+  totalFavorites?: number;
+  recentUsers?: RecentUserStat[];
 }
 
 export interface MajorStat {

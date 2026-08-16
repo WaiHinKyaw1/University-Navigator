@@ -6,13 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface User {
+export interface RecentUserStat {
   id: number;
   name: string;
   email: string;
-  /** student | admin */
   role: string;
-  /** active | banned */
   status: string;
   /** @nullable */
   avatarUrl?: string | null;

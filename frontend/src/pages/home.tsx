@@ -10,13 +10,14 @@ import {
   Newspaper,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useListNews } from "@workspace/api-client-react";
+import { useListNews, useGetSiteSettings } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { User } from "lucide-react";
 
 export default function Home() {
   const { data: newsData } = useListNews({ page: 1, limit: 5 });
   const latestNews = newsData?.articles ?? [];
+  const { data: siteSettings } = useGetSiteSettings();
   const { user } = useAuth();
 
   return (
@@ -31,9 +32,11 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {user && (
-                <h2 className="text-xl font-semibold text-4xl md:text-4xl font-bold tracking-tight mb-6">
-                  Welcome, {user.name}
+              {(user || siteSettings?.welcomeMessage) && (
+                <h2 className="text-xl md:text-2xl font-bold tracking-tight mb-6">
+                  {user
+                    ? `Welcome, ${user.name}`
+                    : siteSettings?.welcomeMessage || "Welcome"}
                 </h2>
               )}
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
