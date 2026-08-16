@@ -51,6 +51,10 @@ export interface SiteSettings {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  /** @nullable */
+  welcomeIntro?: string | null;
+  /** @nullable */
+  welcomeDescription?: string | null;
   maintenanceMode?: boolean;
   maintenanceMessage?: string;
   updatedAt: string;
@@ -70,6 +74,10 @@ export interface SiteSettingsInput {
   contactPhone?: string | null;
   /** @nullable */
   welcomeMessage?: string | null;
+  /** @nullable */
+  welcomeIntro?: string | null;
+  /** @nullable */
+  welcomeDescription?: string | null;
   maintenanceMode?: boolean;
   maintenanceMessage?: string;
 }

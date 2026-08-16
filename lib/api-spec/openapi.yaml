@@ -1236,6 +1236,10 @@ components:
           type: ["string", "null"]
         welcomeMessage:
           type: ["string", "null"]
+        welcomeIntro:
+          type: ["string", "null"]
+        welcomeDescription:
+          type: ["string", "null"]
         maintenanceMode:
           type: boolean
         maintenanceMessage:
@@ -1264,11 +1268,14 @@ components:
           type: ["string", "null"]
         welcomeMessage:
           type: ["string", "null"]
+        welcomeIntro:
+          type: ["string", "null"]
+        welcomeDescription:
+          type: ["string", "null"]
         maintenanceMode:
           type: boolean
         maintenanceMessage:
           type: string
-
     # ── AUTH ──────────────────────────────────────────────────────────────
     RegisterInput:
       type: object

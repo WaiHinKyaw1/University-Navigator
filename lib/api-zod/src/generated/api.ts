@@ -1166,6 +1166,8 @@ export const GetSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
+  "welcomeIntro": zod.string().nullish(),
+  "welcomeDescription": zod.string().nullish(),
   "maintenanceMode": zod.boolean().optional(),
   "maintenanceMessage": zod.string().optional(),
   "updatedAt": zod.coerce.date()
@@ -1187,6 +1189,8 @@ export const UpdateSiteSettingsBody = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
+  "welcomeIntro": zod.string().nullish(),
+  "welcomeDescription": zod.string().nullish(),
   "maintenanceMode": zod.boolean().optional(),
   "maintenanceMessage": zod.string().optional()
 })
@@ -1200,6 +1204,8 @@ export const UpdateSiteSettingsResponse = zod.object({
   "contactEmail": zod.string().nullish(),
   "contactPhone": zod.string().nullish(),
   "welcomeMessage": zod.string().nullish(),
+  "welcomeIntro": zod.string().nullish(),
+  "welcomeDescription": zod.string().nullish(),
   "maintenanceMode": zod.boolean().optional(),
   "maintenanceMessage": zod.string().optional(),
   "updatedAt": zod.coerce.date()

@@ -38,6 +38,8 @@ const FALLBACK_SETTINGS: SiteSettingsInput = {
   contactEmail: null,
   contactPhone: null,
   welcomeMessage: null,
+  welcomeIntro: null,
+  welcomeDescription: null,
   maintenanceMode: false,
   maintenanceMessage: "We are making a few improvements. Please check back soon.",
 };
@@ -52,6 +54,8 @@ function toForm(settings: SiteSettings | undefined): SiteSettingsInput {
     contactEmail: settings.contactEmail ?? null,
     contactPhone: settings.contactPhone ?? null,
     welcomeMessage: settings.welcomeMessage ?? null,
+    welcomeIntro: settings.welcomeIntro ?? null,
+    welcomeDescription: settings.welcomeDescription ?? null,
     maintenanceMode: settings.maintenanceMode,
     maintenanceMessage: settings.maintenanceMessage ?? FALLBACK_SETTINGS.maintenanceMessage,
   };
@@ -181,6 +185,8 @@ export default function AdminSettings() {
         contactEmail,
         contactPhone: form.contactPhone?.trim() || null,
         welcomeMessage: form.welcomeMessage?.trim() || null,
+        welcomeIntro: form.welcomeIntro?.trim() || null,
+        welcomeDescription: form.welcomeDescription?.trim() || null,
         maintenanceMessage,
       },
     });
@@ -296,7 +302,7 @@ export default function AdminSettings() {
             <Card>
               <CardHeader>
                 <CardTitle>Contact and welcome content</CardTitle>
-                <CardDescription>Contact email and phone appear in the site footer on every page (clickable mail and call links). The welcome message is shown in the welcome area of the home page.</CardDescription>
+                <CardDescription>Contact email and phone appear in the site footer on every page (clickable mail and call links). The welcome message, intro, and description shape the welcome hero section of the home page — set content here to override the built-in defaults.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
@@ -308,8 +314,19 @@ export default function AdminSettings() {
                   <Input id="contact-phone" value={form.contactPhone ?? ""} onChange={(event) => updateField("contactPhone", event.target.value)} placeholder="09 ..." disabled={isLoading} maxLength={40} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="welcome-message" className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-muted-foreground" /> Welcome message</Label>
-                  <Textarea id="welcome-message" value={form.welcomeMessage ?? ""} onChange={(event) => updateField("welcomeMessage", event.target.value)} placeholder="Welcome to University Navigator" className="min-h-28" disabled={isLoading} maxLength={1000} />
+                  <Label htmlFor="welcome-message" className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-muted-foreground" /> Welcome heading</Label>
+                  <Textarea id="welcome-message" value={form.welcomeMessage ?? ""} onChange={(event) => updateField("welcomeMessage", event.target.value)} placeholder="Welcome to University Navigator" className="min-h-20" disabled={isLoading} maxLength={1000} />
+                  <p className="text-xs text-muted-foreground">Shown as the heading of the welcome section on the home page. Leave blank to hide the heading.</p>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="welcome-intro" className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-muted-foreground" /> Welcome intro line</Label>
+                  <Input id="welcome-intro" value={form.welcomeIntro ?? ""} onChange={(event) => updateField("welcomeIntro", event.target.value)} placeholder="A short line shown under the welcome heading (default: Your pathway to Myanmar's universities begins here.)" disabled={isLoading} maxLength={500} />
+                  <p className="text-xs text-muted-foreground">Replaces the default hero headline. Leave blank to keep the built-in headline.</p>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="welcome-description" className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-muted-foreground" /> Welcome description</Label>
+                  <Textarea id="welcome-description" value={form.welcomeDescription ?? ""} onChange={(event) => updateField("welcomeDescription", event.target.value)} placeholder="A short paragraph shown under the headline (default: Navigate your post-Grade 12 journey with confidence...)" className="min-h-24" disabled={isLoading} maxLength={2000} />
+                  <p className="text-xs text-muted-foreground">Replaces the default hero paragraph. Leave blank to keep the built-in text.</p>
                 </div>
               </CardContent>
             </Card>
