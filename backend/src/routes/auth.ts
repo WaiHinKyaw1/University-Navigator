@@ -4,7 +4,6 @@ import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { signToken, requireAuth, requireAdmin } from "../middlewares/auth";
 import { logger } from "../lib/logger";
-import { imageUpload } from "../lib/uploads";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../lib/mail";
 import { sendResetPasswordEmail } from "../lib/mail";
@@ -158,7 +157,7 @@ router.post("/auth/login", loginRateLimit, async (req, res): Promise<void> => {
         email: user.email,
         role: user.role,
         status: user.status,
-        avatarUrl: user.avatarUrl,
+        avatarUrl: user.avatarData || user.avatarUrl,
         createdAt: user.createdAt,
       },
       token,
@@ -196,7 +195,7 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
       email: user.email,
       role: user.role,
       status: user.status,
-      avatarUrl: user.avatarUrl,
+      avatarUrl: user.avatarData || user.avatarUrl,
       createdAt: user.createdAt,
     });
   } catch (error) {
@@ -245,7 +244,7 @@ router.put("/auth/profile", requireAuth, async (req, res): Promise<void> => {
       email: updatedUser.email,
       role: updatedUser.role,
       status: updatedUser.status,
-      avatarUrl: updatedUser.avatarUrl,
+      avatarUrl: updatedUser.avatarData || updatedUser.avatarUrl,
       createdAt: updatedUser.createdAt,
     });
   } catch (error) {
@@ -479,84 +478,7 @@ router.post("/auth/reset-password", resetPasswordRateLimit, async (req, res): Pr
   });
 });
 
-router.post(
-  "/auth/profile/image",
-  requireAuth,
-
-  (req, res, next) => {
-    imageUpload.single("file")(req, res, (err) => {
-      if (err) {
-        res.status(400).json({
-          error: err.message,
-        });
-
-        return;
-      }
-
-      next();
-    });
-  },
-
-  async (req, res) => {
-    if (!req.file) {
-      res.status(400).json({
-        error: "Image required",
-      });
-
-      return;
-    }
-
-    const avatarUrl = `/uploads/images/${req.file.filename}`;
-    const result = await db
-      .update(usersTable)
-
-      .set({
-        avatarUrl,
-      })
-
-      .where(eq(usersTable.id, req.user!.id))
-      .returning();
-
-    res.json({
-      avatarUrl,
-    });
-  },
-);
-
-router.delete(
-  "/auth/profile/image",
-  requireAuth,
-  async (req, res): Promise<void> => {
-    try {
-      const [user] = await db
-        .update(usersTable)
-        .set({
-          avatarUrl: null,
-        })
-        .where(eq(usersTable.id, req.user!.id))
-        .returning();
-
-      if (!user) {
-        res.status(404).json({
-          error: "User not found",
-        });
-        return;
-      }
-
-      res.json({
-        message: "Profile photo removed",
-        avatarUrl: null,
-      });
-    } catch (error) {
-      logger.error({ error }, "Remove profile image failed");
-
-      res.status(500).json({
-        error: "Failed to remove profile image",
-      });
-    }
-  },
-);
-
+// Profile image routes moved to routes/profile-image.ts (database-backed storage)
 router.delete(
   "/users/:id",
   requireAuth,
