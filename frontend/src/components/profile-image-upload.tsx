@@ -13,9 +13,16 @@ interface Props {
 export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [file, setFile] = useState<File | null>(null);
+    const [file, setFile] = useState<File | null>(null);
+
+  const [readyFile, setReadyFile] = useState<File | null>(null);
+
+  const [compressing, setCompressing] = useState(false);
+
   const [preview, setPreview] = useState(avatarUrl || "/default-avatar.png");
+
   const [loading, setLoading] = useState(false);
+
   const { updateUser } = useAuth();
 
   // Load image from database after refresh
@@ -27,29 +34,75 @@ export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: P
     }
   }, [avatarUrl]);
 
-  // Select image preview
-  const chooseFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress/resize an image file client-side so typical phone photos
+  // (2–6 MB JPEGs, large PNGs, HEIC exports) fit within the 1.5 MB server
+  // limit. Returns a JPEG blob ≤ targetMaxBytes.
+  const compressImage = async (file: File, targetMaxBytes = 1024 * 1024): Promise<Blob> => {
+    const bitmap = await createImageBitmap(file);
+    const maxDim = 1024;
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+
+    // Iteratively lower JPEG quality until under the size target.
+    for (const quality of [0.8, 0.7, 0.6, 0.5, 0.4, 0.3]) {
+      const blob = await new Promise<Blob>((resolve) =>
+        canvas.toBlob((b) => resolve(b ?? new Blob()), "image/jpeg", quality),
+      );
+      if (blob.size <= targetMaxBytes) return blob;
+    }
+    // Fallback: smallest JPEG we can make.
+    return await new Promise<Blob>((resolve) =>
+      canvas.toBlob((b) => resolve(b ?? new Blob()), "image/jpeg", 0.3),
+    );
+  };
+
+  // Select image preview and pre-compress it before upload.
+  const chooseFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
 
     if (!selected) return;
 
-    setFile(selected);
-
     const previewUrl = URL.createObjectURL(selected);
 
     setPreview(previewUrl);
+
+    // Compress in the background; keep the original in state until ready.
+    setFile(selected);
+    setCompressing(true);
+    try {
+      const compressed = await compressImage(selected);
+      // Carry the compressed blob as a File so the upload uses it instead.
+      const ready = new File([compressed], selected.name.replace(/\.[^.]+$/, "") + ".jpg", {
+        type: "image/jpeg",
+      });
+      setReadyFile(ready);
+    } catch {
+      // If compression fails (e.g., unsupported format), fall back to the raw file.
+      setReadyFile(selected);
+    } finally {
+      setCompressing(false);
+    }
   };
 
-  // Upload image
+  // Upload image (uses the compressed file once ready)
   const upload = async () => {
-    if (!file) {
-      toast.error("Please choose image");
+    const toSend = readyFile ?? file;
+
+    if (!toSend) {
+      toast.error(compressing ? "Preparing your photo..." : "Please choose image");
       return;
     }
 
     const formData = new FormData();
 
-    formData.append("file", file);
+    formData.append("file", toSend);
 
     try {
       setLoading(true);
@@ -75,10 +128,13 @@ export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: P
 
       if (!response.ok) {
         throw new Error(
-          data?.error ||
-            (response.status === 200
-              ? "Upload endpoint not available. Please contact support."
-              : `Upload failed (status ${response.status})`),
+          data?.error
+            ? data.error
+            : response.status === 400
+              ? "The photo could not be processed. Try a smaller photo (under 2 MB) or a JPG/PNG file."
+              : response.status === 200
+                ? "Upload endpoint not available. Please contact support."
+                : `Upload failed (status ${response.status})`,
         );
       }
       if (!data?.avatarUrl) {
@@ -171,7 +227,7 @@ export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: P
           ref={inputRef}
           hidden
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           onChange={chooseFile}
         />
       </div>
@@ -219,14 +275,19 @@ export default function ProfileImageUpload({ avatarUrl, onUploaded, compact }: P
         ref={inputRef}
         hidden
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
         onChange={chooseFile}
       />
 
-      {file && <p className="text-sm text-muted-foreground">{file.name}</p>}
+      {file && (
+        <p className="text-sm text-muted-foreground">
+          {file.name}
+          {compressing ? " (preparing...)" : readyFile ? " (ready)" : ""}
+        </p>
+      )}
 
-      <Button onClick={upload} disabled={loading} className="w-full">
-        {loading ? "Uploading..." : "Save Profile Photo"}
+      <Button onClick={upload} disabled={loading || compressing || !readyFile} className="w-full">
+        {compressing ? "Preparing photo..." : loading ? "Uploading..." : "Save Profile Photo"}
       </Button>
 
       {avatarUrl && (

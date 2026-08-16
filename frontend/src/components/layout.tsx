@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, Menu, X, User as UserIcon, Wrench, GitCompareArrows } from "lucide-react";
+import { GraduationCap, LogOut, Menu, X, User as UserIcon, Wrench, GitCompareArrows, Mail, Phone } from "lucide-react";
 import { useState } from "react";
 import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
@@ -270,10 +270,31 @@ export function Layout({
                 )}
                 {projectName}
               </p>
-              <p className="mt-1">
+                            <p className="mt-1">
                 {tagline}
               </p>
-
+              {(siteSettings?.contactEmail || siteSettings?.contactPhone) && (
+                <div className="mt-2 flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-sm">
+                  {siteSettings.contactEmail && (
+                    <a
+                      href={`mailto:${siteSettings.contactEmail}`}
+                      className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      {siteSettings.contactEmail}
+                    </a>
+                  )}
+                  {siteSettings.contactPhone && (
+                    <a
+                      href={`tel:${siteSettings.contactPhone}`}
+                      className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Phone className="h-3.5 w-3.5" />
+                      {siteSettings.contactPhone}
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex max-w-full flex-wrap justify-center gap-x-4 gap-y-2">
               <Link
