@@ -510,18 +510,48 @@ export default function ScoreCalculator() {
     });
   };
 
-  // Slider mode — live filter from allUniversities
+  // Slider mode — live filter from allUniversities, ranked by major match then cutoff proximity.
   const sliderResults = useMemo(() => {
     if (inputMode !== "slider" || allUniversities.length === 0) return [];
+    const selected = preferredMajorIds.length > 0 ? preferredMajorIds : [];
     const eligible = allUniversities.filter(
       (u) => u.minScore != null && u.minScore <= sliderTotal,
     );
-    return [
-      ...eligible
-        .sort((a, b) => b.minScore - a.minScore)
-        .map((u) => ({ uni: u, eligible: true })),
-    ];
-  }, [sliderTotal, allUniversities, inputMode]);
+    const built = eligible.map((u: any) => {
+      const majors: any[] = (u.majors ?? []).map((m: any) => typeof m === "number" ? { id: m } : m);
+      const matched = majors.filter((m: any) => selected.includes(m.id));
+      const majorMatch = matched.length > 0;
+      const gap = sliderTotal - (u.minScore ?? 0);
+      let matchScore = Math.max(0, 100 - Math.abs(gap) * 0.5);
+      if (majorMatch) matchScore += 15;
+      const reasons: string[] = ["သင့်ရမှတ်ဖြင့် ဝင်ခွင့်အနိမ့်ဆုံးရမှတ်ကို ဖြည့်မီသည်"];
+      if (majorMatch) {
+        const majorNames = matched
+          .map((m: any) => m.nameEn || m.name)
+          .filter(Boolean)
+          .slice(0, 2)
+          .join(", ");
+        reasons.push(`သင်ရွေးထားသော ဘာသာရပ်နှင့် ကိုက်ညီသည်: ${majorNames}`);
+      }
+      if (gap <= 30) reasons.push("သင့်ရမှတ်နှင့် ဝင်ခွင့်ဖြတ်မှတ် နီးစပ်သော ရွေးချယ်မှုဖြစ်သည်");
+      const tier = majorMatch ? "strong" : "eligible";
+      return {
+        uni: { ...u, majors },
+        eligible: true,
+        matchScore: Math.min(100, Math.round(matchScore)),
+        majorMatch,
+        recommendationTier: tier,
+        recommendationReasons: reasons,
+      };
+    })
+    // When subject interests are chosen, keep only universities offering those majors.
+    .filter((r) => (selected.length > 0 ? r.majorMatch : true))
+    .sort((a, b) => {
+      if (a.majorMatch !== b.majorMatch) return a.majorMatch ? -1 : 1;
+      return b.matchScore - a.matchScore;
+    });
+    return built;
+  }, [sliderTotal, allUniversities, inputMode, preferredMajorIds]);
 
   // const subjectResults = calculateMutation.data;
   const subjectResults = (calculateMutation.data as any[]) || results;
@@ -826,7 +856,7 @@ export default function ScoreCalculator() {
                     </h2>
                     <div className="flex gap-2">
                       <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full">
-                        ✓ {sliderEligibleCount} ကျောင်း
+                        ✓ {sliderEligibleCount} ကျောင်း{sliderResults.some((r) => r.majorMatch) ? "" : ""}
                       </span>
                     </div>
                   </div>
@@ -839,12 +869,16 @@ export default function ScoreCalculator() {
                       </p>
                       {sliderResults
                         .filter((r) => r.eligible)
-                        .map(({ uni }, i) => (
+                        .map((r, i) => (
                           <ResultCard
                             key={i}
-                            uni={uni}
+                            uni={r.uni}
                             userTotal={sliderTotal}
                             eligible
+                            matchScore={r.matchScore}
+                            majorMatch={r.majorMatch}
+                            recommendationTier={r.recommendationTier}
+                            recommendationReasons={r.recommendationReasons}
                           />
                         ))}
                     </div>
@@ -855,8 +889,11 @@ export default function ScoreCalculator() {
                     <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
                       <GraduationCap className="h-12 w-12 text-gray-200 mx-auto mb-3" />
                       <p className="text-gray-500 font-medium">
-                        ရမှတ် {sliderTotal} ဖြင့် ဝင်ခွင့်ရနိုင်သော ကျောင်း
-                        မတွေ့ပါ
+                        {sliderResults.length === 0
+                          ? preferredMajorIds.length > 0
+                            ? `ရမှတ် ${sliderTotal} နှင့် ရွေးထားသော ဘာသာရပ်ကို တက်ရောက်နိုင်သော ကျောင်း မတွေ့ပါ — ဘာသာရပ် ပြောင်းရွေးကြည့်ပါ`
+                            : `ရမှတ် ${sliderTotal} ဖြင့် ဝင်ခွင့်ရနိုင်သော ကျောင်း မတွေ့ပါ`
+                          : "ရလဒ် မရှိပါ"}
                       </p>
                       <p className="text-gray-400 text-sm mt-1">
                         Slider ကို ညာဘက် ဆွဲ၍ ရမှတ်မြှင့်ကြည့်ပါ
