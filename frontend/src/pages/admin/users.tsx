@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin-layout";
-import { useListUsers, useBanUser } from "@workspace/api-client-react";
+import {
+  useListUsers,
+  useBanUser,
+  getListUsersQueryKey,
+} from "@workspace/api-client-react";
 import {
   Table,
   TableBody,
@@ -31,6 +35,8 @@ import {
   ShieldAlert,
   Trash2,
   MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,8 +47,67 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const pageSize = 10;
+
+function Pagination({
+  page,
+  total,
+  onChange,
+}: {
+  page: number;
+  total: number;
+  onChange: (p: number) => void;
+}) {
+  const totalPages = Math.ceil(total / pageSize);
+  if (totalPages <= 1) return null;
+
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const visible = pages.filter(
+    (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
+  );
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 pt-4">
+      <button
+        onClick={() => onChange(page - 1)}
+        disabled={page === 1}
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+
+      {visible.map((p, i, arr) => (
+        <span key={p} className="flex items-center gap-1.5">
+          {i > 0 && arr[i - 1] !== p - 1 && (
+            <span className="px-1 text-sm text-muted-foreground">…</span>
+          )}
+          <button
+            onClick={() => onChange(p)}
+            className={`h-9 min-w-9 px-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              p === page
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "border border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-primary"
+            }`}
+          >
+            {p}
+          </button>
+        </span>
+      ))}
+
+      <button
+        onClick={() => onChange(page + 1)}
+        disabled={page === totalPages}
+        className="touch-target flex h-9 w-9 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 export default function AdminUsers() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [banModalOpen, setBanModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{
     id: number;
@@ -55,6 +120,8 @@ export default function AdminUsers() {
 
   const { data: usersData, isLoading } = useListUsers({
     search: search || undefined,
+    page,
+    limit: pageSize,
   });
 
   const banMutation = useBanUser({
@@ -67,7 +134,7 @@ export default function AdminUsers() {
         );
         setBanModalOpen(false);
         setBanReason("");
-        queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
       },
       onError: (err) => {
         toast.error(err.message || "Failed to update user status");
@@ -125,7 +192,7 @@ export default function AdminUsers() {
       setDeleteModalOpen(false);
 
       queryClient.invalidateQueries({
-        queryKey: ["/api/users"],
+        queryKey: getListUsersQueryKey(),
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Delete failed");
@@ -148,7 +215,10 @@ export default function AdminUsers() {
               placeholder="Search by name or email..."
               className="pl-9 bg-card"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
             />
           </div>
         </div>
@@ -270,6 +340,19 @@ export default function AdminUsers() {
               </TableBody>
             </Table>
           </CardContent>
+          {usersData?.total !== undefined && usersData.total > pageSize && (
+            <div className="border-t px-4 py-2 text-sm text-muted-foreground">
+              Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, usersData.total)} of{" "}
+              {usersData.total} users
+            </div>
+          )}
+          <div className="px-4 pb-4">
+            <Pagination
+              page={page}
+              total={usersData?.total ?? 0}
+              onChange={(p) => setPage(Math.max(1, p))}
+            />
+          </div>
         </Card>
 
         <Dialog open={banModalOpen} onOpenChange={setBanModalOpen}>
