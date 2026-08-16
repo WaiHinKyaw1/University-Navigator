@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFavorites } from "@/hooks/use-favorites";
 import { Building2, Heart, MapPin, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { toast } from "sonner";
 
@@ -25,9 +25,6 @@ export default function SavedUniversities() {
           </div>
           <p className="mt-1 text-sm text-muted-foreground">နောက်မှ ပြန်ကြည့်ရန် သိမ်းထားသော တက္ကသိုလ်များ</p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/favorites">အားလုံးကြည့်မယ်</Link>
-        </Button>
       </div>
 
       {isLoading ? (
@@ -48,7 +45,7 @@ export default function SavedUniversities() {
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <Building2 className="mx-auto mb-3 h-9 w-9 text-muted-foreground/40" />
           <p className="font-medium text-foreground">သိမ်းထားတာ မရှိသေးပါ</p>
-          <p className="mt-1 text-sm text-muted-foreground">Universities စာမျက်နှာမှ တက္ကသိုလ်များကို Favorites ထဲသို့ သိမ်းနိုင်ပါတယ်။</p>
+          <p className="mt-1 text-sm text-muted-foreground">Universities စာမျက်နှာမှ တက်ကသိုလ်ကိတ်ကာဒ်ပေါ်ရှိ နှလုံးပုံခလုတ်ကို နှိပ်ပီး သိမ်းနိုင်ပါတယ်။</p>
         </div>
       ) : (
         <div className="space-y-3">

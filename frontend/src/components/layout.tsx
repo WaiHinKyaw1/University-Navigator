@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Heart, LogOut, Menu, X, User as UserIcon, Wrench, GitCompareArrows } from "lucide-react";
+import { GraduationCap, LogOut, Menu, X, User as UserIcon, Wrench, GitCompareArrows } from "lucide-react";
 import { useState } from "react";
 import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
@@ -97,15 +97,6 @@ export function Layout({
       >
         Chatbot Advisor
       </Link>
-      {user && (
-        <Link
-          href="/favorites"
-          className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${location === "/favorites" ? "text-primary" : "text-muted-foreground"}`}
-        >
-          <Heart className="h-3.5 w-3.5" />
-          Favorites
-        </Link>
-      )}
       {user && (
         <Link
           href="/chat"

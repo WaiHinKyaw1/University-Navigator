@@ -8,8 +8,9 @@ import {
   universitiesTable,
   universityMajorsTable,
   majorsTable,
+  favoritesTable,
 } from "@workspace/db";
-import { eq, ilike, or, sql, desc } from "drizzle-orm";
+import { eq, ilike, or, sql, desc, gte } from "drizzle-orm";
 import { requireAdmin, requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -167,6 +168,29 @@ router.get(
       .select({ count: sql<number>`count(*)` })
       .from(newsTable);
 
+    const [recentRegistrations] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(usersTable)
+      .where(gte(usersTable.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)));
+
+    const recentUsers = await db
+      .select({
+        id: usersTable.id,
+        name: usersTable.name,
+        email: usersTable.email,
+        role: usersTable.role,
+        status: usersTable.status,
+        avatarUrl: usersTable.avatarUrl,
+        createdAt: usersTable.createdAt,
+      })
+      .from(usersTable)
+      .orderBy(desc(usersTable.createdAt))
+      .limit(5);
+
+    const [totalFavorites] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(favoritesTable);
+
     res.json({
       totalUsers: Number(totalUsers.count),
       totalUniversities: Number(totalUnis.count),
@@ -175,6 +199,17 @@ router.get(
       activeUsers: Number(activeUsers.count),
       bannedUsers: Number(bannedUsers.count),
       totalNewsArticles: Number(totalNews.count),
+      recentRegistrations: Number(recentRegistrations.count),
+      recentUsers: recentUsers.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        status: u.status,
+        avatarUrl: u.avatarUrl,
+        createdAt: u.createdAt,
+      })),
+      totalFavorites: Number(totalFavorites.count),
     });
   },
 );

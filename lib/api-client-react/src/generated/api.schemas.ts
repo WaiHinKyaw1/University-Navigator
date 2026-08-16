@@ -525,6 +525,17 @@ export interface AuditLogListResponse {
   limit: number;
 }
 
+export interface RecentUserStat {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  /** @nullable */
+  avatarUrl?: string | null;
+  createdAt: string;
+}
+
 export interface AnalyticsOverview {
   totalUsers: number;
   totalUniversities: number;
@@ -533,6 +544,9 @@ export interface AnalyticsOverview {
   activeUsers: number;
   bannedUsers: number;
   totalNewsArticles?: number;
+  recentRegistrations: number;
+  recentUsers: RecentUserStat[];
+  totalFavorites: number;
 }
 
 export interface MajorStat {

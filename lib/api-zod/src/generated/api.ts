@@ -1087,7 +1087,18 @@ export const GetAnalyticsOverviewResponse = zod.object({
   "totalMessages": zod.number(),
   "activeUsers": zod.number(),
   "bannedUsers": zod.number(),
-  "totalNewsArticles": zod.number().optional()
+  "totalNewsArticles": zod.number().optional(),
+  "recentRegistrations": zod.number(),
+  "recentUsers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string(),
+  "status": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "totalFavorites": zod.number()
 })
 
 

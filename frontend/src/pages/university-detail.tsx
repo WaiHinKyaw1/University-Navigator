@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import FavoriteButton from "@/components/favorite-button";
 import {
   MapPin,
   Globe,
@@ -381,9 +380,6 @@ export default function UniversityDetail() {
                     )}
                   </div>
                 )}
-                <div>
-                  <FavoriteButton universityId={uni.id} />
-                </div>
               </div>
             </div>
           </div>
