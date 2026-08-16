@@ -13,6 +13,8 @@ const DEFAULT_SETTINGS = {
   contactEmail: null,
   contactPhone: null,
   welcomeMessage: null,
+  welcomeIntro: null,
+  welcomeDescription: null,
   maintenanceMode: false,
   maintenanceMessage: "We are making a few improvements. Please check back soon.",
 } as const;
@@ -24,6 +26,8 @@ const MAX_LENGTHS = {
   contactEmail: 160,
   contactPhone: 40,
   welcomeMessage: 1000,
+  welcomeIntro: 500,
+  welcomeDescription: 2000,
   maintenanceMessage: 240,
 } as const;
 
@@ -53,8 +57,15 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+// Allow external http(s) URLs, inline base64 data URLs, and relative paths to
+// images served by this API (e.g. /uploads/images/123.png returned by the
+// image upload endpoint) so saved logos always pass validation.
 function isValidLogoUrl(value: string): boolean {
-  return /^https?:\/\/[^\s]+$/i.test(value) || /^data:image\/(png|jpeg|webp|svg\+xml);base64,/i.test(value);
+  return (
+    /^https?:\/\/[^\s]+$/i.test(value) ||
+    /^data:image\/(png|jpeg|webp|svg\+xml);base64,/i.test(value) ||
+    /^\/[^\s?]+\.(png|jpe?g|gif|webp|svg)(\?[^\s]*)?$/i.test(value)
+  );
 }
 
 async function getOrCreateSettings() {
@@ -87,6 +98,8 @@ router.put("/admin/settings", requireAdmin, async (req, res): Promise<void> => {
   const contactEmail = cleanText(body.contactEmail);
   const contactPhone = cleanText(body.contactPhone);
   const welcomeMessage = cleanText(body.welcomeMessage);
+  const welcomeIntro = cleanText(body.welcomeIntro);
+  const welcomeDescription = cleanText(body.welcomeDescription);
   const maintenanceMessage = cleanText(body.maintenanceMessage) ?? DEFAULT_SETTINGS.maintenanceMessage;
   const maintenanceMode = body.maintenanceMode === true;
   const logoUrl = cleanText(body.logoUrl);
@@ -98,6 +111,8 @@ router.put("/admin/settings", requireAdmin, async (req, res): Promise<void> => {
     validateTextField("contactEmail", contactEmail) ??
     validateTextField("contactPhone", contactPhone) ??
     validateTextField("welcomeMessage", welcomeMessage) ??
+    validateTextField("welcomeIntro", welcomeIntro) ??
+    validateTextField("welcomeDescription", welcomeDescription) ??
     validateTextField("maintenanceMessage", maintenanceMessage, true);
 
   if (validationError) {
@@ -124,6 +139,8 @@ router.put("/admin/settings", requireAdmin, async (req, res): Promise<void> => {
     contactEmail,
     contactPhone,
     welcomeMessage,
+    welcomeIntro,
+    welcomeDescription,
     maintenanceMode,
     maintenanceMessage,
   };

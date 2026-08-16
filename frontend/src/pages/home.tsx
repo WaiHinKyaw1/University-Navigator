@@ -40,14 +40,17 @@ export default function Home() {
                 </h2>
               )}
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-                Your pathway to{" "}
-                <span className="text-secondary">Myanmar's universities</span>{" "}
-                begins here.
+                {siteSettings?.welcomeIntro || (
+                  <>
+                    Your pathway to{" "}
+                    <span className="text-secondary">Myanmar's universities</span>{" "}
+                    begins here.
+                  </>
+                )}
               </h1>
               <p className="text-lg md:text-xl opacity-90 mb-10 max-w-2xl mx-auto">
-                Navigate your post-Grade 12 journey with confidence. Calculate
-                your eligibility, explore universities, and find the perfect
-                major.
+                {siteSettings?.welcomeDescription ||
+                  "Navigate your post-Grade 12 journey with confidence. Calculate your eligibility, explore universities, and find the perfect major."}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button

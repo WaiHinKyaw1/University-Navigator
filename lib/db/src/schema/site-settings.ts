@@ -11,6 +11,8 @@ export const siteSettingsTable = pgTable("site_settings", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   welcomeMessage: text("welcome_message"),
+  welcomeIntro: text("welcome_intro"),
+  welcomeDescription: text("welcome_description"),
   maintenanceMode: boolean("maintenance_mode").notNull().default(false),
   maintenanceMessage: text("maintenance_message").notNull().default("We are making a few improvements. Please check back soon."),
   updatedAt: timestamp("updated_at", { withTimezone: true })
