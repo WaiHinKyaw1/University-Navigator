@@ -154,6 +154,26 @@ export default function AdminSettings() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Normalize the logo URL before saving: strip query parameters from
+    // relative paths, and convert same-origin absolute URLs to relative paths
+    // so they always pass the server's logoUrl validation.
+    const normalizeLogoUrl = (url: string | null | undefined): string | null => {
+      if (!url) return null;
+      const trimmed = url.trim();
+      if (!trimmed) return null;
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        try {
+          const parsed = new URL(trimmed);
+          if (parsed.origin === window.location.origin) {
+            return parsed.pathname.replace(/\?[\S]*$/, "");
+          }
+          return parsed.toString();
+        } catch {
+          return trimmed;
+        }
+      }
+      return trimmed.replace(/\?[\S]*$/, "");
+    };
     const projectName = form.projectName.trim();
     const academicYear = form.academicYear.trim();
     const contactEmail = form.contactEmail?.trim() || null;
@@ -188,6 +208,7 @@ export default function AdminSettings() {
         welcomeIntro: form.welcomeIntro?.trim() || null,
         welcomeDescription: form.welcomeDescription?.trim() || null,
         maintenanceMessage,
+        logoUrl: normalizeLogoUrl(form.logoUrl),
       },
     });
   };

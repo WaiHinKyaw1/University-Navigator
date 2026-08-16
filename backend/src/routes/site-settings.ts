@@ -58,14 +58,21 @@ function isValidEmail(value: string): boolean {
 }
 
 // Allow external http(s) URLs, inline base64 data URLs, and relative paths to
-// images served by this API (e.g. /uploads/images/123.png returned by the
-// image upload endpoint) so saved logos always pass validation.
+// images served by this API (e.g. /uploads/images/123-still_developing.png
+// returned by the image upload endpoint). Relative paths are matched broadly
+// (must start with /uploads/images/ and contain no whitespace) so any file the
+// upload endpoint produces passes validation regardless of extension or query
+// parameters. Query strings are stripped before saving for cleanliness.
 function isValidLogoUrl(value: string): boolean {
   return (
     /^https?:\/\/[^\s]+$/i.test(value) ||
     /^data:image\/(png|jpeg|webp|svg\+xml);base64,/i.test(value) ||
-    /^\/[^\s?]+\.(png|jpe?g|gif|webp|svg)(\?[^\s]*)?$/i.test(value)
+    /^\/uploads\/images\/[^\s?]+(\?[\S]*)?$/i.test(value)
   );
+}
+
+function normalizeRelativeUrl(value: string): string {
+  return value.replace(/\?[\S]*$/, "");
 }
 
 async function getOrCreateSettings() {
@@ -102,7 +109,10 @@ router.put("/admin/settings", requireAdmin, async (req, res): Promise<void> => {
   const welcomeDescription = cleanText(body.welcomeDescription);
   const maintenanceMessage = cleanText(body.maintenanceMessage) ?? DEFAULT_SETTINGS.maintenanceMessage;
   const maintenanceMode = body.maintenanceMode === true;
-  const logoUrl = cleanText(body.logoUrl);
+  let logoUrl = cleanText(body.logoUrl);
+  if (logoUrl && !logoUrl.startsWith("http") && !logoUrl.startsWith("data:")) {
+    logoUrl = normalizeRelativeUrl(logoUrl);
+  }
 
   const validationError =
     validateTextField("projectName", projectName, true) ??
