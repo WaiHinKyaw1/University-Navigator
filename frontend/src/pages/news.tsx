@@ -64,8 +64,8 @@ export default function News() {
           </div>
         </div>
 
-        <div className="grid flex-1 gap-6 lg:grid-cols-[380px_1fr]">
-          <div className="space-y-3">
+        <div className="grid flex-1 gap-6 lg:grid-cols-[380px_1fr] lg:min-h-0">
+          <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
             {isLoading && (
               <Card className="p-6 text-center text-sm text-muted-foreground">Loading news...</Card>
             )}
@@ -100,7 +100,7 @@ export default function News() {
             ))}
           </div>
 
-          <Card className="min-h-[520px] overflow-hidden">
+          <Card className="min-h-[520px] overflow-hidden lg:sticky lg:top-24 lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto scrollbar-hide">
             {activeArticle ? (
               <article>
                 {activeArticle.imageUrl && (
