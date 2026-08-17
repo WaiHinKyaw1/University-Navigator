@@ -1,11 +1,19 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Layout } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useListNews, type NewsArticle } from "@workspace/api-client-react";
-import { CalendarDays, Newspaper, Search } from "lucide-react";
+import {
+  getListNewsQueryKey,
+  listNews,
+  useListNews,
+  type NewsArticle,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CalendarDays, Newspaper, Search, Loader2 } from "lucide-react";
+
+const PAGE_SIZE = 12;
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString([], {
@@ -21,23 +29,59 @@ function excerpt(content: string, maxLength = 180) {
 }
 
 export default function News() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
-  const { data, isLoading, error } = useListNews({ page: 1, limit: 50 });
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const { data, isLoading, error, isFetching } = useListNews(
+    { page: 1, limit: PAGE_SIZE },
+    {
+      query: {
+        queryKey: getListNewsQueryKey({ page: 1, limit: PAGE_SIZE }),
+        staleTime: 60_000,
+        placeholderData: (previous) => previous,
+      },
+    },
+  );
 
   const articles = data?.articles ?? [];
+  const total = data?.total ?? 0;
+
   const visibleArticles = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return articles;
-
-    return articles.filter((article) =>
-      [article.title, article.content, article.category, article.authorName]
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(keyword)),
-    );
-  }, [articles, search]);
+    let result = articles;
+    if (keyword) {
+      result = result.filter((article) =>
+        [article.title, article.content, article.category, article.authorName]
+          .filter(Boolean)
+          .some((value) => value!.toLowerCase().includes(keyword)),
+      );
+    }
+    if (category) {
+      result = result.filter((article) => article.category === category);
+    }
+    return result;
+  }, [articles, search, category]);
 
   const activeArticle = selectedArticle ?? visibleArticles[0] ?? null;
+
+  const loadNextPage = useCallback(() => {
+    if (loadingMore || isFetching || !data || articles.length >= total) return;
+    const next = page + 1;
+    setLoadingMore(true);
+    listNews({ page: next, limit: PAGE_SIZE })
+      .then((response) => {
+        const all = [...articles, ...response.articles];
+        queryClient.setQueryData(getListNewsQueryKey({ page: 1, limit: PAGE_SIZE }), (old: { articles: NewsArticle[]; total: number; page: number; limit: number } | undefined) =>
+          old ? { ...old, articles: all, page: next } : old,
+        );
+        setPage(next);
+      })
+      .finally(() => setLoadingMore(false));
+  }, [loadingMore, isFetching, data, articles, total, page, queryClient]);
 
   return (
     <Layout>
@@ -57,11 +101,37 @@ export default function News() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setSelectedArticle(null);
+              }}
               placeholder="Search news..."
               className="bg-muted/40 pl-9"
             />
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant={category === null ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => setCategory(null)}
+          >
+            All
+          </Badge>
+          {["admission", "announcement", "scholarship", "general"].map((cat) => (
+            <Badge
+              key={cat}
+              variant={category === cat ? "default" : "outline"}
+              className="cursor-pointer capitalize"
+              onClick={() => setCategory(cat)}
+            >
+              {cat}
+            </Badge>
+          ))}
+          <span className="ml-auto text-xs text-muted-foreground">
+            {total} article{total === 1 ? "" : "s"}
+          </span>
         </div>
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[380px_1fr] lg:min-h-0">
@@ -98,6 +168,24 @@ export default function News() {
                 </p>
               </button>
             ))}
+
+            {data && articles.length < total && (
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={loadingMore || isFetching}
+                onClick={loadNextPage}
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ...
+                  </>
+                ) : (
+                  `Load more (${articles.length} / ${total})`
+                )}
+              </Button>
+            )}
           </div>
 
           <Card className="min-h-[520px] overflow-hidden lg:sticky lg:top-24 lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto scrollbar-hide">
@@ -131,14 +219,6 @@ export default function News() {
             )}
           </Card>
         </div>
-
-        {data && data.total > visibleArticles.length && (
-          <div className="flex justify-center">
-            <Button variant="outline" disabled>
-              Showing latest {visibleArticles.length} of {data.total}
-            </Button>
-          </div>
-        )}
       </div>
     </Layout>
   );
