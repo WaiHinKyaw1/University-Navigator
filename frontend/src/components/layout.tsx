@@ -157,18 +157,6 @@ export function Layout({
         </Link>
       )}
 
-      {user?.role === "admin" && (
-        <Link
-          href="/admin"
-          className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
-            location.startsWith("/admin")
-              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/10 border border-primary/30"
-              : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
-          }`}
-        >
-          Admin
-        </Link>
-      )}
     </>
   );
   return (
