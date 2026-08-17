@@ -135,7 +135,7 @@ export default function News() {
         </div>
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[380px_1fr] lg:min-h-0">
-          <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+          <div className="space-y-3 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto scrollbar-hide lg:pr-1">
             {isLoading && (
               <Card className="p-6 text-center text-sm text-muted-foreground">Loading news...</Card>
             )}
