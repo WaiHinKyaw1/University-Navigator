@@ -165,6 +165,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         >
           <div className="p-4 space-y-2">
             {!sidebarOpen ? (
+              <div className="my-4 border-b border-border/50" />
+            ) : (
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
+                Profile
+              </div>
+            )}
+            <NavItem
+              href="/admin/profile"
+              icon={UserCog}
+              label="Admin Profile"
+              collapsed={!sidebarOpen}
+            />
+            {!sidebarOpen ? (
               <div className="h-4" />
             ) : (
               <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -245,20 +258,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               href="/admin/audit"
               icon={Activity}
               label="Audit Logs"
-              collapsed={!sidebarOpen}
-            />
-
-            {!sidebarOpen ? (
-              <div className="my-4 border-b border-border/50" />
-            ) : (
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
-                Profile
-              </div>
-            )}
-            <NavItem
-              href="/admin/profile"
-              icon={UserCog}
-              label="Admin Profile"
               collapsed={!sidebarOpen}
             />
           </div>
