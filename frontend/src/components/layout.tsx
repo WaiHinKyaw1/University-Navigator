@@ -1,7 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, Menu, X, User as UserIcon } from "lucide-react";
+import {
+  GraduationCap,
+  LogOut,
+  Menu,
+  X,
+  Sparkles,
+  User as UserIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
@@ -45,6 +52,16 @@ export function Layout({
         className={`text-sm font-medium transition-colors hover:text-primary ${location === "/score" ? "text-primary" : "text-muted-foreground"}`}
       >
         Score Calculator
+      </Link>
+      <Link
+        href="/interest-guide"
+        className={`text-sm font-medium transition-colors hover:text-primary ${
+          location === "/interest-guide"
+            ? "text-primary"
+            : "text-muted-foreground"
+        }`}
+      >
+        Interest Guide
       </Link>
       <Link
         href="/news"

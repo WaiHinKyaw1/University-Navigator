@@ -15,6 +15,7 @@ import {
   Tag,
   UserCog,
   Menu,
+  Heart,
   X,
 } from "lucide-react";
 
@@ -58,10 +59,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
       <Link
         href={href}
-        className={`flex items-center ${collapsed ? "justify-center px-0" : "gap-3 px-3"} py-2 rounded-md transition-colors ${isActive
-          ? "bg-primary/10 text-primary font-medium"
-          : "hover:bg-muted text-muted-foreground hover:text-foreground"
-          }`}
+        className={`flex items-center ${collapsed ? "justify-center px-0" : "gap-3 px-3"} py-2 rounded-md transition-colors ${
+          isActive
+            ? "bg-primary/10 text-primary font-medium"
+            : "hover:bg-muted text-muted-foreground hover:text-foreground"
+        }`}
         title={collapsed ? label : undefined}
       >
         <Icon className="h-5 w-5 shrink-0" />
@@ -129,6 +131,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           />
           <NavItem href="/admin/majors" icon={BookOpen} label="Majors" />
           <NavItem href="/admin/categories" icon={Tag} label="Categories" />
+          <NavItem
+            href="/admin/interest-guide"
+            icon={Heart}
+            label="Interest Guide"
+          />
           <NavItem href="/admin/news" icon={FileText} label="News" />
           <NavItem
             href="/admin/admission-guide"
@@ -148,16 +155,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
             Profile
           </div>
-          <NavItem
-            href="/admin/profile"
-            icon={UserCog}
-            label="Admin Profile"
-          />
+          <NavItem href="/admin/profile" icon={UserCog} label="Admin Profile" />
         </div>
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className={`${sidebarOpen ? "w-64" : "w-[72px]"} transition-all duration-300 border-r bg-card hidden md:block overflow-y-auto shrink-0`}>
+        <aside
+          className={`${sidebarOpen ? "w-64" : "w-[72px]"} transition-all duration-300 border-r bg-card hidden md:block overflow-y-auto shrink-0`}
+        >
           <div className="p-4 space-y-2">
             {!sidebarOpen ? (
               <div className="h-4" />
@@ -166,7 +171,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 Overview
               </div>
             )}
-            <NavItem href="/admin" icon={Activity} label="Dashboard" collapsed={!sidebarOpen} />
+            <NavItem
+              href="/admin"
+              icon={Activity}
+              label="Dashboard"
+              collapsed={!sidebarOpen}
+            />
 
             {!sidebarOpen ? (
               <div className="my-4 border-b border-border/50" />
@@ -175,12 +185,48 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 Management
               </div>
             )}
-            <NavItem href="/admin/users" icon={Users} label="Users" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/universities" icon={Building2} label="Universities" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/majors" icon={BookOpen} label="Majors" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/categories" icon={Tag} label="Categories" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/news" icon={FileText} label="News" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/admission-guide" icon={FileUp} label="Admission PDF" collapsed={!sidebarOpen} />
+            <NavItem
+              href="/admin/users"
+              icon={Users}
+              label="Users"
+              collapsed={!sidebarOpen}
+            />
+            <NavItem
+              href="/admin/universities"
+              icon={Building2}
+              label="Universities"
+              collapsed={!sidebarOpen}
+            />
+            <NavItem
+              href="/admin/majors"
+              icon={BookOpen}
+              label="Majors"
+              collapsed={!sidebarOpen}
+            />
+            <NavItem
+              href="/admin/categories"
+              icon={Tag}
+              label="Categories"
+              collapsed={!sidebarOpen}
+            />
+            <NavItem
+              href="/admin/interest-guide"
+              icon={Heart}
+              label="Interest Guide"
+              collapsed={!sidebarOpen}
+            />
+            <NavItem
+              href="/admin/news"
+              icon={FileText}
+              label="News"
+              collapsed={!sidebarOpen}
+            />
+            <NavItem
+              href="/admin/admission-guide"
+              icon={FileUp}
+              label="Admission PDF"
+              collapsed={!sidebarOpen}
+            />
 
             {!sidebarOpen ? (
               <div className="my-4 border-b border-border/50" />
@@ -189,8 +235,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 Monitoring
               </div>
             )}
-            <NavItem href="/admin/chat-monitor" icon={MessageSquare} label="Chat Monitor" collapsed={!sidebarOpen} />
-            <NavItem href="/admin/audit" icon={Activity} label="Audit Logs" collapsed={!sidebarOpen} />
+            <NavItem
+              href="/admin/chat-monitor"
+              icon={MessageSquare}
+              label="Chat Monitor"
+              collapsed={!sidebarOpen}
+            />
+            <NavItem
+              href="/admin/audit"
+              icon={Activity}
+              label="Audit Logs"
+              collapsed={!sidebarOpen}
+            />
 
             {!sidebarOpen ? (
               <div className="my-4 border-b border-border/50" />
@@ -199,7 +255,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 Profile
               </div>
             )}
-            <NavItem href="/admin/profile" icon={UserCog} label="Admin Profile" collapsed={!sidebarOpen} />
+            <NavItem
+              href="/admin/profile"
+              icon={UserCog}
+              label="Admin Profile"
+              collapsed={!sidebarOpen}
+            />
           </div>
         </aside>
 

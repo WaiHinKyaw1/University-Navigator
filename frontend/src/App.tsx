@@ -30,6 +30,8 @@ import AdminProfile from "@/pages/admin/admin-profile";
 import VerifyEmail from "@/pages/verify-email";
 import ResetPassword from "./pages/reset-password";
 import ForgotPassword from "./pages/forgot-password";
+import InterestGuide from "@/pages/interest-guide";
+import AdminInterestGuide from "@/pages/admin/interest-guide";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +59,8 @@ function Router() {
       <Route path="/admin/chat-monitor" component={AdminChatMonitor} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin/profile" component={AdminProfile} />
+      <Route path="/interest-guide" component={InterestGuide} />
+      <Route path="/admin/interest-guide" component={AdminInterestGuide} />
       <Route path="/verify-email">
         <VerifyEmail />
       </Route>

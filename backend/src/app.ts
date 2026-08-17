@@ -7,6 +7,7 @@ import { ensureUploadDirs } from "./lib/uploads";
 import { errorHandler } from "./middlewares/error-handler";
 import path from "node:path";
 import fs from "node:fs";
+import interestGuideRouter from "./routes/interest-guide";
 
 const app: Express = express();
 
@@ -39,12 +40,18 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsDir = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadsDir));
 app.use("/api/uploads", express.static(uploadsDir));
-
+app.use("/api", interestGuideRouter);
 app.use("/api", router);
 
 // Serve frontend static files in production
 // Frontend build output is at frontend/dist/public relative to the workspace root
-const frontendDist = path.join(process.cwd(), "..", "frontend", "dist", "public");
+const frontendDist = path.join(
+  process.cwd(),
+  "..",
+  "frontend",
+  "dist",
+  "public",
+);
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
   // SPA fallback - return index.html for all non-API routes (Express 5 compatible)
@@ -57,7 +64,10 @@ if (fs.existsSync(frontendDist)) {
     }
   });
 } else {
-  logger.warn({ frontendDist }, "Frontend dist not found – running API-only mode");
+  logger.warn(
+    { frontendDist },
+    "Frontend dist not found – running API-only mode",
+  );
 }
 
 app.use(errorHandler);
