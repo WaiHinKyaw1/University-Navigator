@@ -157,18 +157,18 @@ export function Layout({
         </Link>
       )}
 
-      {/* {user?.role === "admin" && (
+      {user?.role === "admin" && (
         <Link
           href="/admin"
           className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
             location.startsWith("/admin")
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5"
+              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/10 border border-primary/30"
+              : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
           }`}
         >
           Admin
         </Link>
-      )} */}
+      )}
     </>
   );
   return (
@@ -188,46 +188,49 @@ export function Layout({
                 {projectName}
               </span>
             </Link>
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-0.5">
               <NavLinks />
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="hidden md:flex items-center gap-1.5">
               {user ? (
-                <div className="flex items-center gap-4">
+                <>
+                  {user?.role === "admin" && (
+                    <Button variant="default" asChild size="sm" className="shrink-0">
+                      <Link href="/admin">Admin Portal</Link>
+                    </Button>
+                  )}
                   <Link
-                    href={
-                      user?.role === "admin" ? "/admin/profile" : "/profile"
-                    }
+                    href="/profile"
+                    className="flex items-center gap-2 rounded-full px-1.5 sm:px-2.5 py-1.5 hover:bg-muted transition"
                   >
-                    <button className="touch-target flex items-center gap-2 rounded-full px-2 sm:px-3 py-2 hover:bg-muted transition">
-                      <img
-                        src={user.avatarUrl || "/default-avatar.png"}
-                        alt="profile"
-                        className="w-9 h-9 rounded-full object-cover border"
-                      />
-                      <span className="hidden md:block font-medium">
-                        {user.name}
-                      </span>
-                    </button>
+                    <img
+                      src={user.avatarUrl || "/default-avatar.png"}
+                      alt="profile"
+                      className="w-8 h-8 rounded-full object-cover border"
+                    />
+                    <span className="hidden lg:block max-w-[8rem] truncate text-sm font-medium">
+                      {user.name}
+                    </span>
                   </Link>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8 shrink-0"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
                   >
                     <LogOut className="h-4 w-4" />
                   </Button>
-                </div>
+                </>
               ) : (
                 <>
-                  <Button variant="ghost" asChild>
+                  <Button variant="ghost" asChild size="sm">
                     <Link href="/login">Log in</Link>
                   </Button>
-                  <Button asChild>
+                  <Button asChild size="sm">
                     <Link href="/register">Sign up</Link>
                   </Button>
                 </>
@@ -256,7 +259,7 @@ export function Layout({
               {user ? (
                 <>
                   <Link
-                    href={user.role === "admin" ? "/admin/profile" : "/profile"}
+                    href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition"
                   >
@@ -270,10 +273,20 @@ export function Layout({
                       <p className="font-medium text-foreground">{user.name}</p>
 
                       {user.role === "admin" && (
-                        <p className="text-xs text-primary">Admin Profile</p>
+                        <p className="text-xs text-primary">My Profile</p>
                       )}
                     </div>
                   </Link>
+
+                  {user.role === "admin" && (
+                    <Button
+                      className="w-full justify-start"
+                      onClick={() => setMobileMenuOpen(false)}
+                      asChild
+                    >
+                      <Link href="/admin">Admin Portal</Link>
+                    </Button>
+                  )}
 
                   <Button
                     variant="outline"
