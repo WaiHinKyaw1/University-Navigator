@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout";
 import {
   useCalculateScore,
+  useListMajors,
   useListUniversities,
 } from "@workspace/api-client-react";
 import {
@@ -130,13 +131,13 @@ function ScoreInput({
   const isFailed = value !== "" && Number(value) < 40;
 
   return (
-    <div className={`bg-white rounded-2xl border ${isFailed ? "border-red-300 shadow-red-100" : "border-gray-100"} shadow-sm p-4 flex flex-col gap-2.5 transition-colors`}>
+    <div className={`flex flex-col gap-2.5 rounded-2xl border p-4 shadow-sm transition-colors ${isFailed ? "border-red-300 bg-red-50/50 shadow-red-100 dark:bg-red-950/20" : "border-border bg-card"}`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-bold text-gray-800 text-sm leading-tight">
+          <p className="text-sm font-bold leading-tight text-card-foreground">
             {subject.label}
           </p>
-          <p className="text-[11px] text-gray-400 mt-0.5">{subject.labelEn}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{subject.labelEn}</p>
         </div>
         <div className="flex flex-col items-end">
           <input
@@ -149,12 +150,12 @@ function ScoreInput({
               if (v === "" || (Number(v) >= 0 && Number(v) <= 100)) onChange(v);
             }}
             placeholder="—"
-            className={`w-14 h-11 rounded-xl border-2 ${isFailed ? "border-red-300 focus:border-red-500 bg-red-50 text-red-700" : "border-gray-200 focus:border-primary bg-gray-50 text-gray-900"} focus:outline-none text-center text-xl font-black transition-colors`}
+            className={`h-11 w-14 rounded-xl border-2 text-center text-xl font-black transition-colors focus:outline-none ${isFailed ? "border-red-300 bg-red-50 text-red-700 focus:border-red-500 dark:bg-red-950/30" : "border-input bg-muted/40 text-foreground focus:border-primary"}`}
           />
           {isFailed && <p className="text-[10px] text-red-500 font-bold mt-1">ကျရှုံး</p>}
         </div>
       </div>
-      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
         <div
           className={`h-full rounded-full transition-all duration-300 ${isFailed ? "bg-red-400" : subject.color}`}
           style={{ width: `${pct}%` }}
@@ -184,7 +185,7 @@ function TotalScoreSlider({
   const scorePct = Math.round((value / 600) * 100);
   const PRIMARY = "hsl(161, 80%, 25%)";
   const label =
-    value < 320
+    value < 240
       ? { text: "ဝင်ခွင့်ရမှတ် မရောက်သေး", color: "text-red-500" }
       : value < 380
         ? { text: "ကျောင်းအချို့ ဝင်ခွင့်ရနိုင်", color: "text-orange-500" }
@@ -198,15 +199,15 @@ function TotalScoreSlider({
             };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+    <div className="space-y-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-sm text-gray-500">စုစုပေါင်း ရမှတ် ရွေးချယ်ရန်</p>
+          <p className="text-sm text-muted-foreground">စုစုပေါင်း ရမှတ် ရွေးချယ်ရန်</p>
           <div className="flex items-end gap-1.5 mt-1">
             <span className="text-6xl font-black text-primary leading-none tabular-nums">
               {value}
             </span>
-            <span className="text-gray-400 text-xl mb-1.5">/ 600</span>
+            <span className="mb-1.5 text-xl text-muted-foreground">/ 600</span>
           </div>
         </div>
         <div className="text-right">
@@ -252,7 +253,7 @@ function TotalScoreSlider({
             border: none;
           }
         `}</style>
-        <div className="flex justify-between text-[11px] text-gray-400 mt-2">
+        <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
           <span>240</span>
           <span>330</span>
           <span>420</span>
@@ -260,10 +261,10 @@ function TotalScoreSlider({
           <span>600</span>
         </div>
       </div>
-
       <p className={`text-sm text-center font-medium ${label.color}`}>
         {label.text}
       </p>
+
     </div>
   );
 }
@@ -274,10 +275,18 @@ function ResultCard({
   uni,
   userTotal,
   eligible,
+  matchScore,
+  majorMatch,
+  recommendationTier,
+  recommendationReasons,
 }: {
   uni: any;
   userTotal: number;
   eligible: boolean;
+  matchScore?: number;
+  majorMatch?: boolean;
+  recommendationTier?: string;
+  recommendationReasons?: string[];
 }) {
   const required = uni.minScore ?? 0;
   const gap = required - userTotal;
@@ -295,19 +304,14 @@ function ResultCard({
 
   return (
     <div
-      className={`rounded-2xl border overflow-hidden transition-all hover:shadow-md ${eligible
-        ? "border-primary/30 bg-white shadow-sm"
-        : "border-gray-200 bg-gray-50/60"
-        }`}
+      className="rounded-2xl border border-primary/30 bg-card overflow-hidden transition-all hover:shadow-md shadow-sm"
     >
-      <div
-        className={`h-1 w-full ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-gray-200"}`}
-      />
+              <div className="h-1 w-full bg-gradient-to-r from-primary to-emerald-400" />
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-bold text-gray-900 text-base leading-tight">
+              <h3 className="text-base font-bold leading-tight text-card-foreground">
                 {uni.name}
               </h3>
               {uni.abbreviation && (
@@ -316,59 +320,60 @@ function ResultCard({
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {uni.nameEn}
             </p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               {uni.state && (
-                <span className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                   📍 {uni.state}
                 </span>
               )}
               {uni.type && (
-                <span className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                   {TYPE_LABELS[uni.type] ?? uni.type}
                 </span>
               )}
-              <span className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                 🎓 ၂၀၂၆ ခုနှစ်
               </span>
             </div>
 
             {/* Progress bar toward cutoff */}
             <div className="mt-3 space-y-1">
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>
-                  သင်ရမှတ်: <b className="text-gray-800">{userTotal}</b>
+                  သင်ရမှတ်: <b className="text-card-foreground">{userTotal}</b>
                 </span>
                 <span>
-                  လိုအပ်မှတ်: <b className="text-gray-800">{required}</b>
+                  လိုအပ်မှတ်: <b className="text-card-foreground">{required}</b>
                 </span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${eligible ? "bg-gradient-to-r from-primary to-emerald-400" : "bg-orange-300"}`}
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              {!eligible && (
-                <p className="text-[11px] text-orange-600 font-medium">
-                  ဝင်ခွင့်ရရန် {gap} မှတ် ပိုလိုသေး
-                </p>
+              {recommendationReasons && recommendationReasons.length > 0 && (
+                <div className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-primary">
+                    <span>{recommendationTier === "strong" ? "အထူးသင့်တော်" : recommendationTier === "near" ? "နီးစပ်သော ရွေးချယ်မှု" : "ကိုက်ညီမှု ရှင်းလင်းချက်"}</span>
+                    {typeof matchScore === "number" && <span className="rounded-full bg-primary/10 px-2 py-0.5">{matchScore}%</span>}
+                    {majorMatch && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">ဘာသာရပ်ကိုက်ညီ</span>}
+                  </div>
+                  <ul className="mt-1.5 space-y-1 text-[11px] text-muted-foreground">
+                    {recommendationReasons.slice(0, 3).map((reason) => <li key={reason}>• {reason}</li>)}
+                  </ul>
+                </div>
               )}
             </div>
           </div>
 
           <div className="flex flex-col items-end gap-2 shrink-0">
-            {eligible ? (
-              <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-sm bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-                <CheckCircle2 className="h-3.5 w-3.5" /> ဝင်ခွင့်ရ
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-gray-400 font-medium text-sm bg-gray-100 px-3 py-1.5 rounded-full">
-                <XCircle className="h-3.5 w-3.5" /> မဝင်နိုင်သေး
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-sm bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+              <CheckCircle2 className="h-3.5 w-3.5" /> ဝင်ခွင့်ရ
+            </div>
             <Link href={`/universities/${uni.id}`}>
               <span
                 className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer transition-colors ${eligible
@@ -411,6 +416,9 @@ export default function ScoreCalculator() {
     sliderTotal,
     setSliderTotal,
 
+    preferredMajorIds,
+    setPreferredMajorIds,
+
     hasSearched,
     setHasSearched,
 
@@ -419,6 +427,7 @@ export default function ScoreCalculator() {
   } = useScoreStore();
 
   const calculateMutation = useCalculateScore();
+  const { data: majorListResponse, isLoading: isMajorsLoading } = useListMajors();
   useEffect(() => {
     if (calculateMutation.data) {
       setResults(calculateMutation.data as any[]);
@@ -426,8 +435,12 @@ export default function ScoreCalculator() {
   }, [calculateMutation.data, setResults]);
 
   // For slider mode — fetch all universities, filter client-side
-  const { data: allUnisResponse } = useListUniversities({});
+  const { data: allUnisResponse } = useListUniversities({
+    compact: true,
+    limit: 1000,
+  });
   const allUniversities: any[] = (allUnisResponse as any)?.universities ?? [];
+  const majorOptions: any[] = ((majorListResponse as any[]) ?? []).slice(0, 24);
 
   const subjects = useMemo(() => {
     if (stream === "science") {
@@ -472,6 +485,16 @@ export default function ScoreCalculator() {
     setHasSearched(false);
     calculateMutation.reset();
   };
+  const togglePreferredMajor = (majorId: number) => {
+    if (!preferredMajorIds.includes(majorId) && preferredMajorIds.length >= 3) return;
+    const next = preferredMajorIds.includes(majorId)
+      ? preferredMajorIds.filter((id) => id !== majorId)
+      : [...preferredMajorIds, majorId];
+    setPreferredMajorIds(next);
+    setHasSearched(false);
+    calculateMutation.reset();
+  };
+
   const handleSubjectSearch = () => {
     setHasSearched(true);
     const subjectData: Record<string, number> = {};
@@ -479,27 +502,56 @@ export default function ScoreCalculator() {
       subjectData[s.id] = Number(scores[s.id]) || 0;
     });
     calculateMutation.mutate({
-      data: { totalScore: subjectTotal, subjects: subjectData as any },
+      data: {
+        totalScore: subjectTotal,
+        subjects: subjectData as any,
+        preferredMajorIds: preferredMajorIds.length > 0 ? preferredMajorIds : undefined,
+      },
     });
   };
 
-  // Slider mode — live filter from allUniversities
+  // Slider mode — live filter from allUniversities, ranked by major match then cutoff proximity.
   const sliderResults = useMemo(() => {
     if (inputMode !== "slider" || allUniversities.length === 0) return [];
+    const selected = preferredMajorIds.length > 0 ? preferredMajorIds : [];
     const eligible = allUniversities.filter(
       (u) => u.minScore != null && u.minScore <= sliderTotal,
     );
-    const notEligible = allUniversities
-      .filter((u) => u.minScore != null && u.minScore > sliderTotal)
-      .sort((a, b) => a.minScore - b.minScore)
-      .slice(0, 8);
-    return [
-      ...eligible
-        .sort((a, b) => b.minScore - a.minScore)
-        .map((u) => ({ uni: u, eligible: true })),
-      ...notEligible.map((u) => ({ uni: u, eligible: false })),
-    ];
-  }, [sliderTotal, allUniversities, inputMode]);
+    const built = eligible.map((u: any) => {
+      const majors: any[] = (u.majors ?? []).map((m: any) => typeof m === "number" ? { id: m } : m);
+      const matched = majors.filter((m: any) => selected.includes(m.id));
+      const majorMatch = matched.length > 0;
+      const gap = sliderTotal - (u.minScore ?? 0);
+      let matchScore = Math.max(0, 100 - Math.abs(gap) * 0.5);
+      if (majorMatch) matchScore += 15;
+      const reasons: string[] = ["သင့်ရမှတ်ဖြင့် ဝင်ခွင့်အနိမ့်ဆုံးရမှတ်ကို ဖြည့်မီသည်"];
+      if (majorMatch) {
+        const majorNames = matched
+          .map((m: any) => m.nameEn || m.name)
+          .filter(Boolean)
+          .slice(0, 2)
+          .join(", ");
+        reasons.push(`သင်ရွေးထားသော ဘာသာရပ်နှင့် ကိုက်ညီသည်: ${majorNames}`);
+      }
+      if (gap <= 30) reasons.push("သင့်ရမှတ်နှင့် ဝင်ခွင့်ဖြတ်မှတ် နီးစပ်သော ရွေးချယ်မှုဖြစ်သည်");
+      const tier = majorMatch ? "strong" : "eligible";
+      return {
+        uni: { ...u, majors },
+        eligible: true,
+        matchScore: Math.min(100, Math.round(matchScore)),
+        majorMatch,
+        recommendationTier: tier,
+        recommendationReasons: reasons,
+      };
+    })
+    // When subject interests are chosen, keep only universities offering those majors.
+    .filter((r) => (selected.length > 0 ? r.majorMatch : true))
+    .sort((a, b) => {
+      if (a.majorMatch !== b.majorMatch) return a.majorMatch ? -1 : 1;
+      return b.matchScore - a.matchScore;
+    });
+    return built;
+  }, [sliderTotal, allUniversities, inputMode, preferredMajorIds]);
 
   // const subjectResults = calculateMutation.data;
   const subjectResults = (calculateMutation.data as any[]) || results;
@@ -514,27 +566,24 @@ export default function ScoreCalculator() {
 
   const subjectEligible =
     filteredSubjectResults.filter((r: any) => r.eligible) ?? [];
-  const subjectNotEligible =
-    filteredSubjectResults.filter((r: any) => !r.eligible) ?? [];
-
   const sliderEligibleCount = sliderResults.filter((r) => r.eligible).length;
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50/50">
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-4xl space-y-5 px-4 py-6 sm:py-8">
           {/* Header */}
           <div className="text-center space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
               ဝင်ခွင့်ရမှတ် စစ်ဆေးရန်
             </h1>
-            <p className="text-gray-500 text-sm">
+            <p className="text-sm text-muted-foreground">
               G-12 ရမှတ်ထည့်ပြီး တက္ကသိုလ်ဝင်ခွင့် စစ်ဆေးပါ
             </p>
           </div>
 
           {/* Input mode toggle */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
+          <div className="flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
             <button
               onClick={() => {
                 setInputMode("subjects");
@@ -543,7 +592,7 @@ export default function ScoreCalculator() {
               }}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${inputMode === "subjects"
                 ? "bg-primary text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-50"
+                : "text-muted-foreground hover:bg-muted"
                 }`}
             >
               <PenLine className="h-4 w-4" />
@@ -553,7 +602,7 @@ export default function ScoreCalculator() {
               onClick={() => setInputMode("slider")}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${inputMode === "slider"
                 ? "bg-primary text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-50"
+                : "text-muted-foreground hover:bg-muted"
                 }`}
             >
               <SlidersHorizontal className="h-4 w-4" />
@@ -561,16 +610,52 @@ export default function ScoreCalculator() {
             </button>
           </div>
 
+          {/* Preferred major preferences */}
+          <section className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-card-foreground">စိတ်ဝင်စားသော ဘာသာရပ်များ</h2>
+                <p className="mt-1 text-xs text-muted-foreground">အများဆုံး ၃ ခုရွေးပါ။ ရွေးချယ်မှုများကို ရလဒ်အစီအစဉ်တွင် ထည့်သွင်းစဉ်းစားမည်။</p>
+              </div>
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{preferredMajorIds.length}/3</span>
+            </div>
+            {isMajorsLoading ? (
+              <div className="h-10 animate-pulse rounded-xl bg-muted" />
+            ) : majorOptions.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3">
+                {majorOptions.map((major) => {
+                  const selected = preferredMajorIds.includes(major.id);
+                  const disabled = !selected && preferredMajorIds.length >= 3;
+                  return (
+                    <button
+                      key={major.id}
+                      type="button"
+                      onClick={() => togglePreferredMajor(major.id)}
+                      disabled={disabled}
+                      aria-pressed={selected}
+                      className={`touch-target rounded-xl border px-3 py-2 text-left text-xs transition-colors ${selected ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:bg-muted"} ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+                    >
+                      <span className="block font-semibold">{major.name}</span>
+                      <span className="mt-0.5 block truncate text-[10px] opacity-80">{major.nameEn}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">ဘာသာရပ်စာရင်း မရရှိသေးပါ။ ရမှတ်အပေါ်မူတည်၍ ရှာဖွေနိုင်ပါသည်။</p>
+            )}
+          </section>
+
           {/* ── SUBJECT MODE ── */}
           {inputMode === "subjects" && (
             <>
               {/* Stream selector */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
+              <div className="flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
                 <button
                   onClick={() => handleStreamChange("science")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${stream === "science"
                     ? "bg-primary/10 text-primary"
-                    : "text-gray-500 hover:bg-gray-50"
+                    : "text-muted-foreground hover:bg-muted"
                     }`}
                 >
                   <FlaskConical className="h-4 w-4" /> သိပ္ပံ (Science)
@@ -579,7 +664,7 @@ export default function ScoreCalculator() {
                   onClick={() => handleStreamChange("arts")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${stream === "arts"
                     ? "bg-primary/10 text-primary"
-                    : "text-gray-500 hover:bg-gray-50"
+                    : "text-muted-foreground hover:bg-muted"
                     }`}
                 >
                   <BookOpen className="h-4 w-4" /> ဝိဇ္ဇာ (Arts)
@@ -589,12 +674,12 @@ export default function ScoreCalculator() {
               {/* Science 6th subject choice */}
               {stream === "science" && (
                 <div className="space-y-2">
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2">
+                  <div className="flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
                     <button
                       onClick={() => handleScienceSixthChange("biology")}
                       className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${scienceSixth === "biology"
                         ? "bg-teal-50 text-teal-700 border border-teal-200"
-                        : "text-gray-500 hover:bg-gray-50"
+                        : "text-muted-foreground hover:bg-muted"
                         }`}
                     >
                       ဇီဝဗေဒ (Biology)
@@ -603,14 +688,14 @@ export default function ScoreCalculator() {
                       onClick={() => handleScienceSixthChange("economics")}
                       className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${scienceSixth === "economics"
                         ? "bg-rose-50 text-rose-700 border border-rose-200"
-                        : "text-gray-500 hover:bg-gray-50"
+                        : "text-muted-foreground hover:bg-muted"
                         }`}
                     >
                       ဘောဂ (Economics)
                     </button>
                   </div>
                   {scienceSixth === "economics" && (
-                    <p className="text-[12px] text-gray-500 px-1">
+                    <p className="px-1 text-[12px] text-muted-foreground">
                       မှတ်ချက်: ဘောဂ ရွေးထားပါက <b>ဆေးတက္ကသိုလ်</b> များကို
                       ရလဒ်တွင် မပြပါ။
                     </p>
@@ -619,7 +704,7 @@ export default function ScoreCalculator() {
               )}
 
               {/* Subject input grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3">
                 {subjects.map((subject) => (
                   <ScoreInput
                     key={`${stream}-${subject.id}`}
@@ -636,15 +721,15 @@ export default function ScoreCalculator() {
               </div>
 
               {/* Total summary */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+              <div className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">စုစုပေါင်း ရမှတ်</p>
+                    <p className="text-sm text-muted-foreground">စုစုပေါင်း ရမှတ်</p>
                     <div className="flex items-end gap-1.5 mt-1">
                       <span className="text-5xl font-black text-primary leading-none tabular-nums">
                         {subjectTotal}
                       </span>
-                      <span className="text-gray-400 text-lg mb-1">
+                      <span className="mb-1 text-lg text-muted-foreground">
                         / {maxPossible}
                       </span>
                     </div>
@@ -655,16 +740,16 @@ export default function ScoreCalculator() {
                     </span>
                   </div>
                 </div>
-                <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-3 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
                     style={{ width: `${subjectPct}%` }}
                   />
                 </div>
-                <p className="text-center text-sm font-medium text-gray-500">
+                <p className="text-center text-sm font-medium text-muted-foreground">
                   {isFailedExam
                     ? <span className="text-red-500 font-bold">❌ ဘာသာရပ်တစ်ခုခု ၄၀ အောက်ရရှိပါက တက္ကသိုလ်ဝင်ခွင့် မရနိုင်ပါ</span>
-                    : subjectTotal < 350
+                    : subjectTotal < 240
                     ? "🔴 ဝင်ခွင့်ရမှတ် မရောက်သေး"
                     : subjectTotal < 400
                       ? "🟡 ကောင်းသည်"
@@ -678,7 +763,7 @@ export default function ScoreCalculator() {
               <button
                 onClick={handleSubjectSearch}
                 disabled={subjectTotal === 0 || isFailedExam || calculateMutation.isPending}
-                className="w-full py-4 rounded-2xl bg-primary text-white font-bold text-base shadow-md hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="touch-target flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
               >
                 {calculateMutation.isPending ? (
                   <>
@@ -699,11 +784,11 @@ export default function ScoreCalculator() {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse"
+                      className="animate-pulse rounded-2xl border border-border bg-card p-5"
                     >
-                      <div className="h-5 bg-gray-100 rounded w-1/2 mb-2" />
-                      <div className="h-3 bg-gray-100 rounded w-1/3 mb-4" />
-                      <div className="h-2 bg-gray-100 rounded w-full" />
+                      <div className="mb-2 h-5 w-1/2 rounded bg-muted" />
+                      <div className="mb-4 h-3 w-1/3 rounded bg-muted" />
+                      <div className="h-2 w-full rounded bg-muted" />
                     </div>
                   ))}
                 </div>
@@ -711,7 +796,7 @@ export default function ScoreCalculator() {
 
               {/* Subject mode results */}
               {isFailedExam ? (
-                <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-center space-y-3 mt-4">
+                <div className="mt-4 space-y-3 rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:bg-red-950/20">
                   <XCircle className="mx-auto h-12 w-12 text-red-500" />
                   <h3 className="text-lg font-bold text-red-700">တက္ကသိုလ်တက်ရောက်ရန် မအောင်မြင်ပါ</h3>
                   <p className="text-sm text-red-600">
@@ -721,15 +806,12 @@ export default function ScoreCalculator() {
               ) : subjectResults && !calculateMutation.isPending && (
                 <div className="space-y-6 mt-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-gray-900 text-lg">
+                    <h2 className="text-lg font-bold text-foreground">
                       ရလဒ်များ
                     </h2>
                     <div className="flex gap-2">
                       <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full">
                         ✓ {subjectEligible.length} ကျောင်း
-                      </span>
-                      <span className="text-xs font-semibold bg-gray-100 text-gray-500 px-3 py-1 rounded-full">
-                        ✗ {subjectNotEligible.length} ကျောင်း
                       </span>
                     </div>
                   </div>
@@ -746,29 +828,15 @@ export default function ScoreCalculator() {
                           uni={m.university}
                           userTotal={subjectTotal}
                           eligible
+                          matchScore={m.matchScore}
+                          majorMatch={m.majorMatch}
+                          recommendationTier={m.recommendationTier}
+                          recommendationReasons={m.recommendationReasons}
                         />
                       ))}
                     </div>
                   )}
 
-                  {subjectNotEligible.length > 0 && (
-                    <div className="space-y-3">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-gray-500">
-                        <XCircle className="h-4 w-4 text-gray-400" />{" "}
-                        မဝင်နိုင်သေးသော တက္ကသိုလ်များ
-                      </p>
-                      {subjectNotEligible
-                        .slice(0, 6)
-                        .map((m: any, i: number) => (
-                          <ResultCard
-                            key={i}
-                            uni={m.university}
-                            userTotal={subjectTotal}
-                            eligible={false}
-                          />
-                        ))}
-                    </div>
-                  )}
                 </div>
               )}
             </>
@@ -783,12 +851,12 @@ export default function ScoreCalculator() {
               {allUniversities.length > 0 && (
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-gray-900 text-lg">
+                    <h2 className="text-lg font-bold text-foreground">
                       ရလဒ်များ
                     </h2>
                     <div className="flex gap-2">
                       <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full">
-                        ✓ {sliderEligibleCount} ကျောင်း
+                        ✓ {sliderEligibleCount} ကျောင်း{sliderResults.some((r) => r.majorMatch) ? "" : ""}
                       </span>
                     </div>
                   </div>
@@ -801,42 +869,31 @@ export default function ScoreCalculator() {
                       </p>
                       {sliderResults
                         .filter((r) => r.eligible)
-                        .map(({ uni }, i) => (
+                        .map((r, i) => (
                           <ResultCard
                             key={i}
-                            uni={uni}
+                            uni={r.uni}
                             userTotal={sliderTotal}
                             eligible
+                            matchScore={r.matchScore}
+                            majorMatch={r.majorMatch}
+                            recommendationTier={r.recommendationTier}
+                            recommendationReasons={r.recommendationReasons}
                           />
                         ))}
                     </div>
                   )}
 
-                  {sliderResults.filter((r) => !r.eligible).length > 0 && (
-                    <div className="space-y-3">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-gray-500">
-                        <XCircle className="h-4 w-4 text-gray-400" /> နီးစပ်သော
-                        တက္ကသိုလ်များ ({sliderTotal} + မှတ် ပိုလိုသည်)
-                      </p>
-                      {sliderResults
-                        .filter((r) => !r.eligible)
-                        .map(({ uni }, i) => (
-                          <ResultCard
-                            key={i}
-                            uni={uni}
-                            userTotal={sliderTotal}
-                            eligible={false}
-                          />
-                        ))}
-                    </div>
-                  )}
 
                   {sliderEligibleCount === 0 && (
                     <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
                       <GraduationCap className="h-12 w-12 text-gray-200 mx-auto mb-3" />
                       <p className="text-gray-500 font-medium">
-                        ရမှတ် {sliderTotal} ဖြင့် ဝင်ခွင့်ရနိုင်သော ကျောင်း
-                        မတွေ့ပါ
+                        {sliderResults.length === 0
+                          ? preferredMajorIds.length > 0
+                            ? `ရမှတ် ${sliderTotal} နှင့် ရွေးထားသော ဘာသာရပ်ကို တက်ရောက်နိုင်သော ကျောင်း မတွေ့ပါ — ဘာသာရပ် ပြောင်းရွေးကြည့်ပါ`
+                            : `ရမှတ် ${sliderTotal} ဖြင့် ဝင်ခွင့်ရနိုင်သော ကျောင်း မတွေ့ပါ`
+                          : "ရလဒ် မရှိပါ"}
                       </p>
                       <p className="text-gray-400 text-sm mt-1">
                         Slider ကို ညာဘက် ဆွဲ၍ ရမှတ်မြှင့်ကြည့်ပါ

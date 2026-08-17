@@ -9,6 +9,7 @@ const JWT_SECRET = process.env.SESSION_SECRET || "myanmar-uni-finder-secret-2024
 export interface AuthPayload {
   userId: number;
   role: string;
+  sessionVersion?: number;
 }
 
 declare global {
@@ -63,6 +64,14 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return;
     }
 
+    if (
+      payload.sessionVersion !== undefined &&
+      payload.sessionVersion !== user.sessionVersion
+    ) {
+      res.status(401).json({ error: "Session expired. Please log in again." });
+      return;
+    }
+
     req.user = { id: user.id, role: user.role, name: user.name, email: user.email, status: user.status };
     next();
   } catch (error) {
@@ -93,7 +102,11 @@ export async function optionalAuth(req: Request, res: Response, next: NextFuncti
     if (payload) {
       try {
         const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
-        if (user && user.status !== "banned") {
+        if (
+          user &&
+          user.status !== "banned" &&
+          (payload.sessionVersion === undefined || payload.sessionVersion === user.sessionVersion)
+        ) {
           req.user = { id: user.id, role: user.role, name: user.name, email: user.email, status: user.status };
         }
       } catch (error) {

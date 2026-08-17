@@ -5,6 +5,8 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListUniversitiesSortBy } from './listUniversitiesSortBy';
+import type { ListUniversitiesSortOrder } from './listUniversitiesSortOrder';
 
 export type ListUniversitiesParams = {
 search?: string;
@@ -13,4 +15,10 @@ state?: string;
 majorId?: number;
 page?: number;
 limit?: number;
+/**
+ * Return only fields needed for list cards and lightweight selectors
+ */
+compact?: boolean;
+sortBy?: ListUniversitiesSortBy;
+sortOrder?: ListUniversitiesSortOrder;
 };

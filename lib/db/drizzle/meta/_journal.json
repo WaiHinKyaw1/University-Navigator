@@ -29,6 +29,20 @@
       "when": 1781290329572,
       "tag": "0003_drop_users_grade",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786812744483,
+      "tag": "0004_site-settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786812744484,
+      "tag": "0005_settings-maintenance",
+      "breakpoints": true
     }
   ]
 }

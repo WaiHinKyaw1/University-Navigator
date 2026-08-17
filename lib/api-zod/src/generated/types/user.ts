@@ -12,11 +12,14 @@ export interface User {
   email: string;
   /** student | admin */
   role: string;
-  /** @nullable */
-  // grade?: string | null;
   /** active | banned */
   status: string;
   /** @nullable */
   avatarUrl?: string | null;
+  /**
+     * Base64-encoded image data URL stored in the database
+     * @nullable
+     */
+  avatarData?: string | null;
   createdAt: Date;
 }

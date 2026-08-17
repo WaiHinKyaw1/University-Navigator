@@ -9,6 +9,27 @@ export interface HealthStatus {
   status: string;
 }
 
+export type ReadinessStatusStatus = typeof ReadinessStatusStatus[keyof typeof ReadinessStatusStatus];
+
+
+export const ReadinessStatusStatus = {
+  ready: 'ready',
+  not_ready: 'not_ready',
+} as const;
+
+export type ReadinessStatusDatabase = typeof ReadinessStatusDatabase[keyof typeof ReadinessStatusDatabase];
+
+
+export const ReadinessStatusDatabase = {
+  ok: 'ok',
+  error: 'error',
+} as const;
+
+export interface ReadinessStatus {
+  status: ReadinessStatusStatus;
+  database: ReadinessStatusDatabase;
+}
+
 export interface ErrorResponse {
   error: string;
 }
@@ -17,14 +38,56 @@ export interface MessageResponse {
   message: string;
 }
 
+export interface SiteSettings {
+  id: number;
+  projectName: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  tagline: string;
+  academicYear: string;
+  /** @nullable */
+  contactEmail?: string | null;
+  /** @nullable */
+  contactPhone?: string | null;
+  /** @nullable */
+  welcomeMessage?: string | null;
+  /** @nullable */
+  welcomeIntro?: string | null;
+  /** @nullable */
+  welcomeDescription?: string | null;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
+  updatedAt: string;
+}
+
+export interface SiteSettingsInput {
+  /** @minLength 1 */
+  projectName: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  tagline?: string;
+  /** @minLength 1 */
+  academicYear: string;
+  /** @nullable */
+  contactEmail?: string | null;
+  /** @nullable */
+  contactPhone?: string | null;
+  /** @nullable */
+  welcomeMessage?: string | null;
+  /** @nullable */
+  welcomeIntro?: string | null;
+  /** @nullable */
+  welcomeDescription?: string | null;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
+}
+
 export interface RegisterInput {
   /** @minLength 2 */
   name: string;
   email: string;
-  /** @minLength 6 */
+  /** @minLength 8 */
   password: string;
-  /** G-10, G-11, G-12 */
-  grade: string;
 }
 
 export interface LoginInput {
@@ -38,12 +101,15 @@ export interface User {
   email: string;
   /** student | admin */
   role: string;
-  /** @nullable */
-  grade?: string | null;
   /** active | banned */
   status: string;
   /** @nullable */
   avatarUrl?: string | null;
+  /**
+     * Base64-encoded image data URL stored in the database
+     * @nullable
+     */
+  avatarData?: string | null;
   createdAt: string;
 }
 
@@ -84,6 +150,26 @@ export interface University {
   minScore: number;
   /** @nullable */
   description?: string | null;
+  /**
+     * Detailed admission requirements when available
+     * @nullable
+     */
+  admissionRequirements?: string | null;
+  /**
+     * Application steps when available
+     * @nullable
+     */
+  applicationProcess?: string | null;
+  /**
+     * Typical program duration when available
+     * @nullable
+     */
+  duration?: string | null;
+  /**
+     * Career outcome information when available
+     * @nullable
+     */
+  careerOutcomes?: string | null;
   /** @nullable */
   website?: string | null;
   /** @nullable */
@@ -116,6 +202,73 @@ export interface UniversityListResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+export type UniversityQualityIssueSeverity = typeof UniversityQualityIssueSeverity[keyof typeof UniversityQualityIssueSeverity];
+
+
+export const UniversityQualityIssueSeverity = {
+  error: 'error',
+  warning: 'warning',
+} as const;
+
+export interface UniversityQualityIssue {
+  universityId: number;
+  universityName: string;
+  universityNameEn: string;
+  severity: UniversityQualityIssueSeverity;
+  code: string;
+  message: string;
+  fields: string[];
+}
+
+export interface UniversityQualitySummary {
+  total: number;
+  complete: number;
+  incomplete: number;
+  duplicateGroups: number;
+  issueCount: number;
+  errorCount: number;
+  warningCount: number;
+  issues: UniversityQualityIssue[];
+}
+
+export interface UniversityCsvInput {
+  /** @minLength 1 */
+  csv: string;
+}
+
+export type UniversityImportPreviewRowValues = {[key: string]: string};
+
+export interface UniversityImportPreviewRow {
+  rowNumber: number;
+  values: UniversityImportPreviewRowValues;
+  missingRequired: string[];
+  invalidFields: string[];
+  /** @nullable */
+  duplicateOf?: number | null;
+  /** @nullable */
+  duplicateReason?: string | null;
+}
+
+export interface UniversityImportPreview {
+  totalRows: number;
+  validRows: number;
+  duplicateRows: number;
+  invalidRows: number;
+  rows: UniversityImportPreviewRow[];
+}
+
+export interface UniversityImportResult {
+  inserted: number;
+  skipped: number;
+  skippedRows: UniversityImportPreviewRow[];
+}
+
+export interface Favorite {
+  favoriteId: number;
+  savedAt: string;
+  university: University;
 }
 
 export interface MajorInput {
@@ -178,6 +331,19 @@ export interface ScoreInput {
   preferredMajorIds?: number[];
 }
 
+/**
+ * Explainable recommendation category
+ */
+export type ScoreMatchRecommendationTier = typeof ScoreMatchRecommendationTier[keyof typeof ScoreMatchRecommendationTier];
+
+
+export const ScoreMatchRecommendationTier = {
+  strong: 'strong',
+  eligible: 'eligible',
+  near: 'near',
+  stretch: 'stretch',
+} as const;
+
 export interface ScoreMatch {
   university: University;
   /** How well the student's score matches (0-100) */
@@ -188,6 +354,12 @@ export interface ScoreMatch {
      * @nullable
      */
   gap?: number | null;
+  /** Whether one or more selected preferred majors are offered */
+  majorMatch?: boolean;
+  /** Explainable recommendation category */
+  recommendationTier?: ScoreMatchRecommendationTier;
+  /** Human-readable reasons for the recommendation */
+  recommendationReasons?: string[];
 }
 
 export type ChatbotHistoryMessageRole = typeof ChatbotHistoryMessageRole[keyof typeof ChatbotHistoryMessageRole];
@@ -219,8 +391,6 @@ export interface ChatbotResponse {
 export interface StudentSummary {
   id: number;
   name: string;
-  /** @nullable */
-  grade: string | null;
   /** @nullable */
   avatarUrl?: string | null;
 }
@@ -368,6 +538,22 @@ export interface AuditLogListResponse {
   limit: number;
 }
 
+export interface RecentUserStat {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  /** @nullable */
+  avatarUrl?: string | null;
+  /**
+     * Base64-encoded image data URL stored in the database
+     * @nullable
+     */
+  avatarData?: string | null;
+  createdAt: string;
+}
+
 export interface AnalyticsOverview {
   totalUsers: number;
   totalUniversities: number;
@@ -376,6 +562,10 @@ export interface AnalyticsOverview {
   activeUsers: number;
   bannedUsers: number;
   totalNewsArticles?: number;
+  /** New user registrations in the last 7 days */
+  recentRegistrations?: number;
+  totalFavorites?: number;
+  recentUsers?: RecentUserStat[];
 }
 
 export interface MajorStat {
@@ -395,7 +585,31 @@ state?: string;
 majorId?: number;
 page?: number;
 limit?: number;
+/**
+ * Return only fields needed for list cards and lightweight selectors
+ */
+compact?: boolean;
+sortBy?: ListUniversitiesSortBy;
+sortOrder?: ListUniversitiesSortOrder;
 };
+
+export type ListUniversitiesSortBy = typeof ListUniversitiesSortBy[keyof typeof ListUniversitiesSortBy];
+
+
+export const ListUniversitiesSortBy = {
+  name: 'name',
+  minScore: 'minScore',
+  type: 'type',
+  state: 'state',
+} as const;
+
+export type ListUniversitiesSortOrder = typeof ListUniversitiesSortOrder[keyof typeof ListUniversitiesSortOrder];
+
+
+export const ListUniversitiesSortOrder = {
+  asc: 'asc',
+  desc: 'desc',
+} as const;
 
 export type ListNewsParams = {
 page?: number;

@@ -5,655 +5,749 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
-import * as zod from "zod";
+import * as zod from 'zod';
+
 
 /**
- * @summary Health check
+ * @summary Liveness health check
  */
 export const HealthCheckResponse = zod.object({
-  status: zod.string(),
-});
+  "status": zod.string()
+})
+
+
+/**
+ * @summary Database readiness check
+ */
+export const ReadinessCheckResponse = zod.object({
+  "status": zod.enum(['ready', 'not_ready']),
+  "database": zod.enum(['ok', 'error'])
+})
+
 
 /**
  * @summary Register a new student account
  */
 export const registerBodyNameMin = 2;
 
-export const registerBodyPasswordMin = 6;
+export const registerBodyPasswordMin = 8;
+
+
 
 export const RegisterBody = zod.object({
-  name: zod.string().min(registerBodyNameMin),
-  email: zod.string().email(),
-  password: zod.string().min(registerBodyPasswordMin),
-  // "grade": zod.string().describe('G-10, G-11, G-12')
-});
+  "name": zod.string().min(registerBodyNameMin),
+  "email": zod.string().email(),
+  "password": zod.string().min(registerBodyPasswordMin)
+})
 
 export const RegisterResponse = zod.object({
-  user: zod.object({
-    id: zod.number(),
-    name: zod.string(),
-    email: zod.string(),
-    role: zod.string().describe("student | admin"),
-    // "grade": zod.string().nullish(),
-    status: zod.string().describe("active | banned"),
-    avatarUrl: zod.string().nullish(),
-    createdAt: zod.coerce.date(),
-  }),
-  token: zod.string(),
-});
+  "user": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string().describe('student | admin'),
+  "status": zod.string().describe('active | banned'),
+  "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
+  "createdAt": zod.coerce.date()
+}),
+  "token": zod.string()
+})
+
 
 /**
  * @summary Login
  */
 export const LoginBody = zod.object({
-  email: zod.string().email(),
-  password: zod.string(),
-});
+  "email": zod.string().email(),
+  "password": zod.string()
+})
 
 export const LoginResponse = zod.object({
-  user: zod.object({
-    id: zod.number(),
-    name: zod.string(),
-    email: zod.string(),
-    role: zod.string().describe("student | admin"),
-    // "grade": zod.string().nullish(),
-    status: zod.string().describe("active | banned"),
-    avatarUrl: zod.string().nullish(),
-    createdAt: zod.coerce.date(),
-  }),
-  token: zod.string(),
-});
+  "user": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string().describe('student | admin'),
+  "status": zod.string().describe('active | banned'),
+  "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
+  "createdAt": zod.coerce.date()
+}),
+  "token": zod.string()
+})
+
 
 /**
- * @summary Logout
+ * @summary Logout and revoke the current session
  */
 export const LogoutResponse = zod.object({
-  message: zod.string(),
-});
+  "message": zod.string()
+})
+
 
 /**
  * @summary Get current user profile
  */
 export const GetMeResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  email: zod.string(),
-  role: zod.string().describe("student | admin"),
-  // "grade": zod.string().nullish(),
-  status: zod.string().describe("active | banned"),
-  avatarUrl: zod.string().nullish(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string().describe('student | admin'),
+  "status": zod.string().describe('active | banned'),
+  "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
+  "createdAt": zod.coerce.date()
+})
+
 
 /**
- * @summary List all universities with optional filters
+ * @summary List all universities with optional filters and sorting
  */
 export const ListUniversitiesQueryParams = zod.object({
-  search: zod.coerce.string().optional(),
-  type: zod.coerce.string().optional(),
-  state: zod.coerce.string().optional(),
-  majorId: zod.coerce.number().optional(),
-  page: zod.coerce.number().optional(),
-  limit: zod.coerce.number().optional(),
-});
+  "search": zod.coerce.string().optional(),
+  "type": zod.coerce.string().optional(),
+  "state": zod.coerce.string().optional(),
+  "majorId": zod.coerce.number().optional(),
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional(),
+  "compact": zod.coerce.boolean().optional().describe('Return only fields needed for list cards and lightweight selectors'),
+  "sortBy": zod.enum(['name', 'minScore', 'type', 'state']).optional(),
+  "sortOrder": zod.enum(['asc', 'desc']).optional()
+})
 
 export const ListUniversitiesResponse = zod.object({
-  universities: zod.array(
-    zod.object({
-      id: zod.number(),
-      name: zod.string().describe("Myanmar name"),
-      nameEn: zod.string().describe("English name"),
-      abbreviation: zod.string().nullish(),
-      type: zod
-        .string()
-        .describe("government | private | technical | medical | education"),
-      state: zod.string().describe("State\/Region in Myanmar"),
-      city: zod.string().nullish(),
-      minScore: zod
-        .number()
-        .describe("Minimum total score required for admission"),
-      description: zod.string().nullish(),
-      website: zod.string().nullish(),
-      imageUrl: zod.string().nullish(),
-      majors: zod
-        .array(
-          zod.object({
-            id: zod.number(),
-            name: zod.string(),
-            nameEn: zod.string(),
-            category: zod
-              .string()
-              .describe(
-                "science | arts | engineering | medical | business | education | law | other",
-              ),
-            description: zod.string().nullish(),
-            duration: zod.string().nullish(),
-            careerPaths: zod.string().nullish(),
-          }),
-        )
-        .optional(),
-      createdAt: zod.coerce.date(),
-    }),
-  ),
-  total: zod.number(),
-  page: zod.number(),
-  limit: zod.number(),
-});
+  "universities": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Myanmar name'),
+  "nameEn": zod.string().describe('English name'),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string().describe('government | private | technical | medical | education'),
+  "state": zod.string().describe('State\/Region in Myanmar'),
+  "city": zod.string().nullish(),
+  "minScore": zod.number().describe('Minimum total score required for admission'),
+  "description": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majors": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.coerce.date()
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number()
+})
+
 
 /**
  * @summary Create a university (admin only)
  */
 export const CreateUniversityBody = zod.object({
-  name: zod.string(),
-  nameEn: zod.string(),
-  abbreviation: zod.string().nullish(),
-  type: zod.string(),
-  state: zod.string(),
-  city: zod.string().nullish(),
-  minScore: zod.number(),
-  description: zod.string().nullish(),
-  website: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
-  majorIds: zod.array(zod.number()).optional(),
-});
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string(),
+  "state": zod.string(),
+  "city": zod.string().nullish(),
+  "minScore": zod.number(),
+  "description": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majorIds": zod.array(zod.number()).optional()
+})
 
 export const CreateUniversityResponse = zod.object({
-  id: zod.number(),
-  name: zod.string().describe("Myanmar name"),
-  nameEn: zod.string().describe("English name"),
-  abbreviation: zod.string().nullish(),
-  type: zod
-    .string()
-    .describe("government | private | technical | medical | education"),
-  state: zod.string().describe("State\/Region in Myanmar"),
-  city: zod.string().nullish(),
-  minScore: zod.number().describe("Minimum total score required for admission"),
-  description: zod.string().nullish(),
-  website: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
-  majors: zod
-    .array(
-      zod.object({
-        id: zod.number(),
-        name: zod.string(),
-        nameEn: zod.string(),
-        category: zod
-          .string()
-          .describe(
-            "science | arts | engineering | medical | business | education | law | other",
-          ),
-        description: zod.string().nullish(),
-        duration: zod.string().nullish(),
-        careerPaths: zod.string().nullish(),
-      }),
-    )
-    .optional(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "name": zod.string().describe('Myanmar name'),
+  "nameEn": zod.string().describe('English name'),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string().describe('government | private | technical | medical | education'),
+  "state": zod.string().describe('State\/Region in Myanmar'),
+  "city": zod.string().nullish(),
+  "minScore": zod.number().describe('Minimum total score required for admission'),
+  "description": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majors": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get university data-quality report (admin only)
+ */
+export const GetUniversityQualityReportResponse = zod.object({
+  "total": zod.number(),
+  "complete": zod.number(),
+  "incomplete": zod.number(),
+  "duplicateGroups": zod.number(),
+  "issueCount": zod.number(),
+  "errorCount": zod.number(),
+  "warningCount": zod.number(),
+  "issues": zod.array(zod.object({
+  "universityId": zod.number(),
+  "universityName": zod.string(),
+  "universityNameEn": zod.string(),
+  "severity": zod.enum(['error', 'warning']),
+  "code": zod.string(),
+  "message": zod.string(),
+  "fields": zod.array(zod.string())
+}))
+})
+
+
+/**
+ * @summary Export universities as CSV (admin only)
+ */
+export const ExportUniversitiesCsvResponse = zod.unknown()
+
+
+/**
+ * @summary Preview additive university CSV import (admin only)
+ */
+
+
+
+export const PreviewUniversitiesCsvBody = zod.object({
+  "csv": zod.string().min(1)
+})
+
+export const PreviewUniversitiesCsvResponse = zod.object({
+  "totalRows": zod.number(),
+  "validRows": zod.number(),
+  "duplicateRows": zod.number(),
+  "invalidRows": zod.number(),
+  "rows": zod.array(zod.object({
+  "rowNumber": zod.number(),
+  "values": zod.record(zod.string(), zod.string()),
+  "missingRequired": zod.array(zod.string()),
+  "invalidFields": zod.array(zod.string()),
+  "duplicateOf": zod.number().nullish(),
+  "duplicateReason": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary Add valid non-duplicate universities from CSV (admin only)
+ */
+
+
+
+export const ImportUniversitiesCsvBody = zod.object({
+  "csv": zod.string().min(1)
+})
+
+export const ImportUniversitiesCsvResponse = zod.object({
+  "inserted": zod.number(),
+  "skipped": zod.number(),
+  "skippedRows": zod.array(zod.object({
+  "rowNumber": zod.number(),
+  "values": zod.record(zod.string(), zod.string()),
+  "missingRequired": zod.array(zod.string()),
+  "invalidFields": zod.array(zod.string()),
+  "duplicateOf": zod.number().nullish(),
+  "duplicateReason": zod.string().nullish()
+}))
+})
+
 
 /**
  * @summary Get university details
  */
 export const GetUniversityParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const GetUniversityResponse = zod.object({
-  id: zod.number(),
-  name: zod.string().describe("Myanmar name"),
-  nameEn: zod.string().describe("English name"),
-  abbreviation: zod.string().nullish(),
-  type: zod
-    .string()
-    .describe("government | private | technical | medical | education"),
-  state: zod.string().describe("State\/Region in Myanmar"),
-  city: zod.string().nullish(),
-  minScore: zod.number().describe("Minimum total score required for admission"),
-  description: zod.string().nullish(),
-  website: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
-  majors: zod
-    .array(
-      zod.object({
-        id: zod.number(),
-        name: zod.string(),
-        nameEn: zod.string(),
-        category: zod
-          .string()
-          .describe(
-            "science | arts | engineering | medical | business | education | law | other",
-          ),
-        description: zod.string().nullish(),
-        duration: zod.string().nullish(),
-        careerPaths: zod.string().nullish(),
-      }),
-    )
-    .optional(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "name": zod.string().describe('Myanmar name'),
+  "nameEn": zod.string().describe('English name'),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string().describe('government | private | technical | medical | education'),
+  "state": zod.string().describe('State\/Region in Myanmar'),
+  "city": zod.string().nullish(),
+  "minScore": zod.number().describe('Minimum total score required for admission'),
+  "description": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majors": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.coerce.date()
+})
+
 
 /**
  * @summary Update a university (admin only)
  */
 export const UpdateUniversityParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const UpdateUniversityBody = zod.object({
-  name: zod.string(),
-  nameEn: zod.string(),
-  abbreviation: zod.string().nullish(),
-  type: zod.string(),
-  state: zod.string(),
-  city: zod.string().nullish(),
-  minScore: zod.number(),
-  description: zod.string().nullish(),
-  website: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
-  majorIds: zod.array(zod.number()).optional(),
-});
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string(),
+  "state": zod.string(),
+  "city": zod.string().nullish(),
+  "minScore": zod.number(),
+  "description": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majorIds": zod.array(zod.number()).optional()
+})
 
 export const UpdateUniversityResponse = zod.object({
-  id: zod.number(),
-  name: zod.string().describe("Myanmar name"),
-  nameEn: zod.string().describe("English name"),
-  abbreviation: zod.string().nullish(),
-  type: zod
-    .string()
-    .describe("government | private | technical | medical | education"),
-  state: zod.string().describe("State\/Region in Myanmar"),
-  city: zod.string().nullish(),
-  minScore: zod.number().describe("Minimum total score required for admission"),
-  description: zod.string().nullish(),
-  website: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
-  majors: zod
-    .array(
-      zod.object({
-        id: zod.number(),
-        name: zod.string(),
-        nameEn: zod.string(),
-        category: zod
-          .string()
-          .describe(
-            "science | arts | engineering | medical | business | education | law | other",
-          ),
-        description: zod.string().nullish(),
-        duration: zod.string().nullish(),
-        careerPaths: zod.string().nullish(),
-      }),
-    )
-    .optional(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "name": zod.string().describe('Myanmar name'),
+  "nameEn": zod.string().describe('English name'),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string().describe('government | private | technical | medical | education'),
+  "state": zod.string().describe('State\/Region in Myanmar'),
+  "city": zod.string().nullish(),
+  "minScore": zod.number().describe('Minimum total score required for admission'),
+  "description": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majors": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.coerce.date()
+})
+
 
 /**
  * @summary Delete a university (admin only)
  */
 export const DeleteUniversityParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const DeleteUniversityResponse = zod.object({
-  message: zod.string(),
-});
+  "message": zod.string()
+})
+
+
+/**
+ * @summary List the current user's saved universities
+ */
+export const ListFavoritesResponseItem = zod.object({
+  "favoriteId": zod.number(),
+  "savedAt": zod.coerce.date(),
+  "university": zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Myanmar name'),
+  "nameEn": zod.string().describe('English name'),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string().describe('government | private | technical | medical | education'),
+  "state": zod.string().describe('State\/Region in Myanmar'),
+  "city": zod.string().nullish(),
+  "minScore": zod.number().describe('Minimum total score required for admission'),
+  "description": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majors": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.coerce.date()
+})
+})
+export const ListFavoritesResponse = zod.array(ListFavoritesResponseItem)
+
+
+/**
+ * @summary Save a university for the current user
+ */
+export const CreateFavoriteParams = zod.object({
+  "universityId": zod.coerce.number()
+})
+
+export const CreateFavoriteResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Remove a university from the current user's Favorites
+ */
+export const DeleteFavoriteParams = zod.object({
+  "universityId": zod.coerce.number()
+})
+
+export const DeleteFavoriteResponse = zod.object({
+  "message": zod.string()
+})
+
 
 /**
  * @summary List all majors / fields of study
  */
 export const ListMajorsResponseItem = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  nameEn: zod.string(),
-  category: zod
-    .string()
-    .describe(
-      "science | arts | engineering | medical | business | education | law | other",
-    ),
-  description: zod.string().nullish(),
-  duration: zod.string().nullish(),
-  careerPaths: zod.string().nullish(),
-});
-export const ListMajorsResponse = zod.array(ListMajorsResponseItem);
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})
+export const ListMajorsResponse = zod.array(ListMajorsResponseItem)
+
 
 /**
  * @summary Create a major (admin only)
  */
 export const CreateMajorBody = zod.object({
-  name: zod.string(),
-  nameEn: zod.string(),
-  category: zod.string(),
-  description: zod.string().nullish(),
-  duration: zod.string().nullish(),
-  careerPaths: zod.string().nullish(),
-});
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})
 
 export const CreateMajorResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  nameEn: zod.string(),
-  category: zod
-    .string()
-    .describe(
-      "science | arts | engineering | medical | business | education | law | other",
-    ),
-  description: zod.string().nullish(),
-  duration: zod.string().nullish(),
-  careerPaths: zod.string().nullish(),
-});
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})
+
 
 /**
  * @summary Update a major (admin only)
  */
 export const UpdateMajorParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const UpdateMajorBody = zod.object({
-  name: zod.string(),
-  nameEn: zod.string(),
-  category: zod.string(),
-  description: zod.string().nullish(),
-  duration: zod.string().nullish(),
-  careerPaths: zod.string().nullish(),
-});
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})
 
 export const UpdateMajorResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  nameEn: zod.string(),
-  category: zod
-    .string()
-    .describe(
-      "science | arts | engineering | medical | business | education | law | other",
-    ),
-  description: zod.string().nullish(),
-  duration: zod.string().nullish(),
-  careerPaths: zod.string().nullish(),
-});
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})
+
 
 /**
  * @summary Delete a major (admin only)
  */
 export const DeleteMajorParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const DeleteMajorResponse = zod.object({
-  message: zod.string(),
-});
+  "message": zod.string()
+})
+
 
 /**
  * @summary List all major categories
  */
 export const ListCategoriesResponseItem = zod.object({
-  id: zod.number(),
-  name: zod.string().describe("Display name, e.g. Engineering"),
-  nameEn: zod
-    .string()
-    .describe("Slug used as value in majors.category, e.g. engineering"),
-  color: zod
-    .string()
-    .nullish()
-    .describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
-  description: zod.string().nullish(),
-});
-export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem);
+  "id": zod.number(),
+  "name": zod.string().describe('Display name, e.g. Engineering'),
+  "color": zod.string().nullish().describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
+  "description": zod.string().nullish()
+})
+export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem)
+
 
 /**
  * @summary Create a category (admin only)
  */
 export const CreateCategoryBody = zod.object({
-  name: zod.string(),
-  nameEn: zod.string(),
-  color: zod.string().nullish(),
-  description: zod.string().nullish(),
-});
+  "name": zod.string(),
+  "color": zod.string().nullish(),
+  "description": zod.string().nullish()
+})
 
 export const CreateCategoryResponse = zod.object({
-  id: zod.number(),
-  name: zod.string().describe("Display name, e.g. Engineering"),
-  nameEn: zod
-    .string()
-    .describe("Slug used as value in majors.category, e.g. engineering"),
-  color: zod
-    .string()
-    .nullish()
-    .describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
-  description: zod.string().nullish(),
-});
+  "id": zod.number(),
+  "name": zod.string().describe('Display name, e.g. Engineering'),
+  "color": zod.string().nullish().describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
+  "description": zod.string().nullish()
+})
+
 
 /**
  * @summary Update a category (admin only)
  */
 export const UpdateCategoryParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const UpdateCategoryBody = zod.object({
-  name: zod.string(),
-  nameEn: zod.string(),
-  color: zod.string().nullish(),
-  description: zod.string().nullish(),
-});
+  "name": zod.string(),
+  "color": zod.string().nullish(),
+  "description": zod.string().nullish()
+})
 
 export const UpdateCategoryResponse = zod.object({
-  id: zod.number(),
-  name: zod.string().describe("Display name, e.g. Engineering"),
-  nameEn: zod
-    .string()
-    .describe("Slug used as value in majors.category, e.g. engineering"),
-  color: zod
-    .string()
-    .nullish()
-    .describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
-  description: zod.string().nullish(),
-});
+  "id": zod.number(),
+  "name": zod.string().describe('Display name, e.g. Engineering'),
+  "color": zod.string().nullish().describe('Optional badge color hex, e.g. \\\"#3b82f6\\\"'),
+  "description": zod.string().nullish()
+})
+
 
 /**
  * @summary Delete a category (admin only)
  */
 export const DeleteCategoryParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const DeleteCategoryResponse = zod.object({
-  message: zod.string(),
-});
+  "message": zod.string()
+})
+
 
 /**
  * @summary Calculate matching universities based on G-12 scores
  */
 export const CalculateScoreBody = zod.object({
-  totalScore: zod.number(),
-  subjects: zod.object({
-    myanmar: zod.number().nullish(),
-    english: zod.number().nullish(),
-    mathematics: zod.number().nullish(),
-    chemistry: zod.number().nullish(),
-    physics: zod.number().nullish(),
-    biology: zod.number().nullish(),
-    history: zod.number().nullish(),
-    geography: zod.number().nullish(),
-    economics: zod.number().nullish(),
-  }),
-  preferredMajorIds: zod.array(zod.number()).optional(),
-});
+  "totalScore": zod.number(),
+  "subjects": zod.object({
+  "myanmar": zod.number().nullish(),
+  "english": zod.number().nullish(),
+  "mathematics": zod.number().nullish(),
+  "chemistry": zod.number().nullish(),
+  "physics": zod.number().nullish(),
+  "biology": zod.number().nullish(),
+  "history": zod.number().nullish(),
+  "geography": zod.number().nullish(),
+  "economics": zod.number().nullish()
+}),
+  "preferredMajorIds": zod.array(zod.number()).optional()
+})
 
 export const CalculateScoreResponseItem = zod.object({
-  university: zod.object({
-    id: zod.number(),
-    name: zod.string().describe("Myanmar name"),
-    nameEn: zod.string().describe("English name"),
-    abbreviation: zod.string().nullish(),
-    type: zod
-      .string()
-      .describe("government | private | technical | medical | education"),
-    state: zod.string().describe("State\/Region in Myanmar"),
-    city: zod.string().nullish(),
-    minScore: zod
-      .number()
-      .describe("Minimum total score required for admission"),
-    description: zod.string().nullish(),
-    website: zod.string().nullish(),
-    imageUrl: zod.string().nullish(),
-    majors: zod
-      .array(
-        zod.object({
-          id: zod.number(),
-          name: zod.string(),
-          nameEn: zod.string(),
-          category: zod
-            .string()
-            .describe(
-              "science | arts | engineering | medical | business | education | law | other",
-            ),
-          description: zod.string().nullish(),
-          duration: zod.string().nullish(),
-          careerPaths: zod.string().nullish(),
-        }),
-      )
-      .optional(),
-    createdAt: zod.coerce.date(),
-  }),
-  matchScore: zod
-    .number()
-    .describe("How well the student's score matches (0-100)"),
-  eligible: zod.boolean(),
-  gap: zod
-    .number()
-    .nullish()
-    .describe(
-      "Score gap if not eligible (positive means eligible, negative means gap)",
-    ),
-});
-export const CalculateScoreResponse = zod.array(CalculateScoreResponseItem);
+  "university": zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Myanmar name'),
+  "nameEn": zod.string().describe('English name'),
+  "abbreviation": zod.string().nullish(),
+  "type": zod.string().describe('government | private | technical | medical | education'),
+  "state": zod.string().describe('State\/Region in Myanmar'),
+  "city": zod.string().nullish(),
+  "minScore": zod.number().describe('Minimum total score required for admission'),
+  "description": zod.string().nullish(),
+  "admissionRequirements": zod.string().nullish().describe('Detailed admission requirements when available'),
+  "applicationProcess": zod.string().nullish().describe('Application steps when available'),
+  "duration": zod.string().nullish().describe('Typical program duration when available'),
+  "careerOutcomes": zod.string().nullish().describe('Career outcome information when available'),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "majors": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameEn": zod.string(),
+  "category": zod.string().describe('science | arts | engineering | medical | business | education | law | other'),
+  "description": zod.string().nullish(),
+  "duration": zod.string().nullish(),
+  "careerPaths": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.coerce.date()
+}),
+  "matchScore": zod.number().describe('How well the student\'s score matches (0-100)'),
+  "eligible": zod.boolean(),
+  "gap": zod.number().nullish().describe('Score gap if not eligible (positive means eligible, negative means gap)'),
+  "majorMatch": zod.boolean().optional().describe('Whether one or more selected preferred majors are offered'),
+  "recommendationTier": zod.enum(['strong', 'eligible', 'near', 'stretch']).optional().describe('Explainable recommendation category'),
+  "recommendationReasons": zod.array(zod.string()).optional().describe('Human-readable reasons for the recommendation')
+})
+export const CalculateScoreResponse = zod.array(CalculateScoreResponseItem)
+
 
 /**
  * @summary Send a message to the AI university admission guide
  */
 export const SendChatbotMessageBody = zod.object({
-  message: zod.string(),
-  sessionId: zod.string().nullish(),
-  history: zod
-    .array(
-      zod.object({
-        role: zod.enum(["user", "assistant"]),
-        content: zod.string(),
-      }),
-    )
-    .optional()
-    .describe("Recent conversation turns (client-managed, not stored in DB)"),
-});
+  "message": zod.string(),
+  "sessionId": zod.string().nullish(),
+  "history": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string()
+})).optional().describe('Recent conversation turns (client-managed, not stored in DB)')
+})
 
 export const SendChatbotMessageResponse = zod.object({
-  reply: zod.string(),
-  sessionId: zod.string(),
-});
+  "reply": zod.string(),
+  "sessionId": zod.string()
+})
+
 
 /**
  * @summary List chat rooms / conversations
  */
 export const ListChatRoomsResponseItem = zod.object({
-  id: zod.number(),
-  participants: zod.array(
-    zod.object({
-      id: zod.number(),
-      name: zod.string(),
-      // "grade": zod.string().nullable(),
-      avatarUrl: zod.string().nullish(),
-    }),
-  ),
-  lastMessage: zod.string().nullish(),
-  lastMessageAt: zod.coerce.date().nullish(),
-  unreadCount: zod.number().optional(),
-  createdAt: zod.coerce.date(),
-});
-export const ListChatRoomsResponse = zod.array(ListChatRoomsResponseItem);
+  "id": zod.number(),
+  "participants": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "avatarUrl": zod.string().nullish()
+})),
+  "lastMessage": zod.string().nullish(),
+  "lastMessageAt": zod.coerce.date().nullish(),
+  "unreadCount": zod.number().optional(),
+  "createdAt": zod.coerce.date()
+})
+export const ListChatRoomsResponse = zod.array(ListChatRoomsResponseItem)
+
 
 /**
  * @summary Create or find direct message room with another user
  */
 export const CreateChatRoomBody = zod.object({
-  participantId: zod.number(),
-});
+  "participantId": zod.number()
+})
 
 export const CreateChatRoomResponse = zod.object({
-  id: zod.number(),
-  participants: zod.array(
-    zod.object({
-      id: zod.number(),
-      name: zod.string(),
-      // "grade": zod.string().nullable(),
-      avatarUrl: zod.string().nullish(),
-    }),
-  ),
-  lastMessage: zod.string().nullish(),
-  lastMessageAt: zod.coerce.date().nullish(),
-  unreadCount: zod.number().optional(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "participants": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "avatarUrl": zod.string().nullish()
+})),
+  "lastMessage": zod.string().nullish(),
+  "lastMessageAt": zod.coerce.date().nullish(),
+  "unreadCount": zod.number().optional(),
+  "createdAt": zod.coerce.date()
+})
+
 
 /**
  * @summary Get messages in a chat room
  */
 export const GetChatMessagesParams = zod.object({
-  roomId: zod.coerce.number(),
-});
+  "roomId": zod.coerce.number()
+})
 
 export const GetChatMessagesResponseItem = zod.object({
-  id: zod.number(),
-  roomId: zod.number(),
-  senderId: zod.number(),
-  senderName: zod.string().optional(),
-  senderAvatar: zod.string().nullish(),
-  content: zod.string(),
-  isFiltered: zod.boolean().optional(),
-  createdAt: zod.coerce.date(),
-});
-export const GetChatMessagesResponse = zod.array(GetChatMessagesResponseItem);
+  "id": zod.number(),
+  "roomId": zod.number(),
+  "senderId": zod.number(),
+  "senderName": zod.string().optional(),
+  "senderAvatar": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean().optional(),
+  "createdAt": zod.coerce.date()
+})
+export const GetChatMessagesResponse = zod.array(GetChatMessagesResponseItem)
+
 
 /**
  * @summary Send a message in a chat room
  */
 export const SendChatMessageParams = zod.object({
-  roomId: zod.coerce.number(),
-});
+  "roomId": zod.coerce.number()
+})
 
 export const SendChatMessageBody = zod.object({
-  content: zod.string(),
-});
+  "content": zod.string()
+})
 
 export const SendChatMessageResponse = zod.object({
-  id: zod.number(),
-  roomId: zod.number(),
-  senderId: zod.number(),
-  senderName: zod.string().optional(),
-  senderAvatar: zod.string().nullish(),
-  content: zod.string(),
-  isFiltered: zod.boolean().optional(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "roomId": zod.number(),
+  "senderId": zod.number(),
+  "senderName": zod.string().optional(),
+  "senderAvatar": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean().optional(),
+  "createdAt": zod.coerce.date()
+})
+
 
 /**
  * @summary List peer chat questions with recursive answers
  */
 export const ListPeerQuestionsResponseItem = zod.object({
-  id: zod.number(),
-  parentId: zod.number().nullable(),
-  senderId: zod.number(),
-  senderName: zod.string(),
-  senderAvatar: zod.string().nullish(),
-  title: zod.string().nullish(),
-  content: zod.string(),
-  isFiltered: zod.boolean(),
-  answerCount: zod.number(),
-  createdAt: zod.coerce.date(),
-  replies: zod.array(zod.unknown()),
-});
-export const ListPeerQuestionsResponse = zod.array(
-  ListPeerQuestionsResponseItem,
-);
+  "id": zod.number(),
+  "parentId": zod.number().nullable(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderAvatar": zod.string().nullish(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean(),
+  "answerCount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "replies": zod.array(zod.unknown())
+})
+export const ListPeerQuestionsResponse = zod.array(ListPeerQuestionsResponseItem)
+
 
 /**
  * @summary Ask a public peer chat question
@@ -662,399 +756,474 @@ export const createPeerQuestionBodyTitleMin = 3;
 
 export const createPeerQuestionBodyContentMin = 3;
 
+
+
 export const CreatePeerQuestionBody = zod.object({
-  title: zod.string().min(createPeerQuestionBodyTitleMin),
-  content: zod.string().min(createPeerQuestionBodyContentMin),
-});
+  "title": zod.string().min(createPeerQuestionBodyTitleMin),
+  "content": zod.string().min(createPeerQuestionBodyContentMin)
+})
 
 export const CreatePeerQuestionResponse = zod.object({
-  id: zod.number(),
-  parentId: zod.number().nullable(),
-  senderId: zod.number(),
-  senderName: zod.string(),
-  senderAvatar: zod.string().nullish(),
-  title: zod.string().nullish(),
-  content: zod.string(),
-  isFiltered: zod.boolean(),
-  answerCount: zod.number(),
-  createdAt: zod.coerce.date(),
-  replies: zod.array(zod.unknown()),
-});
+  "id": zod.number(),
+  "parentId": zod.number().nullable(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderAvatar": zod.string().nullish(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean(),
+  "answerCount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "replies": zod.array(zod.unknown())
+})
+
 
 /**
  * @summary Reply to a peer question or answer
  */
 export const CreatePeerReplyParams = zod.object({
-  messageId: zod.coerce.number(),
-});
+  "messageId": zod.coerce.number()
+})
 
 export const createPeerReplyBodyContentMin = 3;
 
+
+
 export const CreatePeerReplyBody = zod.object({
-  content: zod.string().min(createPeerReplyBodyContentMin),
-});
+  "content": zod.string().min(createPeerReplyBodyContentMin)
+})
 
 export const CreatePeerReplyResponse = zod.object({
-  id: zod.number(),
-  parentId: zod.number().nullable(),
-  senderId: zod.number(),
-  senderName: zod.string(),
-  senderAvatar: zod.string().nullish(),
-  title: zod.string().nullish(),
-  content: zod.string(),
-  isFiltered: zod.boolean(),
-  answerCount: zod.number(),
-  createdAt: zod.coerce.date(),
-  replies: zod.array(zod.unknown()),
-});
+  "id": zod.number(),
+  "parentId": zod.number().nullable(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderAvatar": zod.string().nullish(),
+  "title": zod.string().nullish(),
+  "content": zod.string(),
+  "isFiltered": zod.boolean(),
+  "answerCount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "replies": zod.array(zod.unknown())
+})
+
 
 /**
  * @summary List news articles / announcements
  */
 export const ListNewsQueryParams = zod.object({
-  page: zod.coerce.number().optional(),
-  limit: zod.coerce.number().optional(),
-});
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional()
+})
 
 export const ListNewsResponse = zod.object({
-  articles: zod.array(
-    zod.object({
-      id: zod.number(),
-      title: zod.string(),
-      content: zod.string(),
-      category: zod
-        .string()
-        .describe("admission | announcement | scholarship | general"),
-      authorId: zod.number(),
-      authorName: zod.string().optional(),
-      imageUrl: zod.string().nullish(),
-      published: zod.boolean().optional(),
-      createdAt: zod.coerce.date(),
-      updatedAt: zod.coerce.date().optional(),
-    }),
-  ),
-  total: zod.number(),
-  page: zod.number(),
-  limit: zod.number(),
-});
+  "articles": zod.array(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "content": zod.string(),
+  "category": zod.string().describe('admission | announcement | scholarship | general'),
+  "authorId": zod.number(),
+  "authorName": zod.string().optional(),
+  "imageUrl": zod.string().nullish(),
+  "published": zod.boolean().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number()
+})
+
 
 /**
  * @summary Create a news article (admin only)
  */
 export const CreateNewsBody = zod.object({
-  title: zod.string(),
-  content: zod.string(),
-  category: zod.string(),
-  imageUrl: zod.string().nullish(),
-  published: zod.boolean().optional(),
-});
+  "title": zod.string(),
+  "content": zod.string(),
+  "category": zod.string(),
+  "imageUrl": zod.string().nullish(),
+  "published": zod.boolean().optional()
+})
 
 export const CreateNewsResponse = zod.object({
-  id: zod.number(),
-  title: zod.string(),
-  content: zod.string(),
-  category: zod
-    .string()
-    .describe("admission | announcement | scholarship | general"),
-  authorId: zod.number(),
-  authorName: zod.string().optional(),
-  imageUrl: zod.string().nullish(),
-  published: zod.boolean().optional(),
-  createdAt: zod.coerce.date(),
-  updatedAt: zod.coerce.date().optional(),
-});
+  "id": zod.number(),
+  "title": zod.string(),
+  "content": zod.string(),
+  "category": zod.string().describe('admission | announcement | scholarship | general'),
+  "authorId": zod.number(),
+  "authorName": zod.string().optional(),
+  "imageUrl": zod.string().nullish(),
+  "published": zod.boolean().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})
+
 
 /**
  * @summary Get a news article
  */
 export const GetNewsParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const GetNewsResponse = zod.object({
-  id: zod.number(),
-  title: zod.string(),
-  content: zod.string(),
-  category: zod
-    .string()
-    .describe("admission | announcement | scholarship | general"),
-  authorId: zod.number(),
-  authorName: zod.string().optional(),
-  imageUrl: zod.string().nullish(),
-  published: zod.boolean().optional(),
-  createdAt: zod.coerce.date(),
-  updatedAt: zod.coerce.date().optional(),
-});
+  "id": zod.number(),
+  "title": zod.string(),
+  "content": zod.string(),
+  "category": zod.string().describe('admission | announcement | scholarship | general'),
+  "authorId": zod.number(),
+  "authorName": zod.string().optional(),
+  "imageUrl": zod.string().nullish(),
+  "published": zod.boolean().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})
+
 
 /**
  * @summary Update a news article (admin only)
  */
 export const UpdateNewsParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const UpdateNewsBody = zod.object({
-  title: zod.string(),
-  content: zod.string(),
-  category: zod.string(),
-  imageUrl: zod.string().nullish(),
-  published: zod.boolean().optional(),
-});
+  "title": zod.string(),
+  "content": zod.string(),
+  "category": zod.string(),
+  "imageUrl": zod.string().nullish(),
+  "published": zod.boolean().optional()
+})
 
 export const UpdateNewsResponse = zod.object({
-  id: zod.number(),
-  title: zod.string(),
-  content: zod.string(),
-  category: zod
-    .string()
-    .describe("admission | announcement | scholarship | general"),
-  authorId: zod.number(),
-  authorName: zod.string().optional(),
-  imageUrl: zod.string().nullish(),
-  published: zod.boolean().optional(),
-  createdAt: zod.coerce.date(),
-  updatedAt: zod.coerce.date().optional(),
-});
+  "id": zod.number(),
+  "title": zod.string(),
+  "content": zod.string(),
+  "category": zod.string().describe('admission | announcement | scholarship | general'),
+  "authorId": zod.number(),
+  "authorName": zod.string().optional(),
+  "imageUrl": zod.string().nullish(),
+  "published": zod.boolean().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})
+
 
 /**
  * @summary Delete a news article (admin only)
  */
 export const DeleteNewsParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const DeleteNewsResponse = zod.object({
-  message: zod.string(),
-});
+  "message": zod.string()
+})
+
 
 /**
  * @summary Get the current active Myanmar university admission PDF metadata
  */
 export const GetActiveAdmissionGuideResponse = zod.object({
-  id: zod.number(),
-  title: zod.string(),
-  academicYear: zod.string().nullish(),
-  fileName: zod.string(),
-  fileSize: zod.number(),
-  mimeType: zod.string(),
-  isActive: zod.boolean(),
-  uploadedById: zod.number(),
-  uploadedByName: zod.string().optional(),
-  downloadUrl: zod.string().optional(),
-  createdAt: zod.coerce.date(),
-  updatedAt: zod.coerce.date().optional(),
-});
+  "id": zod.number(),
+  "title": zod.string(),
+  "academicYear": zod.string().nullish(),
+  "fileName": zod.string(),
+  "fileSize": zod.number(),
+  "mimeType": zod.string(),
+  "isActive": zod.boolean(),
+  "uploadedById": zod.number(),
+  "uploadedByName": zod.string().optional(),
+  "downloadUrl": zod.string().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})
+
 
 /**
  * @summary Download the current active admission PDF
  */
-export const DownloadActiveAdmissionGuideResponse = zod.unknown();
+export const DownloadActiveAdmissionGuideResponse = zod.unknown()
+
 
 /**
  * @summary List all admission guide uploads (admin only)
  */
 export const ListAdmissionGuidesResponse = zod.object({
-  guides: zod.array(
-    zod.object({
-      id: zod.number(),
-      title: zod.string(),
-      academicYear: zod.string().nullish(),
-      fileName: zod.string(),
-      fileSize: zod.number(),
-      mimeType: zod.string(),
-      isActive: zod.boolean(),
-      uploadedById: zod.number(),
-      uploadedByName: zod.string().optional(),
-      downloadUrl: zod.string().optional(),
-      createdAt: zod.coerce.date(),
-      updatedAt: zod.coerce.date().optional(),
-    }),
-  ),
-});
+  "guides": zod.array(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "academicYear": zod.string().nullish(),
+  "fileName": zod.string(),
+  "fileSize": zod.number(),
+  "mimeType": zod.string(),
+  "isActive": zod.boolean(),
+  "uploadedById": zod.number(),
+  "uploadedByName": zod.string().optional(),
+  "downloadUrl": zod.string().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+}))
+})
+
 
 /**
  * @summary Set an admission guide as active (admin only)
  */
 export const ActivateAdmissionGuideParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const ActivateAdmissionGuideResponse = zod.object({
-  id: zod.number(),
-  title: zod.string(),
-  academicYear: zod.string().nullish(),
-  fileName: zod.string(),
-  fileSize: zod.number(),
-  mimeType: zod.string(),
-  isActive: zod.boolean(),
-  uploadedById: zod.number(),
-  uploadedByName: zod.string().optional(),
-  downloadUrl: zod.string().optional(),
-  createdAt: zod.coerce.date(),
-  updatedAt: zod.coerce.date().optional(),
-});
+  "id": zod.number(),
+  "title": zod.string(),
+  "academicYear": zod.string().nullish(),
+  "fileName": zod.string(),
+  "fileSize": zod.number(),
+  "mimeType": zod.string(),
+  "isActive": zod.boolean(),
+  "uploadedById": zod.number(),
+  "uploadedByName": zod.string().optional(),
+  "downloadUrl": zod.string().optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})
+
 
 /**
  * @summary Download a specific admission guide PDF (admin only)
  */
 export const DownloadAdmissionGuideParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
-export const DownloadAdmissionGuideResponse = zod.unknown();
+export const DownloadAdmissionGuideResponse = zod.unknown()
+
 
 /**
  * @summary Delete an admission guide (admin only)
  */
 export const DeleteAdmissionGuideParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const DeleteAdmissionGuideResponse = zod.object({
-  message: zod.string(),
-});
+  "message": zod.string()
+})
+
 
 /**
  * @summary List all users (admin only)
  */
 export const ListUsersQueryParams = zod.object({
-  search: zod.coerce.string().optional(),
-  status: zod.coerce.string().optional(),
-  page: zod.coerce.number().optional(),
-  limit: zod.coerce.number().optional(),
-});
+  "search": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional(),
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional()
+})
 
 export const ListUsersResponse = zod.object({
-  users: zod.array(
-    zod.object({
-      id: zod.number(),
-      name: zod.string(),
-      email: zod.string(),
-      role: zod.string().describe("student | admin"),
-      // "grade": zod.string().nullish(),
-      status: zod.string().describe("active | banned"),
-      avatarUrl: zod.string().nullish(),
-      createdAt: zod.coerce.date(),
-    }),
-  ),
-  total: zod.number(),
-  page: zod.number(),
-  limit: zod.number(),
-});
+  "users": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string().describe('student | admin'),
+  "status": zod.string().describe('active | banned'),
+  "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
+  "createdAt": zod.coerce.date()
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number()
+})
+
 
 /**
  * @summary Get a user (admin only)
  */
 export const GetUserParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const GetUserResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  email: zod.string(),
-  role: zod.string().describe("student | admin"),
-  // "grade": zod.string().nullish(),
-  status: zod.string().describe("active | banned"),
-  avatarUrl: zod.string().nullish(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string().describe('student | admin'),
+  "status": zod.string().describe('active | banned'),
+  "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
+  "createdAt": zod.coerce.date()
+})
+
 
 /**
  * @summary Ban or unban a user (admin only)
  */
 export const BanUserParams = zod.object({
-  id: zod.coerce.number(),
-});
+  "id": zod.coerce.number()
+})
 
 export const BanUserBody = zod.object({
-  banned: zod.boolean(),
-  reason: zod.string(),
-});
+  "banned": zod.boolean(),
+  "reason": zod.string()
+})
 
 export const BanUserResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  email: zod.string(),
-  role: zod.string().describe("student | admin"),
-  // "grade": zod.string().nullish(),
-  status: zod.string().describe("active | banned"),
-  avatarUrl: zod.string().nullish(),
-  createdAt: zod.coerce.date(),
-});
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string().describe('student | admin'),
+  "status": zod.string().describe('active | banned'),
+  "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
+  "createdAt": zod.coerce.date()
+})
+
 
 /**
  * @summary Get dashboard overview stats
  */
 export const GetAnalyticsOverviewResponse = zod.object({
-  totalUsers: zod.number(),
-  totalUniversities: zod.number(),
-  totalMajors: zod.number(),
-  totalMessages: zod.number(),
-  activeUsers: zod.number(),
-  bannedUsers: zod.number(),
-  totalNewsArticles: zod.number().optional(),
-});
+  "totalUsers": zod.number(),
+  "totalUniversities": zod.number(),
+  "totalMajors": zod.number(),
+  "totalMessages": zod.number(),
+  "activeUsers": zod.number(),
+  "bannedUsers": zod.number(),
+  "totalNewsArticles": zod.number().optional(),
+  "recentRegistrations": zod.number().optional().describe('New user registrations in the last 7 days'),
+  "totalFavorites": zod.number().optional(),
+  "recentUsers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string(),
+  "status": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "avatarData": zod.string().nullish().describe('Base64-encoded image data URL stored in the database'),
+  "createdAt": zod.coerce.date()
+})).optional()
+})
+
 
 /**
  * @summary Get distribution of students by major interest
  */
 export const GetMajorDistributionResponseItem = zod.object({
-  majorName: zod.string(),
-  count: zod.number(),
-});
-export const GetMajorDistributionResponse = zod.array(
-  GetMajorDistributionResponseItem,
-);
+  "majorName": zod.string(),
+  "count": zod.number()
+})
+export const GetMajorDistributionResponse = zod.array(GetMajorDistributionResponseItem)
+
 
 /**
  * @summary Get user registration trend by month
  */
 export const GetRegistrationTrendResponseItem = zod.object({
-  month: zod.string(),
-  count: zod.number(),
-});
-export const GetRegistrationTrendResponse = zod.array(
-  GetRegistrationTrendResponseItem,
-);
+  "month": zod.string(),
+  "count": zod.number()
+})
+export const GetRegistrationTrendResponse = zod.array(GetRegistrationTrendResponseItem)
+
 
 /**
  * @summary Get system audit logs (admin only)
  */
 export const ListAuditLogsQueryParams = zod.object({
-  page: zod.coerce.number().optional(),
-  limit: zod.coerce.number().optional(),
-});
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional()
+})
 
 export const ListAuditLogsResponse = zod.object({
-  logs: zod.array(
-    zod.object({
-      id: zod.number(),
-      adminId: zod.number(),
-      adminName: zod.string(),
-      action: zod.string(),
-      targetType: zod.string(),
-      targetId: zod.number().nullish(),
-      details: zod.string().nullish(),
-      createdAt: zod.coerce.date(),
-    }),
-  ),
-  total: zod.number(),
-  page: zod.number(),
-  limit: zod.number(),
-});
+  "logs": zod.array(zod.object({
+  "id": zod.number(),
+  "adminId": zod.number(),
+  "adminName": zod.string(),
+  "action": zod.string(),
+  "targetType": zod.string(),
+  "targetId": zod.number().nullish(),
+  "details": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number()
+})
+
+
+/**
+ * @summary Get public project settings
+ */
+export const GetSiteSettingsResponse = zod.object({
+  "id": zod.number(),
+  "projectName": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "tagline": zod.string(),
+  "academicYear": zod.string(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish(),
+  "welcomeMessage": zod.string().nullish(),
+  "welcomeIntro": zod.string().nullish(),
+  "welcomeDescription": zod.string().nullish(),
+  "maintenanceMode": zod.boolean().optional(),
+  "maintenanceMessage": zod.string().optional(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update project settings (admin only)
+ */
+
+
+
+
+export const UpdateSiteSettingsBody = zod.object({
+  "projectName": zod.string().min(1),
+  "logoUrl": zod.string().nullish(),
+  "tagline": zod.string().optional(),
+  "academicYear": zod.string().min(1),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish(),
+  "welcomeMessage": zod.string().nullish(),
+  "welcomeIntro": zod.string().nullish(),
+  "welcomeDescription": zod.string().nullish(),
+  "maintenanceMode": zod.boolean().optional(),
+  "maintenanceMessage": zod.string().optional()
+})
+
+export const UpdateSiteSettingsResponse = zod.object({
+  "id": zod.number(),
+  "projectName": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "tagline": zod.string(),
+  "academicYear": zod.string(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish(),
+  "welcomeMessage": zod.string().nullish(),
+  "welcomeIntro": zod.string().nullish(),
+  "welcomeDescription": zod.string().nullish(),
+  "maintenanceMode": zod.boolean().optional(),
+  "maintenanceMessage": zod.string().optional(),
+  "updatedAt": zod.coerce.date()
+})
+
 
 /**
  * @summary List students to start a chat with
  */
 export const ListStudentsQueryParams = zod.object({
-  search: zod.coerce.string().optional(),
-});
+  "search": zod.coerce.string().optional()
+})
 
 export const ListStudentsResponseItem = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  // "grade": zod.string().nullable(),
-  avatarUrl: zod.string().nullish(),
-});
-export const ListStudentsResponse = zod.array(ListStudentsResponseItem);
+  "id": zod.number(),
+  "name": zod.string(),
+  "avatarUrl": zod.string().nullish()
+})
+export const ListStudentsResponse = zod.array(ListStudentsResponseItem)
+
+

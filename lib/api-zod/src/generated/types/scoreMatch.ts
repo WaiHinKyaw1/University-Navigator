@@ -5,6 +5,7 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
+import type { ScoreMatchRecommendationTier } from './scoreMatchRecommendationTier';
 import type { University } from './university';
 
 export interface ScoreMatch {
@@ -17,4 +18,10 @@ export interface ScoreMatch {
      * @nullable
      */
   gap?: number | null;
+  /** Whether one or more selected preferred majors are offered */
+  majorMatch?: boolean;
+  /** Explainable recommendation category */
+  recommendationTier?: ScoreMatchRecommendationTier;
+  /** Human-readable reasons for the recommendation */
+  recommendationReasons?: string[];
 }

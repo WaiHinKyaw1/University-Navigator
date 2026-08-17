@@ -70,7 +70,7 @@ export default function AdmissionGuide() {
               <div className="w-16 h-16 bg-primary-foreground/10 rounded-2xl flex items-center justify-center">
                 <BookOpen className="h-8 w-8 text-primary-foreground" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
                 ဝင်ခွင့် လမ်းညွှန် PDF များ
               </h1>
               <p className="text-lg md:text-xl opacity-90 max-w-xl">
@@ -184,7 +184,7 @@ function GuideCard({ guide }: { guide: GuideInfo }) {
       )}
 
       {/* Card header strip */}
-      <div className="bg-primary/5 border-b px-6 py-4 flex items-center gap-3">
+      <div className="flex items-center gap-3 border-b bg-primary/5 px-4 py-4 sm:px-6">
         <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
           <FileText className="h-5 w-5" />
         </div>
@@ -194,7 +194,7 @@ function GuideCard({ guide }: { guide: GuideInfo }) {
               {guide.title}
             </p>
             {guide.isActive && (
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+              <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
                 <CheckCircle2 className="h-3 w-3" /> Active
               </span>
             )}
@@ -206,7 +206,7 @@ function GuideCard({ guide }: { guide: GuideInfo }) {
       </div>
 
       {/* Meta info */}
-      <div className="px-6 py-4 grid sm:grid-cols-3 gap-4">
+      <div className="grid gap-4 px-4 py-4 sm:grid-cols-3 sm:px-6">
         <MetaItem
           icon={<HardDrive className="h-4 w-4" />}
           label="ဖိုင်အရွယ်"
@@ -229,7 +229,7 @@ function GuideCard({ guide }: { guide: GuideInfo }) {
       </div>
 
       {/* Action buttons */}
-      <div className="px-6 pb-5 flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col gap-2 px-4 pb-5 sm:flex-row sm:px-6">
         <Button size="sm" asChild className="gap-2">
           <a href={guide.downloadUrl} download>
             <Download className="h-4 w-4" />
@@ -245,7 +245,7 @@ function GuideCard({ guide }: { guide: GuideInfo }) {
       </div>
 
       {/* Footer note */}
-      <div className="border-t bg-muted/30 px-6 py-2">
+      <div className="border-t bg-muted/30 px-4 py-2 sm:px-6">
         <p className="text-xs text-muted-foreground">
           တင်သွင်းသူ:{" "}
           <span className="font-medium">{guide.uploadedByName ?? "Admin"}</span>

@@ -9,7 +9,7 @@ import {
   useGetMajorDistribution,
   useGetRegistrationTrend,
 } from "@workspace/api-client-react";
-import { Users, Building2, BookOpen, MessageSquare } from "lucide-react";
+import { Users, Building2, BookOpen, MessageSquare, Heart, UserPlus, ShieldCheck, CalendarDays, TrendingUp } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
   LineChart, Line, Cell 
@@ -81,10 +81,41 @@ export default function AdminDashboard() {
           <StatCard title="Chat Messages" value={overview?.totalMessages || 0} icon={MessageSquare} desc="Peer and direct student chat" isLoading={isOverviewLoading} />
         </div>
 
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Recent Registrations (7 days)"
+            value={overview?.recentRegistrations ?? 0}
+            icon={UserPlus}
+            desc="New users in the last 7 days"
+            isLoading={isOverviewLoading}
+          />
+          <StatCard
+            title="Saved Favorites"
+            value={overview?.totalFavorites ?? 0}
+            icon={Heart}
+            desc="Universities saved by students"
+            isLoading={isOverviewLoading}
+          />
+          <StatCard
+            title="News Articles"
+            value={overview?.totalNewsArticles || 0}
+            icon={CalendarDays}
+            desc="Published announcements"
+            isLoading={isOverviewLoading}
+          />
+          <StatCard
+            title="Banned Users"
+            value={overview?.bannedUsers ?? 0}
+            icon={ShieldCheck}
+            desc="Accounts currently banned"
+            isLoading={isOverviewLoading}
+          />
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="col-span-1">
             <CardHeader>
-              <CardTitle>User Registrations</CardTitle>
+              <CardTitle>User Registrations (12 months)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] w-full">
@@ -100,7 +131,7 @@ export default function AdminDashboard() {
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                         itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
-                      <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
@@ -128,7 +159,7 @@ export default function AdminDashboard() {
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                         cursor={{ fill: 'hsl(var(--muted))' }}
                       />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                         {majorDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
@@ -142,6 +173,53 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+                <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              Recent Users
+            </CardTitle>
+            {overview?.recentUsers && (
+              <span className="text-xs text-muted-foreground">Last 5 registered</span>
+            )}
+          </CardHeader>
+          <CardContent>
+            {isOverviewLoading ? (
+              <CircleLoading label="Loading recent users" />
+            ) : overview?.recentUsers && overview.recentUsers.length > 0 ? (
+              <div className="space-y-3">
+                {overview.recentUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <img
+                        src={user.avatarData || user.avatarUrl || "/default-avatar.png"}
+                        alt={user.name}
+                        className="h-9 w-9 rounded-full object-cover border"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${user.role === "admin" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {user.role}
+                      </span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${user.status === "banned" ? "bg-destructive/10 text-destructive" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"}`}>
+                        {user.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center py-6 text-muted-foreground">No recent users</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );

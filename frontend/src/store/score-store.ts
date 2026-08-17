@@ -10,6 +10,7 @@ const initialState = {
   scienceSixth: "biology" as ScienceSixth,
   scores: {} as Record<string, string>,
   sliderTotal: 240,
+  preferredMajorIds: [] as number[],
   hasSearched: false,
   results: [] as any[],
 };
@@ -20,6 +21,7 @@ type ScoreState = {
   scienceSixth: ScienceSixth;
   scores: Record<string, string>;
   sliderTotal: number;
+  preferredMajorIds: number[];
   hasSearched: boolean;
   results: any[];
 
@@ -28,10 +30,10 @@ type ScoreState = {
   setScienceSixth: (v: ScienceSixth) => void;
   setScores: (v: Record<string, string>) => void;
   setSliderTotal: (v: number) => void;
+  setPreferredMajorIds: (v: number[]) => void;
   setHasSearched: (v: boolean) => void;
   setResults: (v: any[]) => void;
 
-  // Reset store to initial values
   reset: () => void;
 };
 
@@ -43,6 +45,7 @@ export const useScoreStore = create<ScoreState>((set) => ({
   setScienceSixth: (v) => set({ scienceSixth: v }),
   setScores: (v) => set({ scores: v }),
   setSliderTotal: (v) => set({ sliderTotal: v }),
+  setPreferredMajorIds: (v) => set({ preferredMajorIds: v }),
   setHasSearched: (v) => set({ hasSearched: v }),
   setResults: (v) => set({ results: v }),
 

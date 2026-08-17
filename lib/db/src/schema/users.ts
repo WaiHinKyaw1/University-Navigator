@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,7 +11,11 @@ export const usersTable = pgTable("users", {
   status: text("status").notNull().default("active"), // active | banned
   banReason: text("ban_reason"),
   avatarUrl: text("avatar_url"),
+  // Full image payload stored as a base64 data URL. This keeps avatars persistent on
+  // serverless deployments (Vercel) where local disk writes are ephemeral.
+  avatarData: text("avatar_data"),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  sessionVersion: integer("session_version").default(0).notNull(),
 
   verificationToken: text("verification_token"),
 

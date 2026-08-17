@@ -11,6 +11,11 @@ import interestGuideRouter from "./routes/interest-guide";
 
 const app: Express = express();
 
+app.disable("x-powered-by");
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
+
 ensureUploadDirs();
 
 app.use(
@@ -32,9 +37,40 @@ app.use(
     },
   }),
 );
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const configuredOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: configuredOrigins.length
+      ? (origin, callback) => {
+          if (!origin || configuredOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+          }
+          callback(new Error("Origin is not allowed by CORS"));
+        }
+      : true,
+    credentials: false,
+  }),
+);
+app.use((_, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "1mb" }));
+app.use(express.urlencoded({
+  extended: true,
+  limit: process.env.FORM_BODY_LIMIT || "1mb",
+}));
 
 // Use process.cwd() which always resolves to backend/ when running `npm run dev`
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -54,8 +90,11 @@ const frontendDist = path.join(
 );
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
-  // SPA fallback - return index.html for all non-API routes (Express 5 compatible)
-  app.get(/(.*)/, (_req, res) => {
+  // SPA fallback - return index.html for all non-API routes (Express 5 compatible).
+  // Express 5 matches `app.get(regex)` against every request path even after mounted
+  // routers, so explicitly exclude /api/* and /uploads/* paths to avoid serving
+  // index.html with a 200 status for API calls.
+  app.get(/^(?!\/api(?:\/|$)|\/uploads(?:\/|$)).*$/, (_req, res) => {
     const indexPath = path.join(frontendDist, "index.html");
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);

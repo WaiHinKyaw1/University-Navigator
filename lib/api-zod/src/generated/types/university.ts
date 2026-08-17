@@ -25,6 +25,26 @@ export interface University {
   minScore: number;
   /** @nullable */
   description?: string | null;
+  /**
+     * Detailed admission requirements when available
+     * @nullable
+     */
+  admissionRequirements?: string | null;
+  /**
+     * Application steps when available
+     * @nullable
+     */
+  applicationProcess?: string | null;
+  /**
+     * Typical program duration when available
+     * @nullable
+     */
+  duration?: string | null;
+  /**
+     * Career outcome information when available
+     * @nullable
+     */
+  careerOutcomes?: string | null;
   /** @nullable */
   website?: string | null;
   /** @nullable */

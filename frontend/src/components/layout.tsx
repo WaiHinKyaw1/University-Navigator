@@ -3,14 +3,18 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   GraduationCap,
+  GitCompareArrows,
   LogOut,
+  Mail,
   Menu,
-  X,
+  Phone,
   Sparkles,
   User as UserIcon,
+  Wrench,
+  X,
 } from "lucide-react";
 import { useState } from "react";
-import { useLogout } from "@workspace/api-client-react";
+import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
 
 export function Layout({
@@ -24,6 +28,11 @@ export function Layout({
   const [location, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { reset } = useScoreStore();
+  const { data: siteSettings } = useGetSiteSettings();
+  const projectName = siteSettings?.projectName || "MM Uni Finder";
+  const tagline = siteSettings?.tagline || "Guiding Myanmar students to their future.";
+  const maintenanceMode = siteSettings?.maintenanceMode === true;
+  const maintenanceExempt = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"].some((path) => location.startsWith(path));
 
   const logoutMutation = useLogout({
     mutation: {
@@ -39,6 +48,27 @@ export function Layout({
     logoutMutation.mutate();
   };
 
+  if (maintenanceMode && user?.role !== "admin" && !maintenanceExempt) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+        <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            {siteSettings?.logoUrl ? (
+              <img src={siteSettings.logoUrl} alt={`${projectName} logo`} className="h-full w-full rounded-2xl object-contain p-2" />
+            ) : (
+              <Wrench className="h-7 w-7" />
+            )}
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">{projectName} is under maintenance</h1>
+          <p className="mt-3 text-muted-foreground">{siteSettings?.maintenanceMessage || "We are making a few improvements. Please check back soon."}</p>
+          <Button asChild variant="outline" className="mt-6">
+            <Link href="/login">Admin login</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const NavLinks = () => (
     <>
       <Link
@@ -52,6 +82,13 @@ export function Layout({
         Universities
       </Link>
 
+      <Link
+        href="/compare"
+        className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${location === "/compare" ? "text-primary" : "text-muted-foreground"}`}
+      >
+        <GitCompareArrows className="h-3.5 w-3.5" />
+        Compare
+      </Link>
       <Link
         href="/score"
         className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
@@ -120,73 +157,68 @@ export function Layout({
         </Link>
       )}
 
-      {/* {user?.role === "admin" && (
-        <Link
-          href="/admin"
-          className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
-            location.startsWith("/admin")
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5"
-          }`}
-        >
-          Admin
-        </Link>
-      )} */}
     </>
   );
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between mx-auto">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="bg-primary p-1.5 rounded-lg">
-                <GraduationCap className="h-6 w-6 text-primary-foreground" />
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-primary p-1.5">
+                {siteSettings?.logoUrl ? (
+                  <img src={siteSettings.logoUrl} alt="Project logo" className="h-full w-full object-contain" />
+                ) : (
+                  <GraduationCap className="h-6 w-6 text-primary-foreground" />
+                )}
               </div>
-              <span className="inline-block font-bold text-xl text-primary">
-                MM Uni Finder
+              <span className="inline-block max-w-[11rem] truncate font-bold text-base sm:text-xl text-primary">
+                {projectName}
               </span>
             </Link>
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-0.5">
               <NavLinks />
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="hidden md:flex items-center gap-1.5">
               {user ? (
-                <div className="flex items-center gap-4">
+                <>
+                  {user?.role === "admin" && (
+                    <Button variant="default" asChild size="sm" className="shrink-0">
+                      <Link href="/admin">Admin Portal</Link>
+                    </Button>
+                  )}
                   <Link
-                    href={
-                      user?.role === "admin" ? "/admin/profile" : "/profile"
-                    }
+                    href="/profile"
+                    className="flex items-center gap-2 rounded-full px-1.5 sm:px-2.5 py-1.5 hover:bg-muted transition"
                   >
-                    <button className="flex items-center gap-2 rounded-full px-3 py-2 hover:bg-muted transition">
-                      <img
-                        src={user.avatarUrl || "/default-avatar.png"}
-                        alt="profile"
-                        className="w-9 h-9 rounded-full object-cover border"
-                      />
-                      <span className="hidden md:block font-medium">
-                        {user.name}
-                      </span>
-                    </button>
+                    <img
+                      src={user.avatarUrl || "/default-avatar.png"}
+                      alt="profile"
+                      className="w-8 h-8 rounded-full object-cover border"
+                    />
+                    <span className="hidden lg:block max-w-[8rem] truncate text-sm font-medium">
+                      {user.name}
+                    </span>
                   </Link>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8 shrink-0"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
                   >
                     <LogOut className="h-4 w-4" />
                   </Button>
-                </div>
+                </>
               ) : (
                 <>
-                  <Button variant="ghost" asChild>
+                  <Button variant="ghost" asChild size="sm">
                     <Link href="/login">Log in</Link>
                   </Button>
-                  <Button asChild>
+                  <Button asChild size="sm">
                     <Link href="/register">Sign up</Link>
                   </Button>
                 </>
@@ -194,7 +226,7 @@ export function Layout({
             </div>
             <Button
               variant="ghost"
-              className="md:hidden px-2"
+              className="touch-target md:hidden px-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -207,15 +239,15 @@ export function Layout({
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-b border-border bg-background p-4 flex flex-col gap-4">
-            <nav className="flex flex-col gap-4">
+          <div className="md:hidden max-h-[calc(100svh-4rem)] overflow-y-auto border-b border-border bg-background p-4 safe-area-pb flex flex-col gap-4">
+            <nav className="flex flex-col gap-1" onClick={() => setMobileMenuOpen(false)}>
               <NavLinks />
             </nav>
             <div className="pt-4 border-t flex flex-col gap-3">
               {user ? (
                 <>
                   <Link
-                    href={user.role === "admin" ? "/admin/profile" : "/profile"}
+                    href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted transition"
                   >
@@ -229,10 +261,20 @@ export function Layout({
                       <p className="font-medium text-foreground">{user.name}</p>
 
                       {user.role === "admin" && (
-                        <p className="text-xs text-primary">Admin Profile</p>
+                        <p className="text-xs text-primary">My Profile</p>
                       )}
                     </div>
                   </Link>
+
+                  {user.role === "admin" && (
+                    <Button
+                      className="w-full justify-start"
+                      onClick={() => setMobileMenuOpen(false)}
+                      asChild
+                    >
+                      <Link href="/admin">Admin Portal</Link>
+                    </Button>
+                  )}
 
                   <Button
                     variant="outline"
@@ -274,21 +316,54 @@ export function Layout({
 
       {!noFooter && (
         <footer className="border-t bg-muted/40 py-5 md:py-8 mt-auto">
-          <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-sm text-muted-foreground">
+          <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4 sm:px-6 text-center md:text-left text-sm text-muted-foreground">
             <div>
-              <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
-                <GraduationCap className="h-4 w-4" /> MM Uni Finder
+                              <p className="font-medium text-foreground flex items-center justify-center md:justify-start gap-2">
+                {siteSettings?.logoUrl ? (
+                  <img src={siteSettings.logoUrl} alt="Project logo" className="h-4 w-4 rounded object-contain" />
+                ) : (
+                  <GraduationCap className="h-4 w-4" />
+                )}
+                {projectName}
               </p>
-              <p className="mt-1">
-                Guiding Myanmar's Grade 12 students to their future.
+                            <p className="mt-1">
+                {tagline}
               </p>
+              {(siteSettings?.contactEmail || siteSettings?.contactPhone) && (
+                <div className="mt-2 flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-sm">
+                  {siteSettings.contactEmail && (
+                    <a
+                      href={`mailto:${siteSettings.contactEmail}`}
+                      className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      {siteSettings.contactEmail}
+                    </a>
+                  )}
+                  {siteSettings.contactPhone && (
+                    <a
+                      href={`tel:${siteSettings.contactPhone}`}
+                      className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Phone className="h-3.5 w-3.5" />
+                      {siteSettings.contactPhone}
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex gap-4">
+            <div className="flex max-w-full flex-wrap justify-center gap-x-4 gap-y-2">
               <Link
                 href="/universities"
                 className="hover:text-foreground transition-colors"
               >
                 Universities
+              </Link>
+              <Link
+                href="/compare"
+                className="hover:text-foreground transition-colors"
+              >
+                Compare
               </Link>
               <Link
                 href="/score"

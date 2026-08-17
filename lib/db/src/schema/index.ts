@@ -7,4 +7,5 @@ export * from "./audit";
 export * from "./admission-guides";
 export * from "./categories";
 export * from "./favorites";
+export * from "./site-settings";
 export * from "./interest-guide-options";
