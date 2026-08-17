@@ -1,7 +1,18 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, Menu, X, User as UserIcon, Wrench, GitCompareArrows, Mail, Phone } from "lucide-react";
+import {
+  GraduationCap,
+  GitCompareArrows,
+  LogOut,
+  Mail,
+  Menu,
+  Phone,
+  Sparkles,
+  User as UserIcon,
+  Wrench,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useGetSiteSettings, useLogout } from "@workspace/api-client-react";
 import { useScoreStore } from "@/store/score-store";
@@ -62,10 +73,15 @@ export function Layout({
     <>
       <Link
         href="/universities"
-        className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/universities") ? "text-primary" : "text-muted-foreground"}`}
+        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+          location.startsWith("/universities")
+            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10"
+            : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
+        }`}
       >
         Universities
       </Link>
+
       <Link
         href="/compare"
         className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${location === "/compare" ? "text-primary" : "text-muted-foreground"}`}
@@ -75,47 +91,86 @@ export function Layout({
       </Link>
       <Link
         href="/score"
-        className={`text-sm font-medium transition-colors hover:text-primary ${location === "/score" ? "text-primary" : "text-muted-foreground"}`}
+        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+          location === "/score"
+            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10"
+            : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
+        }`}
       >
         Score Calculator
       </Link>
+
+      <Link
+        href="/interest-guide"
+        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+          location === "/interest-guide"
+            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10"
+            : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
+        }`}
+      >
+        Interest Guide
+      </Link>
+
       <Link
         href="/news"
-        className={`text-sm font-medium transition-colors hover:text-primary ${location === "/news" ? "text-primary" : "text-muted-foreground"}`}
+        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+          location === "/news"
+            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10"
+            : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
+        }`}
       >
         News
       </Link>
+
       <Link
         href="/admission-guide"
-        className={`text-sm font-medium transition-colors hover:text-primary ${location === "/admission-guide" ? "text-primary" : "text-muted-foreground"}`}
+        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+          location === "/admission-guide"
+            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10"
+            : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
+        }`}
       >
         Admission Info
       </Link>
+
       <Link
         href="/chatbot"
-        className={`text-sm font-medium transition-colors hover:text-primary ${location === "/chatbot" ? "text-primary" : "text-muted-foreground"}`}
+        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+          location === "/chatbot"
+            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10"
+            : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
+        }`}
       >
         Chatbot Advisor
       </Link>
+
       {user && (
         <Link
           href="/chat"
-          className={`text-sm font-medium transition-colors hover:text-primary ${location === "/chat" ? "text-primary" : "text-muted-foreground"}`}
+          className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+            location === "/chat"
+              ? "bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10"
+              : "text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-primary hover:border-primary/10 hover:-translate-y-0.5"
+          }`}
         >
           Peer Chat
         </Link>
       )}
-      {user?.role === "admin" && (
+
+      {/* {user?.role === "admin" && (
         <Link
           href="/admin"
-          className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/admin") ? "text-primary" : "text-muted-foreground"}`}
+          className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+            location.startsWith("/admin")
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5"
+          }`}
         >
           Admin
         </Link>
-      )}
+      )} */}
     </>
   );
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -133,7 +188,7 @@ export function Layout({
                 {projectName}
               </span>
             </Link>
-            <nav className="hidden md:flex gap-6">
+            <nav className="hidden md:flex items-center gap-1">
               <NavLinks />
             </nav>
           </div>

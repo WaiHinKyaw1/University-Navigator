@@ -35,6 +35,8 @@ const AdminSettings = lazy(() => import("@/pages/admin/settings"));
 const VerifyEmail = lazy(() => import("@/pages/verify-email"));
 const ResetPassword = lazy(() => import("./pages/reset-password"));
 const ForgotPassword = lazy(() => import("./pages/forgot-password"));
+const InterestGuide = lazy(() => import("@/pages/interest-guide"));
+const AdminInterestGuide = lazy(() => import("@/pages/admin/interest-guide"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +76,8 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/admin/profile" component={AdminProfile} />
       <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/interest-guide" component={InterestGuide} />
+      <Route path="/admin/interest-guide" component={AdminInterestGuide} />
       <Route path="/verify-email">
         <VerifyEmail />
       </Route>

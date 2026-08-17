@@ -14,6 +14,7 @@ import {
   UserCog,
   Settings,
   Menu,
+  Heart,
   X,
 } from "lucide-react";
 
@@ -67,10 +68,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
       <Link
         href={href}
-        className={`flex items-center ${collapsed ? "justify-center px-0" : "gap-3 px-3"} py-2 rounded-md transition-colors ${isActive
-          ? "bg-primary/10 text-primary font-medium"
-          : "hover:bg-muted text-muted-foreground hover:text-foreground"
-          }`}
+        className={`flex items-center ${collapsed ? "justify-center px-0" : "gap-3 px-3"} py-2 rounded-md transition-colors ${
+          isActive
+            ? "bg-primary/10 text-primary font-medium"
+            : "hover:bg-muted text-muted-foreground hover:text-foreground"
+        }`}
         title={collapsed ? label : undefined}
       >
         <Icon className="h-5 w-5 shrink-0" />
@@ -101,6 +103,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <NavItem href="/admin/universities" icon={Building2} label="Universities" collapsed={collapsed} />
       <NavItem href="/admin/majors" icon={BookOpen} label="Majors" collapsed={collapsed} />
       <NavItem href="/admin/categories" icon={Tag} label="Categories" collapsed={collapsed} />
+      <NavItem href="/admin/interest-guide" icon={Heart} label="Interest Guide" collapsed={collapsed} />
       <NavItem href="/admin/news" icon={FileText} label="News" collapsed={collapsed} />
       <NavItem href="/admin/admission-guide" icon={FileUp} label="Admission PDF" collapsed={collapsed} />
 
