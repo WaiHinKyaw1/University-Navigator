@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,20 +50,124 @@ type Recommendation = {
   reasons: string[];
 };
 
+// ============================================================
+// SAVED INTEREST GUIDE DATA
+// ============================================================
+
+type SavedInterestGuideData = {
+  education: string;
+  englishLevel: string;
+  interests: string[];
+  subject: string;
+  career: string;
+  recommendations: Recommendation[];
+  submitted: boolean;
+};
+
+const INTEREST_GUIDE_STORAGE_KEY = "interest-guide-form";
+
 export default function InterestGuide() {
   const [options, setOptions] = useState<Option[]>([]);
+
   const [universities, setUniversities] = useState<University[]>([]);
 
   const [education, setEducation] = useState("");
+
   const [englishLevel, setEnglishLevel] = useState("");
+
   const [interests, setInterests] = useState<string[]>([]);
+
   const [subject, setSubject] = useState("");
+
   const [career, setCareer] = useState("");
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   const [loading, setLoading] = useState(true);
+
   const [submitted, setSubmitted] = useState(false);
+
+  // ============================================================
+  // IMPORTANT
+  // Prevent auto-save from overwriting saved data
+  // before restore is completed.
+  // ============================================================
+
+  const restoredRef = useRef(false);
+
+  // ============================================================
+  // RESTORE PREVIOUSLY SELECTED DATA + RESULTS
+  // ============================================================
+
+  useEffect(() => {
+    try {
+      const savedData = sessionStorage.getItem(INTEREST_GUIDE_STORAGE_KEY);
+
+      if (savedData) {
+        const data: Partial<SavedInterestGuideData> = JSON.parse(savedData);
+
+        // Restore education
+        setEducation(data.education || "");
+
+        // Restore English level
+        setEnglishLevel(data.englishLevel || "");
+
+        // Restore interests
+        setInterests(Array.isArray(data.interests) ? data.interests : []);
+
+        // Restore subject
+        setSubject(data.subject || "");
+
+        // Restore career
+        setCareer(data.career || "");
+
+        // Restore recommendation results
+        setRecommendations(
+          Array.isArray(data.recommendations) ? data.recommendations : [],
+        );
+
+        // Restore submitted state
+        setSubmitted(data.submitted === true);
+      }
+    } catch (error) {
+      console.error("Failed to restore Interest Guide data:", error);
+
+      sessionStorage.removeItem(INTEREST_GUIDE_STORAGE_KEY);
+    } finally {
+      restoredRef.current = true;
+    }
+  }, []);
+
+  // ============================================================
+  // AUTO SAVE FORM + RESULTS
+  // ============================================================
+
+  useEffect(() => {
+    // Do not save before restore is completed.
+    if (!restoredRef.current) {
+      return;
+    }
+
+    const data: SavedInterestGuideData = {
+      education,
+      englishLevel,
+      interests,
+      subject,
+      career,
+      recommendations,
+      submitted,
+    };
+
+    sessionStorage.setItem(INTEREST_GUIDE_STORAGE_KEY, JSON.stringify(data));
+  }, [
+    education,
+    englishLevel,
+    interests,
+    subject,
+    career,
+    recommendations,
+    submitted,
+  ]);
 
   // ============================================================
   // LOAD OPTIONS + UNIVERSITIES
@@ -86,13 +190,14 @@ export default function InterestGuide() {
         }
 
         const optionsData = await optionsResponse.json();
+
         const universitiesData = await universitiesResponse.json();
 
         setOptions(optionsData);
 
         setUniversities(universitiesData.universities || universitiesData);
       } catch (error) {
-        console.error("Failed to load Interest Guide data:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -102,7 +207,7 @@ export default function InterestGuide() {
   }, []);
 
   // ============================================================
-  // OPTION GROUPS
+  // CATEGORY OPTIONS
   // ============================================================
 
   const educationOptions = useMemo(
@@ -140,282 +245,12 @@ export default function InterestGuide() {
         ? current.filter((item) => item !== code)
         : [...current, code],
     );
+    clearPreviousResults();
   };
 
-  // ============================================================
-  // KEYWORD MAPPING
-  // ============================================================
-
-  /**
-   * Interest related keywords
-   *
-   * Example:
-   * Programming
-   *   -> programming
-   *   -> computer science
-   *   -> software
-   *   -> IT
-   *   -> software engineering
-   */
-  const interestKeywords: Record<string, string[]> = {
-    programming: [
-      "programming",
-      "computer science",
-      "software",
-      "information technology",
-      "information systems",
-      "computer engineering",
-      "software engineering",
-      "web development",
-      "app development",
-      "application development",
-      "developer",
-      "coding",
-    ],
-
-    technology: [
-      "technology",
-      "computer science",
-      "information technology",
-      "information systems",
-      "software",
-      "computer engineering",
-      "data science",
-      "artificial intelligence",
-      "cyber security",
-      "cybersecurity",
-    ],
-
-    business: [
-      "business",
-      "business administration",
-      "management",
-      "commerce",
-      "accounting",
-      "finance",
-      "marketing",
-      "economics",
-      "entrepreneurship",
-    ],
-
-    art: [
-      "art",
-      "design",
-      "graphic design",
-      "fine arts",
-      "visual arts",
-      "creative",
-      "multimedia",
-    ],
-
-    music: ["music", "musical", "performing arts", "sound", "audio"],
-
-    science: [
-      "science",
-      "biology",
-      "chemistry",
-      "physics",
-      "mathematics",
-      "environmental science",
-      "laboratory",
-    ],
-  };
-
-  /**
-   * Career related keywords
-   *
-   * Career is given the highest weight.
-   */
-  const careerKeywords: Record<string, string[]> = {
-    programmer: [
-      "programmer",
-      "programming",
-      "computer science",
-      "software",
-      "software engineering",
-      "information technology",
-      "information systems",
-      "computer engineering",
-      "developer",
-      "web development",
-      "application development",
-      "coding",
-    ],
-
-    software_developer: [
-      "software developer",
-      "software development",
-      "software engineering",
-      "computer science",
-      "programming",
-      "information technology",
-      "developer",
-    ],
-
-    web_developer: [
-      "web developer",
-      "web development",
-      "computer science",
-      "software engineering",
-      "information technology",
-      "programming",
-    ],
-
-    data_scientist: [
-      "data science",
-      "data scientist",
-      "computer science",
-      "statistics",
-      "mathematics",
-      "artificial intelligence",
-      "machine learning",
-    ],
-
-    engineer: [
-      "engineering",
-      "computer engineering",
-      "electrical engineering",
-      "mechanical engineering",
-      "civil engineering",
-      "software engineering",
-    ],
-
-    accountant: [
-      "accounting",
-      "accountancy",
-      "finance",
-      "business",
-      "business administration",
-      "commerce",
-    ],
-
-    business_manager: [
-      "business",
-      "business administration",
-      "management",
-      "commerce",
-      "marketing",
-      "finance",
-      "economics",
-    ],
-
-    teacher: [
-      "education",
-      "teaching",
-      "teacher",
-      "english",
-      "mathematics",
-      "science",
-      "education studies",
-    ],
-
-    doctor: [
-      "medicine",
-      "medical",
-      "health science",
-      "health sciences",
-      "medicine and surgery",
-    ],
-
-    nurse: ["nursing", "health science", "health sciences", "medical"],
-
-    designer: [
-      "design",
-      "graphic design",
-      "visual design",
-      "fine arts",
-      "multimedia",
-      "creative arts",
-    ],
-  };
-
-  /**
-   * Favorite subject related keywords.
-   *
-   * Subject has lower weight than Career + Interest.
-   */
-  const subjectKeywords: Record<string, string[]> = {
-    english: [
-      "english",
-      "english language",
-      "english literature",
-      "linguistics",
-      "language studies",
-    ],
-
-    mathematics: [
-      "mathematics",
-      "mathematical",
-      "statistics",
-      "data science",
-      "computer science",
-      "engineering",
-      "economics",
-    ],
-
-    physics: [
-      "physics",
-      "engineering",
-      "computer engineering",
-      "electrical engineering",
-      "mechanical engineering",
-    ],
-
-    chemistry: [
-      "chemistry",
-      "chemical engineering",
-      "pharmacy",
-      "biochemistry",
-      "science",
-    ],
-
-    biology: [
-      "biology",
-      "biological science",
-      "medicine",
-      "medical",
-      "nursing",
-      "pharmacy",
-      "health science",
-      "life science",
-    ],
-
-    computer_science: [
-      "computer science",
-      "programming",
-      "software",
-      "information technology",
-      "information systems",
-      "computer engineering",
-      "software engineering",
-    ],
-
-    economics: [
-      "economics",
-      "business",
-      "finance",
-      "accounting",
-      "commerce",
-      "management",
-    ],
-  };
-
-  // ============================================================
-  // GET KEYWORDS
-  // ============================================================
-
-  const getKeywords = (
-    code: string,
-    name: string,
-    mapping: Record<string, string[]>,
-  ): string[] => {
-    const mappedKeywords = mapping[code];
-
-    if (mappedKeywords && mappedKeywords.length > 0) {
-      return mappedKeywords;
-    }
-
-    return [name.toLowerCase(), code.toLowerCase().replace(/_/g, " ")];
+  const clearPreviousResults = () => {
+    setRecommendations([]);
+    setSubmitted(false);
   };
 
   // ============================================================
@@ -423,127 +258,83 @@ export default function InterestGuide() {
   // ============================================================
 
   const calculateRecommendations = () => {
-    const selectedInterestOptions = interestOptions.filter((option) =>
-      interests.includes(option.code),
-    );
-
-    const selectedSubjectOption = subjectOptions.find(
-      (option) => option.code === subject,
-    );
-
-    const selectedCareerOption = careerOptions.find(
-      (option) => option.code === career,
-    );
-
     const results: Recommendation[] = universities.map((university) => {
       let score = 0;
 
       const reasons: string[] = [];
 
-      // ========================================================
-      // UNIVERSITY SEARCH TEXT
-      // ========================================================
-
       const universityText = `
-        ${university.name}
-        ${university.nameEn}
-        ${university.description || ""}
-        ${university.type || ""}
-        ${university.state || ""}
-        ${university.city || ""}
+          ${university.name}
+          ${university.nameEn}
+          ${university.description || ""}
+          ${university.majors
+            .map((major) => `${major.name} ${major.nameEn}`)
+            .join(" ")}
+        `.toLowerCase();
 
-        ${(university.majors || [])
-          .map(
-            (major) => `
-              ${major.name}
-              ${major.nameEn}
-              ${major.description || ""}
-            `,
-          )
-          .join(" ")}
-      `.toLowerCase();
+      const selectedInterestNames = interestOptions
+        .filter((option) => interests.includes(option.code))
+        .map((option) => option.name.toLowerCase());
 
-      // ========================================================
+      const selectedSubjectName =
+        subjectOptions
+          .find((option) => option.code === subject)
+          ?.name.toLowerCase() || "";
+
+      const selectedCareerName =
+        careerOptions
+          .find((option) => option.code === career)
+          ?.name.toLowerCase() || "";
+
+      // ======================================================
       // INTEREST MATCH
-      // ========================================================
+      // ======================================================
 
-      for (const interestOption of selectedInterestOptions) {
-        const keywords = getKeywords(
-          interestOption.code,
-          interestOption.name,
-          interestKeywords,
-        );
+      for (const interest of selectedInterestNames) {
+        const words = interest
+          .split(/[\s/,&-]+/)
+          .filter((word) => word.length >= 4);
 
-        const matchedKeyword = keywords.find((keyword) =>
-          universityText.includes(keyword.toLowerCase()),
-        );
+        if (words.some((word) => universityText.includes(word))) {
+          score += 12;
 
-        if (matchedKeyword) {
-          score += 25;
-
-          reasons.push(`Interest match: ${interestOption.name}`);
+          reasons.push(`Interest match: ${interest}`);
 
           break;
         }
       }
 
-      // ========================================================
-      // CAREER MATCH
-      // ========================================================
-
-      if (selectedCareerOption) {
-        const keywords = getKeywords(
-          selectedCareerOption.code,
-          selectedCareerOption.name,
-          careerKeywords,
-        );
-
-        const matchedKeyword = keywords.find((keyword) =>
-          universityText.includes(keyword.toLowerCase()),
-        );
-
-        if (matchedKeyword) {
-          score += 35;
-
-          reasons.push(`Career match: ${selectedCareerOption.name}`);
-        }
-      }
-
-      // ========================================================
+      // ======================================================
       // SUBJECT MATCH
-      // ========================================================
+      // ======================================================
 
-      if (selectedSubjectOption) {
-        const keywords = getKeywords(
-          selectedSubjectOption.code,
-          selectedSubjectOption.name,
-          subjectKeywords,
-        );
+      if (selectedSubjectName && universityText.includes(selectedSubjectName)) {
+        score += 18;
 
-        const matchedKeyword = keywords.find((keyword) =>
-          universityText.includes(keyword.toLowerCase()),
-        );
-
-        if (matchedKeyword) {
-          score += 10;
-
-          reasons.push(`Subject match: ${selectedSubjectOption.name}`);
-        }
+        reasons.push(`Subject match: ${selectedSubjectName}`);
       }
 
-      // ========================================================
-      // MINIMUM SCORE
-      // ========================================================
+      // ======================================================
+      // CAREER MATCH
+      // ======================================================
+
+      if (selectedCareerName && universityText.includes(selectedCareerName)) {
+        score += 25;
+
+        reasons.push(`Career match: ${selectedCareerName}`);
+      }
+
+      // ======================================================
+      // MIN SCORE
+      // ======================================================
 
       if (university.minScore <= 400) {
         score += 5;
-
-        reasons.push("Entry score may be suitable");
       }
 
-      // ========================================================
+      // ======================================================
       // EDUCATION
-      // ========================================================
+      // ======================================================
 
       if (education) {
         score += 5;
@@ -551,19 +342,15 @@ export default function InterestGuide() {
         reasons.push("Suitable for your education level");
       }
 
-      // ========================================================
+      // ======================================================
       // ENGLISH LEVEL
-      // ========================================================
+      // ======================================================
 
       if (englishLevel) {
         score += 5;
 
         reasons.push("English level considered");
       }
-
-      // ========================================================
-      // RETURN RESULT
-      // ========================================================
 
       return {
         university,
@@ -572,25 +359,34 @@ export default function InterestGuide() {
       };
     });
 
-    // ==========================================================
-    // SORT HIGH SCORE FIRST
-    // ==========================================================
+    // Sort highest score first
+    results.sort((a, b) => b.score - a.score);
 
-    results.sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
+    // Keep top 10
+    const topResults = results.slice(0, 10);
 
-      return a.university.name.localeCompare(b.university.name);
-    });
+    // Set result
+    setRecommendations(topResults);
 
-    // ==========================================================
-    // TOP 10
-    // ==========================================================
-
-    setRecommendations(results.slice(0, 10));
-
+    // Show result section
     setSubmitted(true);
+
+    // ========================================================
+    // IMPORTANT
+    // Save result immediately
+    // ========================================================
+
+    const data: SavedInterestGuideData = {
+      education,
+      englishLevel,
+      interests,
+      subject,
+      career,
+      recommendations: topResults,
+      submitted: true,
+    };
+
+    sessionStorage.setItem(INTEREST_GUIDE_STORAGE_KEY, JSON.stringify(data));
   };
 
   // ============================================================
@@ -599,6 +395,32 @@ export default function InterestGuide() {
 
   const canSubmit =
     education && englishLevel && interests.length > 0 && subject && career;
+
+  // ============================================================
+  // CLEAR ALL DATA
+  // ============================================================
+
+  const clearInterestGuideData = () => {
+    // Clear form
+    setEducation("");
+
+    setEnglishLevel("");
+
+    setInterests([]);
+
+    setSubject("");
+
+    setCareer("");
+
+    // Clear recommendations
+    setRecommendations([]);
+
+    // Hide results
+    setSubmitted(false);
+
+    // Remove storage
+    sessionStorage.removeItem(INTEREST_GUIDE_STORAGE_KEY);
+  };
 
   // ============================================================
   // LOADING
@@ -621,9 +443,9 @@ export default function InterestGuide() {
   return (
     <Layout>
       <div className="max-w-5xl mx-auto w-full px-4 py-10 space-y-8">
-        {/* =====================================================
+        {/* ======================================================
             HEADER
-        ====================================================== */}
+        ======================================================= */}
 
         <div className="text-center">
           <h1 className="text-3xl md:text-4xl font-bold">Interest Guide</h1>
@@ -633,9 +455,9 @@ export default function InterestGuide() {
           </p>
         </div>
 
-        {/* =====================================================
+        {/* ======================================================
             FORM
-        ====================================================== */}
+        ======================================================= */}
 
         <Card>
           <CardHeader>
@@ -643,14 +465,20 @@ export default function InterestGuide() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* =================================================
+            {/* ==================================================
                 EDUCATION
-            ================================================== */}
+            =================================================== */}
 
             <div>
               <label className="text-sm font-medium">လက်ရှိပညာရေး</label>
 
-              <Select value={education} onValueChange={setEducation}>
+              <Select
+                value={education}
+                onValueChange={(value) => {
+                  setEducation(value);
+                  clearPreviousResults();
+                }}
+              >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="လက်ရှိပညာရေးရွေးပါ" />
                 </SelectTrigger>
@@ -665,14 +493,20 @@ export default function InterestGuide() {
               </Select>
             </div>
 
-            {/* =================================================
+            {/* ==================================================
                 ENGLISH LEVEL
-            ================================================== */}
+            =================================================== */}
 
             <div>
               <label className="text-sm font-medium">English Level</label>
 
-              <Select value={englishLevel} onValueChange={setEnglishLevel}>
+              <Select
+                value={englishLevel}
+                onValueChange={(value) => {
+                  setEnglishLevel(value);
+                  clearPreviousResults();
+                }}
+              >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="English level ရွေးပါ" />
                 </SelectTrigger>
@@ -687,9 +521,9 @@ export default function InterestGuide() {
               </Select>
             </div>
 
-            {/* =================================================
+            {/* ==================================================
                 INTERESTS
-            ================================================== */}
+            =================================================== */}
 
             <div>
               <label className="text-sm font-medium">ဝါသနာ / Interests</label>
@@ -711,14 +545,20 @@ export default function InterestGuide() {
               </div>
             </div>
 
-            {/* =================================================
+            {/* ==================================================
                 SUBJECT
-            ================================================== */}
+            =================================================== */}
 
             <div>
               <label className="text-sm font-medium">အကြိုက်ဆုံးဘာသာရပ်</label>
 
-              <Select value={subject} onValueChange={setSubject}>
+              <Select
+                value={subject}
+                onValueChange={(value) => {
+                  setSubject(value);
+                  clearPreviousResults();
+                }}
+              >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="ဘာသာရပ်ရွေးပါ" />
                 </SelectTrigger>
@@ -733,14 +573,20 @@ export default function InterestGuide() {
               </Select>
             </div>
 
-            {/* =================================================
+            {/* ==================================================
                 CAREER
-            ================================================== */}
+            =================================================== */}
 
             <div>
               <label className="text-sm font-medium">Career Goal</label>
 
-              <Select value={career} onValueChange={setCareer}>
+              <Select
+                value={career}
+                onValueChange={(value) => {
+                  setCareer(value);
+                  clearPreviousResults();
+                }}
+              >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Career goal ရွေးပါ" />
                 </SelectTrigger>
@@ -755,24 +601,35 @@ export default function InterestGuide() {
               </Select>
             </div>
 
-            {/* =================================================
-                SUBMIT
-            ================================================== */}
+            {/* ==================================================
+                BUTTONS
+            =================================================== */}
 
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={!canSubmit}
-              onClick={calculateRecommendations}
-            >
-              Find Suitable Universities
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                className="flex-1"
+                size="lg"
+                disabled={!canSubmit}
+                onClick={calculateRecommendations}
+              >
+                Find Suitable Universities
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={clearInterestGuideData}
+              >
+                Clear
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        {/* =====================================================
-            RESULTS
-        ====================================================== */}
+        {/* ======================================================
+            RECOMMENDATIONS
+        ======================================================= */}
 
         {submitted && (
           <Card>
@@ -790,10 +647,6 @@ export default function InterestGuide() {
                       key={item.university.id}
                       className="border rounded-xl p-5"
                     >
-                      {/* =======================================
-                          UNIVERSITY HEADER
-                      ======================================== */}
-
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2">
@@ -814,60 +667,23 @@ export default function InterestGuide() {
                         </div>
                       </div>
 
-                      {/* =======================================
-                          DESCRIPTION
-                      ======================================== */}
-
                       {item.university.description && (
                         <p className="mt-3 text-sm">
                           {item.university.description}
                         </p>
                       )}
 
-                      {/* =======================================
-                          WHY THIS UNIVERSITY
-                      ======================================== */}
-
                       {item.reasons.length > 0 && (
                         <div className="mt-4">
                           <p className="font-medium">Why this may suit you:</p>
 
                           <ul className="list-disc ml-5 text-sm text-muted-foreground mt-1">
-                            {item.reasons
-                              .slice(0, 4)
-                              .map((reason, reasonIndex) => (
-                                <li key={`${reason}-${reasonIndex}`}>
-                                  {reason}
-                                </li>
-                              ))}
+                            {item.reasons.slice(0, 3).map((reason) => (
+                              <li key={reason}>{reason}</li>
+                            ))}
                           </ul>
                         </div>
                       )}
-
-                      {/* =======================================
-                          MAJORS
-                      ======================================== */}
-
-                      {item.university.majors &&
-                        item.university.majors.length > 0 && (
-                          <div className="mt-4">
-                            <p className="font-medium">Available Majors:</p>
-
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {item.university.majors
-                                .slice(0, 6)
-                                .map((major) => (
-                                  <Badge key={major.id} variant="outline">
-                                    {major.name}
-                                  </Badge>
-                                ))}
-                            </div>
-                          </div>
-                        )}
-
-                      {/* =======================================
-                          VIEW UNIVERSITY
-                      ======================================== */}
 
                       <div className="mt-4">
                         <Button asChild variant="outline">
