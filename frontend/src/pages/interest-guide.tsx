@@ -13,6 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 
+// ============================================================
+// TYPES
+// ============================================================
+
 type Option = {
   id: number;
   category: string;
@@ -50,15 +54,10 @@ type Recommendation = {
   reasons: string[];
 };
 
-// ============================================================
-// SAVED INTEREST GUIDE DATA
-// ============================================================
-
 type SavedInterestGuideData = {
   education: string;
   englishLevel: string;
   interests: string[];
-  subject: string;
   career: string;
   recommendations: Recommendation[];
   submitted: boolean;
@@ -66,10 +65,537 @@ type SavedInterestGuideData = {
 
 const INTEREST_GUIDE_STORAGE_KEY = "interest-guide-form";
 
+// ============================================================
+// UNIVERSITY CACHE
+// ============================================================
+
+let universitiesCache: University[] | null = null;
+
+// ============================================================
+// KEYWORD GROUPS
+//
+// Admin code can be:
+// programming
+// programmer
+// coding
+// software
+//
+// These will automatically match related university majors.
+// ============================================================
+
+const KEYWORD_GROUPS: Record<string, string[]> = {
+  // ==========================================================
+  // PROGRAMMING / COMPUTER
+  // ==========================================================
+
+  programming: [
+    "programming",
+    "programmer",
+    "coding",
+    "coder",
+    "software",
+    "software engineering",
+    "computer science",
+    "computer engineering",
+    "information technology",
+    "information technology engineering",
+    "information systems",
+    "computing",
+    "computer studies",
+    "informatics",
+    "web development",
+    "web developer",
+    "application development",
+    "app development",
+    "technology",
+    "it",
+  ],
+
+  programmer: [
+    "programmer",
+    "programming",
+    "coding",
+    "coder",
+    "software",
+    "software engineering",
+    "computer science",
+    "computer engineering",
+    "information technology",
+    "information technology engineering",
+    "information systems",
+    "computing",
+    "computer studies",
+    "informatics",
+    "web development",
+    "web developer",
+    "application development",
+    "app development",
+  ],
+
+  coding: [
+    "coding",
+    "programming",
+    "programmer",
+    "coder",
+    "computer science",
+    "software engineering",
+    "computer engineering",
+    "information technology",
+    "information systems",
+    "computing",
+    "informatics",
+  ],
+
+  software: [
+    "software",
+    "software engineering",
+    "computer science",
+    "programming",
+    "programmer",
+    "information technology",
+    "information systems",
+    "computing",
+  ],
+
+  "computer science": [
+    "computer science",
+    "computing",
+    "computer studies",
+    "software engineering",
+    "computer engineering",
+    "programming",
+    "programmer",
+    "coding",
+    "information technology",
+    "information systems",
+    "informatics",
+  ],
+
+  "computer engineering": [
+    "computer engineering",
+    "computer science",
+    "software engineering",
+    "programming",
+    "coding",
+    "information technology",
+    "information systems",
+    "computing",
+  ],
+
+  "information technology": [
+    "information technology",
+    "information technology engineering",
+    "computer science",
+    "computer engineering",
+    "software engineering",
+    "information systems",
+    "computing",
+    "informatics",
+    "programming",
+    "coding",
+  ],
+
+  "information systems": [
+    "information systems",
+    "information technology",
+    "computer science",
+    "computing",
+    "software engineering",
+    "programming",
+    "database",
+    "systems",
+  ],
+
+  // ==========================================================
+  // LAW
+  // ==========================================================
+
+  law: [
+    "law",
+    "legal studies",
+    "legal",
+    "lawyer",
+    "attorney",
+    "jurisprudence",
+    "business law",
+    "international law",
+  ],
+
+  lawyer: [
+    "law",
+    "legal studies",
+    "legal",
+    "lawyer",
+    "attorney",
+    "jurisprudence",
+  ],
+
+  legal: [
+    "law",
+    "legal studies",
+    "legal",
+    "lawyer",
+    "attorney",
+    "jurisprudence",
+  ],
+
+  // ==========================================================
+  // BUSINESS
+  // ==========================================================
+
+  business: [
+    "business",
+    "business administration",
+    "business management",
+    "management",
+    "commerce",
+    "marketing",
+    "finance",
+    "accounting",
+    "economics",
+    "entrepreneurship",
+  ],
+
+  marketing: [
+    "marketing",
+    "business",
+    "business administration",
+    "management",
+    "commerce",
+    "advertising",
+    "digital marketing",
+  ],
+
+  finance: [
+    "finance",
+    "financial",
+    "accounting",
+    "business",
+    "economics",
+    "banking",
+    "commerce",
+  ],
+
+  accounting: ["accounting", "finance", "business", "commerce", "economics"],
+
+  // ==========================================================
+  // ENGINEERING
+  // ==========================================================
+
+  engineering: ["engineering", "engineer", "technology", "technical"],
+
+  mechanical: ["mechanical engineering", "mechanical", "engineering"],
+
+  civil: ["civil engineering", "civil", "construction", "engineering"],
+
+  electrical: [
+    "electrical engineering",
+    "electrical",
+    "electronics",
+    "engineering",
+  ],
+
+  electronics: [
+    "electronics",
+    "electrical engineering",
+    "electronic engineering",
+    "engineering",
+  ],
+
+  // ==========================================================
+  // ART / DESIGN
+  // ==========================================================
+
+  painting: [
+    "painting",
+    "fine art",
+    "fine arts",
+    "visual art",
+    "visual arts",
+    "art",
+    "arts",
+  ],
+
+  drawing: [
+    "drawing",
+    "fine art",
+    "fine arts",
+    "visual art",
+    "visual arts",
+    "art",
+    "design",
+  ],
+
+  art: [
+    "art",
+    "arts",
+    "fine art",
+    "fine arts",
+    "visual art",
+    "visual arts",
+    "design",
+  ],
+
+  design: [
+    "design",
+    "graphic design",
+    "visual design",
+    "art",
+    "fine arts",
+    "architecture",
+  ],
+
+  // ==========================================================
+  // MEDIA
+  // ==========================================================
+
+  photography: [
+    "photography",
+    "photographic",
+    "visual media",
+    "media",
+    "film",
+    "digital media",
+  ],
+
+  music: ["music", "musical", "music education", "performing arts", "arts"],
+
+  // ==========================================================
+  // SCIENCE
+  // ==========================================================
+
+  science: ["science", "scientific", "natural science", "applied science"],
+
+  mathematics: [
+    "mathematics",
+    "math",
+    "mathematical",
+    "statistics",
+    "applied mathematics",
+    "data science",
+  ],
+
+  math: ["mathematics", "math", "mathematical", "statistics", "data science"],
+
+  physics: ["physics", "physical science", "engineering", "applied physics"],
+
+  chemistry: ["chemistry", "chemical", "chemical engineering", "science"],
+
+  biology: ["biology", "biological", "life science", "biotechnology"],
+
+  // ==========================================================
+  // MEDICAL
+  // ==========================================================
+
+  medicine: ["medicine", "medical", "doctor", "health science", "healthcare"],
+
+  nursing: ["nursing", "nurse", "health science", "healthcare", "medical"],
+
+  pharmacy: [
+    "pharmacy",
+    "pharmaceutical",
+    "pharmacology",
+    "medical",
+    "health science",
+  ],
+
+  // ==========================================================
+  // EDUCATION
+  // ==========================================================
+
+  teaching: ["education", "teaching", "teacher", "pedagogy", "educational"],
+
+  teacher: ["education", "teaching", "teacher", "pedagogy", "educational"],
+
+  // ==========================================================
+  // LANGUAGE
+  // ==========================================================
+
+  english: [
+    "english",
+    "english studies",
+    "english language",
+    "english literature",
+    "linguistics",
+    "language",
+  ],
+
+  language: [
+    "language",
+    "linguistics",
+    "english",
+    "foreign language",
+    "languages",
+  ],
+
+  // ==========================================================
+  // ARCHITECTURE
+  // ==========================================================
+
+  architecture: [
+    "architecture",
+    "architectural",
+    "architect",
+    "building design",
+    "design",
+  ],
+
+  // ==========================================================
+  // AGRICULTURE
+  // ==========================================================
+
+  agriculture: [
+    "agriculture",
+    "agricultural",
+    "farming",
+    "crop science",
+    "animal science",
+  ],
+};
+
+// ============================================================
+// NORMALIZE TEXT
+// ============================================================
+
+function normalizeText(value: string | null | undefined): string {
+  return (value || "")
+    .toLowerCase()
+    .replace(/[()[\]{}]/g, " ")
+    .replace(/[.,:;!?]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// ============================================================
+// GET KEYWORDS
+//
+// IMPORTANT:
+//
+// Admin:
+// code = programming
+// name = Programming
+//
+// We use CODE first.
+//
+// This fixes:
+//
+// getKeywords("programming Programming")
+//
+// which previously failed to find
+// KEYWORD_GROUPS["programming"].
+//
+// Now:
+// getKeywords("programming")
+// correctly gets all programming keywords.
+// ============================================================
+
+function getKeywords(value: string): string[] {
+  const normalized = normalizeText(value);
+
+  if (!normalized) {
+    return [];
+  }
+
+  const keywords = new Set<string>();
+
+  // ----------------------------------------------------------
+  // Exact full value
+  // ----------------------------------------------------------
+
+  keywords.add(normalized);
+
+  // ----------------------------------------------------------
+  // Exact group
+  // ----------------------------------------------------------
+
+  const exactGroup = KEYWORD_GROUPS[normalized];
+
+  if (exactGroup) {
+    exactGroup.forEach((keyword) => {
+      keywords.add(normalizeText(keyword));
+    });
+  }
+
+  // ----------------------------------------------------------
+  // Individual words
+  // ----------------------------------------------------------
+
+  const parts = normalized
+    .split(/[\s/_,-]+/)
+    .filter((word) => word.length >= 2);
+
+  for (const part of parts) {
+    keywords.add(part);
+
+    const group = KEYWORD_GROUPS[part];
+
+    if (group) {
+      group.forEach((keyword) => {
+        keywords.add(normalizeText(keyword));
+      });
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Check known groups inside the value
+  // ----------------------------------------------------------
+
+  for (const key of Object.keys(KEYWORD_GROUPS)) {
+    if (
+      normalized === key ||
+      normalized.startsWith(`${key} `) ||
+      normalized.includes(` ${key} `)
+    ) {
+      KEYWORD_GROUPS[key].forEach((keyword) => {
+        keywords.add(normalizeText(keyword));
+      });
+    }
+  }
+
+  return Array.from(keywords).filter(Boolean);
+}
+
+// ============================================================
+// CHECK MATCH
+// ============================================================
+
+function keywordMatchesText(
+  keywords: string[],
+  universityText: string,
+): string | null {
+  for (const keyword of keywords) {
+    const normalizedKeyword = normalizeText(keyword);
+
+    if (!normalizedKeyword) {
+      continue;
+    }
+
+    if (universityText.includes(normalizedKeyword)) {
+      return keyword;
+    }
+  }
+
+  return null;
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
 export default function InterestGuide() {
+  // ==========================================================
+  // DATA
+  // ==========================================================
+
   const [options, setOptions] = useState<Option[]>([]);
 
-  const [universities, setUniversities] = useState<University[]>([]);
+  const [universities, setUniversities] = useState<University[]>(
+    universitiesCache || [],
+  );
+
+  // ==========================================================
+  // FORM
+  // ==========================================================
 
   const [education, setEducation] = useState("");
 
@@ -77,27 +603,36 @@ export default function InterestGuide() {
 
   const [interests, setInterests] = useState<string[]>([]);
 
-  const [subject, setSubject] = useState("");
-
   const [career, setCareer] = useState("");
+
+  // ==========================================================
+  // RESULTS
+  // ==========================================================
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
-  const [loading, setLoading] = useState(true);
-
   const [submitted, setSubmitted] = useState(false);
 
-  // ============================================================
-  // IMPORTANT
-  // Prevent auto-save from overwriting saved data
-  // before restore is completed.
-  // ============================================================
+  // ==========================================================
+  // LOADING
+  // ==========================================================
+
+  const [loading, setLoading] = useState(true);
+
+  const [universitiesLoading, setUniversitiesLoading] =
+    useState(!universitiesCache);
+
+  const [universitiesError, setUniversitiesError] = useState(false);
+
+  // ==========================================================
+  // RESTORE CONTROL
+  // ==========================================================
 
   const restoredRef = useRef(false);
 
-  // ============================================================
-  // RESTORE PREVIOUSLY SELECTED DATA + RESULTS
-  // ============================================================
+  // ==========================================================
+  // RESTORE SAVED DATA
+  // ==========================================================
 
   useEffect(() => {
     try {
@@ -106,27 +641,18 @@ export default function InterestGuide() {
       if (savedData) {
         const data: Partial<SavedInterestGuideData> = JSON.parse(savedData);
 
-        // Restore education
         setEducation(data.education || "");
 
-        // Restore English level
         setEnglishLevel(data.englishLevel || "");
 
-        // Restore interests
         setInterests(Array.isArray(data.interests) ? data.interests : []);
 
-        // Restore subject
-        setSubject(data.subject || "");
-
-        // Restore career
         setCareer(data.career || "");
 
-        // Restore recommendation results
         setRecommendations(
           Array.isArray(data.recommendations) ? data.recommendations : [],
         );
 
-        // Restore submitted state
         setSubmitted(data.submitted === true);
       }
     } catch (error) {
@@ -138,12 +664,11 @@ export default function InterestGuide() {
     }
   }, []);
 
-  // ============================================================
-  // AUTO SAVE FORM + RESULTS
-  // ============================================================
+  // ==========================================================
+  // AUTO SAVE
+  // ==========================================================
 
   useEffect(() => {
-    // Do not save before restore is completed.
     if (!restoredRef.current) {
       return;
     }
@@ -152,92 +677,153 @@ export default function InterestGuide() {
       education,
       englishLevel,
       interests,
-      subject,
       career,
       recommendations,
       submitted,
     };
 
     sessionStorage.setItem(INTEREST_GUIDE_STORAGE_KEY, JSON.stringify(data));
-  }, [
-    education,
-    englishLevel,
-    interests,
-    subject,
-    career,
-    recommendations,
-    submitted,
-  ]);
+  }, [education, englishLevel, interests, career, recommendations, submitted]);
 
-  // ============================================================
-  // LOAD OPTIONS + UNIVERSITIES
-  // ============================================================
+  // ==========================================================
+  // LOAD OPTIONS
+  // ==========================================================
 
   useEffect(() => {
-    const loadData = async () => {
+    let cancelled = false;
+
+    const loadOptions = async () => {
       try {
-        const [optionsResponse, universitiesResponse] = await Promise.all([
-          fetch("/api/interest-guide/options"),
-          fetch("/api/universities?limit=1000"),
-        ]);
+        setLoading(true);
 
-        if (!optionsResponse.ok) {
-          throw new Error("Failed to load options");
+        const response = await fetch("/api/interest-guide/options");
+
+        if (!response.ok) {
+          throw new Error("Failed to load interest guide options");
         }
 
-        if (!universitiesResponse.ok) {
-          throw new Error("Failed to load universities");
+        const data: Option[] = await response.json();
+
+        if (!cancelled) {
+          setOptions(data);
         }
-
-        const optionsData = await optionsResponse.json();
-
-        const universitiesData = await universitiesResponse.json();
-
-        setOptions(optionsData);
-
-        setUniversities(universitiesData.universities || universitiesData);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load interest guide options:", error);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    loadData();
+    loadOptions();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // ============================================================
+  // ==========================================================
+  // LOAD UNIVERSITIES
+  // ==========================================================
+
+  useEffect(() => {
+    if (universitiesCache) {
+      setUniversities(universitiesCache);
+      setUniversitiesLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadUniversities = async () => {
+      try {
+        setUniversitiesLoading(true);
+        setUniversitiesError(false);
+
+        const response = await fetch("/api/universities?limit=1000");
+
+        if (!response.ok) {
+          throw new Error("Failed to load universities");
+        }
+
+        const data = await response.json();
+
+        const universityList: University[] = data.universities || data;
+
+        if (!cancelled) {
+          universitiesCache = universityList;
+
+          setUniversities(universityList);
+        }
+      } catch (error) {
+        console.error("Failed to load universities:", error);
+
+        if (!cancelled) {
+          setUniversitiesError(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setUniversitiesLoading(false);
+        }
+      }
+    };
+
+    loadUniversities();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ==========================================================
   // CATEGORY OPTIONS
-  // ============================================================
+  // ==========================================================
 
   const educationOptions = useMemo(
-    () => options.filter((item) => item.category === "education"),
+    () =>
+      options
+        .filter((item) => item.category === "education")
+        .sort((a, b) => a.displayOrder - b.displayOrder),
     [options],
   );
 
   const englishOptions = useMemo(
-    () => options.filter((item) => item.category === "english_levels"),
+    () =>
+      options
+        .filter((item) => item.category === "english_levels")
+        .sort((a, b) => a.displayOrder - b.displayOrder),
     [options],
   );
 
   const interestOptions = useMemo(
-    () => options.filter((item) => item.category === "interests"),
-    [options],
-  );
-
-  const subjectOptions = useMemo(
-    () => options.filter((item) => item.category === "subjects"),
+    () =>
+      options
+        .filter((item) => item.category === "interests")
+        .sort((a, b) => a.displayOrder - b.displayOrder),
     [options],
   );
 
   const careerOptions = useMemo(
-    () => options.filter((item) => item.category === "careers"),
+    () =>
+      options
+        .filter((item) => item.category === "careers")
+        .sort((a, b) => a.displayOrder - b.displayOrder),
     [options],
   );
 
-  // ============================================================
+  // ==========================================================
+  // CLEAR PREVIOUS RESULTS
+  // ==========================================================
+
+  const clearPreviousResults = () => {
+    setRecommendations([]);
+    setSubmitted(false);
+  };
+
+  // ==========================================================
   // TOGGLE INTEREST
-  // ============================================================
+  // ==========================================================
 
   const toggleInterest = (code: string) => {
     setInterests((current) =>
@@ -245,142 +831,290 @@ export default function InterestGuide() {
         ? current.filter((item) => item !== code)
         : [...current, code],
     );
+
     clearPreviousResults();
   };
 
-  const clearPreviousResults = () => {
-    setRecommendations([]);
-    setSubmitted(false);
-  };
-
-  // ============================================================
+  // ==========================================================
   // CALCULATE RECOMMENDATIONS
-  // ============================================================
+  //
+  // SCORE:
+  //
+  // Interest = 50%
+  // Career  = 50%
+  //
+  // Education = NOT USED
+  // English   = NOT USED
+  //
+  // Example:
+  //
+  // Programming -> Computer Science
+  // Programmer  -> Computer Science
+  //
+  // Interest = 50
+  // Career = 50
+  // Total = 100%
+  // ==========================================================
 
   const calculateRecommendations = () => {
-    const results: Recommendation[] = universities.map((university) => {
-      let score = 0;
+    if (universitiesLoading) {
+      return;
+    }
 
-      const reasons: string[] = [];
+    if (universitiesError) {
+      return;
+    }
 
-      const universityText = `
-          ${university.name}
-          ${university.nameEn}
-          ${university.description || ""}
-          ${university.majors
-            .map((major) => `${major.name} ${major.nameEn}`)
-            .join(" ")}
-        `.toLowerCase();
+    if (universities.length === 0) {
+      setRecommendations([]);
+      setSubmitted(true);
+      return;
+    }
 
-      const selectedInterestNames = interestOptions
-        .filter((option) => interests.includes(option.code))
-        .map((option) => option.name.toLowerCase());
+    // ========================================================
+    // SELECTED INTERESTS
+    //
+    // IMPORTANT:
+    //
+    // Use option.code only.
+    //
+    // programming
+    // programmer
+    // painting
+    // law
+    //
+    // will correctly find KEYWORD_GROUPS.
+    // ========================================================
 
-      const selectedSubjectName =
-        subjectOptions
-          .find((option) => option.code === subject)
-          ?.name.toLowerCase() || "";
+    const selectedInterests = interestOptions
+      .filter((option) => interests.includes(option.code))
+      .map((option) => ({
+        code: option.code,
+        name: option.name,
+        keywords: getKeywords(option.code),
+      }));
 
-      const selectedCareerName =
-        careerOptions
-          .find((option) => option.code === career)
-          ?.name.toLowerCase() || "";
+    // ========================================================
+    // SELECTED CAREER
+    // ========================================================
+
+    const selectedCareer = careerOptions.find(
+      (option) => option.code === career,
+    );
+
+    const careerKeywords = selectedCareer
+      ? getKeywords(selectedCareer.code)
+      : [];
+
+    // ========================================================
+    // DEBUG
+    //
+    // Check browser console.
+    //
+    // Example:
+    //
+    // Selected interest:
+    // programming
+    //
+    // Keywords:
+    // programming
+    // computer science
+    // software engineering
+    // information technology
+    // ...
+    // ========================================================
+
+    console.log("Interest Guide - Selected Interests:", selectedInterests);
+
+    console.log("Interest Guide - Selected Career:", selectedCareer);
+
+    console.log("Interest Guide - Career Keywords:", careerKeywords);
+
+    // ========================================================
+    // RESULTS
+    // ========================================================
+
+    const results: Recommendation[] = [];
+
+    for (const university of universities) {
+      // ======================================================
+      // BUILD SEARCHABLE UNIVERSITY TEXT
+      // ======================================================
+
+      const universityText = normalizeText(
+        [
+          university.name,
+          university.nameEn,
+          university.description || "",
+          university.type,
+          university.state,
+          university.city || "",
+
+          ...(university.majors || []).flatMap((major) => [
+            major.name || "",
+            major.nameEn || "",
+            major.description || "",
+          ]),
+        ].join(" "),
+      );
 
       // ======================================================
       // INTEREST MATCH
       // ======================================================
 
-      for (const interest of selectedInterestNames) {
-        const words = interest
-          .split(/[\s/,&-]+/)
-          .filter((word) => word.length >= 4);
+      const matchedInterests: string[] = [];
 
-        if (words.some((word) => universityText.includes(word))) {
-          score += 12;
+      for (const interest of selectedInterests) {
+        const matchedKeyword = keywordMatchesText(
+          interest.keywords,
+          universityText,
+        );
 
-          reasons.push(`Interest match: ${interest}`);
-
-          break;
+        if (matchedKeyword) {
+          matchedInterests.push(interest.name);
         }
-      }
-
-      // ======================================================
-      // SUBJECT MATCH
-      // ======================================================
-
-      if (selectedSubjectName && universityText.includes(selectedSubjectName)) {
-        score += 18;
-
-        reasons.push(`Subject match: ${selectedSubjectName}`);
       }
 
       // ======================================================
       // CAREER MATCH
       // ======================================================
 
-      if (selectedCareerName && universityText.includes(selectedCareerName)) {
-        score += 25;
+      let careerMatched = false;
 
-        reasons.push(`Career match: ${selectedCareerName}`);
+      if (selectedCareer && careerKeywords.length > 0) {
+        const matchedCareer = keywordMatchesText(
+          careerKeywords,
+          universityText,
+        );
+
+        careerMatched = Boolean(matchedCareer);
       }
 
       // ======================================================
-      // MIN SCORE
+      // INTEREST SCORE
+      //
+      // Maximum = 50
+      //
+      // Example:
+      //
+      // 1 interest selected
+      // matched = 1
+      //
+      // 1 / 1 * 50 = 50
+      //
+      // 2 interests selected
+      // matched = 1
+      //
+      // 1 / 2 * 50 = 25
       // ======================================================
 
-      if (university.minScore <= 400) {
-        score += 5;
+      let interestScore = 0;
+
+      if (selectedInterests.length > 0) {
+        const interestRatio =
+          matchedInterests.length / selectedInterests.length;
+
+        interestScore = Math.round(interestRatio * 50);
       }
 
       // ======================================================
-      // EDUCATION
+      // CAREER SCORE
+      //
+      // Maximum = 50
       // ======================================================
 
-      if (education) {
-        score += 5;
+      const careerScore = careerMatched ? 50 : 0;
 
-        reasons.push("Suitable for your education level");
+      // ======================================================
+      // FINAL SCORE
+      // ======================================================
+
+      const score = interestScore + careerScore;
+
+      // ======================================================
+      // DO NOT SHOW 0%
+      // ======================================================
+
+      if (score <= 0) {
+        continue;
       }
 
       // ======================================================
-      // ENGLISH LEVEL
+      // REASONS
       // ======================================================
 
-      if (englishLevel) {
-        score += 5;
+      const reasons: string[] = [];
 
-        reasons.push("English level considered");
+      for (const interestName of matchedInterests) {
+        reasons.push(`Interest match: ${interestName}`);
       }
 
-      return {
+      if (careerMatched && selectedCareer) {
+        reasons.push(`Career match: ${selectedCareer.name}`);
+      }
+
+      if (matchedInterests.length > 0 && careerMatched) {
+        reasons.push(
+          "Strong match: your interest and career goal both match this university's programs.",
+        );
+      }
+
+      // ======================================================
+      // ADD RESULT
+      // ======================================================
+
+      results.push({
         university,
-        score: Math.min(score, 100),
+        score,
         reasons,
-      };
+      });
+    }
+
+    // ========================================================
+    // SORT
+    //
+    // Highest score first.
+    //
+    // Therefore:
+    //
+    // Programming + Programmer
+    //
+    // Computer Science University
+    //     100%
+    //
+    // Law University
+    //     0% -> removed
+    //
+    // English University
+    //     0% -> removed
+    // ========================================================
+
+    results.sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+
+      return a.university.name.localeCompare(b.university.name);
     });
 
-    // Sort highest score first
-    results.sort((a, b) => b.score - a.score);
+    // ========================================================
+    // TOP 30
+    // ========================================================
 
-    // Keep top 10
-    const topResults = results.slice(0, 10);
+    const topResults = results.slice(0, 30);
 
-    // Set result
     setRecommendations(topResults);
 
-    // Show result section
     setSubmitted(true);
 
     // ========================================================
-    // IMPORTANT
-    // Save result immediately
+    // SAVE SESSION
     // ========================================================
 
     const data: SavedInterestGuideData = {
       education,
       englishLevel,
       interests,
-      subject,
       career,
       recommendations: topResults,
       submitted: true,
@@ -389,75 +1123,75 @@ export default function InterestGuide() {
     sessionStorage.setItem(INTEREST_GUIDE_STORAGE_KEY, JSON.stringify(data));
   };
 
-  // ============================================================
-  // SUBMIT VALIDATION
-  // ============================================================
+  // ==========================================================
+  // VALIDATION
+  //
+  // Education + English are required for form submission,
+  // but NOT used for university score.
+  // ==========================================================
 
   const canSubmit =
-    education && englishLevel && interests.length > 0 && subject && career;
+    Boolean(education) &&
+    Boolean(englishLevel) &&
+    interests.length > 0 &&
+    Boolean(career);
 
-  // ============================================================
-  // CLEAR ALL DATA
-  // ============================================================
+  // ==========================================================
+  // CLEAR ALL
+  // ==========================================================
 
   const clearInterestGuideData = () => {
-    // Clear form
     setEducation("");
-
     setEnglishLevel("");
-
     setInterests([]);
-
-    setSubject("");
-
     setCareer("");
-
-    // Clear recommendations
     setRecommendations([]);
-
-    // Hide results
     setSubmitted(false);
 
-    // Remove storage
     sessionStorage.removeItem(INTEREST_GUIDE_STORAGE_KEY);
   };
 
-  // ============================================================
+  // ==========================================================
   // LOADING
-  // ============================================================
+  // ==========================================================
 
   if (loading) {
     return (
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center">
-          Loading...
+          <div className="text-center">
+            <div className="text-lg font-medium">Loading Interest Guide...</div>
+
+            <p className="mt-2 text-sm text-muted-foreground">Please wait...</p>
+          </div>
         </div>
       </Layout>
     );
   }
 
-  // ============================================================
+  // ==========================================================
   // UI
-  // ============================================================
+  // ==========================================================
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto w-full px-4 py-10 space-y-8">
-        {/* ======================================================
+        {/* ====================================================
             HEADER
-        ======================================================= */}
+        ===================================================== */}
 
         <div className="text-center">
           <h1 className="text-3xl md:text-4xl font-bold">Interest Guide</h1>
 
           <p className="text-muted-foreground mt-2">
-            ဖြေဆိုပြီး သင့်အတွက် သင့်တော်နိုင်သော Universities တွေကို ရှာဖွေပါ။
+            သင့်ဝါသနာနဲ့ Career Goal အပေါ်မူတည်ပြီး သင့်အတွက် သင့်တော်နိုင်တဲ့
+            Universities တွေကို ရှာဖွေပါ။
           </p>
         </div>
 
-        {/* ======================================================
+        {/* ====================================================
             FORM
-        ======================================================= */}
+        ===================================================== */}
 
         <Card>
           <CardHeader>
@@ -494,7 +1228,7 @@ export default function InterestGuide() {
             </div>
 
             {/* ==================================================
-                ENGLISH LEVEL
+                ENGLISH
             =================================================== */}
 
             <div>
@@ -522,7 +1256,7 @@ export default function InterestGuide() {
             </div>
 
             {/* ==================================================
-                INTERESTS
+                INTEREST
             =================================================== */}
 
             <div>
@@ -532,7 +1266,12 @@ export default function InterestGuide() {
                 {interestOptions.map((option) => (
                   <label
                     key={option.id}
-                    className="flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-muted"
+                    className="
+                        flex items-center gap-3
+                        border rounded-lg p-3
+                        cursor-pointer
+                        hover:bg-muted
+                      "
                   >
                     <Checkbox
                       checked={interests.includes(option.code)}
@@ -543,34 +1282,6 @@ export default function InterestGuide() {
                   </label>
                 ))}
               </div>
-            </div>
-
-            {/* ==================================================
-                SUBJECT
-            =================================================== */}
-
-            <div>
-              <label className="text-sm font-medium">အကြိုက်ဆုံးဘာသာရပ်</label>
-
-              <Select
-                value={subject}
-                onValueChange={(value) => {
-                  setSubject(value);
-                  clearPreviousResults();
-                }}
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="ဘာသာရပ်ရွေးပါ" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {subjectOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.code}>
-                      {option.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* ==================================================
@@ -602,6 +1313,36 @@ export default function InterestGuide() {
             </div>
 
             {/* ==================================================
+                LOADING
+            =================================================== */}
+
+            {universitiesLoading && (
+              <div className="rounded-lg border bg-muted/40 px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  Universities are loading...
+                </p>
+
+                <p className="text-xs text-muted-foreground mt-1">
+                  You can fill in your information while universities are
+                  loading.
+                </p>
+              </div>
+            )}
+
+            {/* ==================================================
+                ERROR
+            =================================================== */}
+
+            {universitiesError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <p className="text-sm text-destructive">
+                  Failed to load universities. Please refresh the page and try
+                  again.
+                </p>
+              </div>
+            )}
+
+            {/* ==================================================
                 BUTTONS
             =================================================== */}
 
@@ -609,10 +1350,14 @@ export default function InterestGuide() {
               <Button
                 className="flex-1"
                 size="lg"
-                disabled={!canSubmit}
+                disabled={
+                  !canSubmit || universitiesLoading || universitiesError
+                }
                 onClick={calculateRecommendations}
               >
-                Find Suitable Universities
+                {universitiesLoading
+                  ? "Loading Universities..."
+                  : "Find Suitable Universities"}
               </Button>
 
               <Button
@@ -627,9 +1372,9 @@ export default function InterestGuide() {
           </CardContent>
         </Card>
 
-        {/* ======================================================
+        {/* ====================================================
             RECOMMENDATIONS
-        ======================================================= */}
+        ===================================================== */}
 
         {submitted && (
           <Card>
@@ -639,17 +1384,30 @@ export default function InterestGuide() {
 
             <CardContent>
               {recommendations.length === 0 ? (
-                <p className="text-muted-foreground">No universities found.</p>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    သင့် Interest နဲ့ Career Goal နဲ့ ကိုက်ညီတဲ့ University
+                    မတွေ့ပါ။
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {recommendations.map((item, index) => (
                     <div
                       key={item.university.id}
-                      className="border rounded-xl p-5"
+                      className="
+                          border rounded-xl p-5
+                          hover:shadow-sm
+                          transition
+                        "
                     >
+                      {/* ========================================
+                            TOP
+                        ========================================= */}
+
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Badge>#{index + 1}</Badge>
 
                             <Badge variant="secondary">
@@ -667,23 +1425,70 @@ export default function InterestGuide() {
                         </div>
                       </div>
 
+                      {/* ========================================
+                            DESCRIPTION
+                        ========================================= */}
+
                       {item.university.description && (
                         <p className="mt-3 text-sm">
                           {item.university.description}
                         </p>
                       )}
 
+                      {/* ========================================
+                            MAJORS
+                        ========================================= */}
+
+                      {item.university.majors?.length > 0 && (
+                        <div className="mt-4">
+                          <p className="font-medium">Available Programs:</p>
+
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {item.university.majors
+                              .slice(0, 10)
+                              .map((major) => (
+                                <Badge key={major.id} variant="outline">
+                                  {major.nameEn || major.name}
+                                </Badge>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ========================================
+                            MATCH REASONS
+                        ========================================= */}
+
                       {item.reasons.length > 0 && (
                         <div className="mt-4">
-                          <p className="font-medium">Why this may suit you:</p>
+                          <p className="font-medium">
+                            Why this university matches:
+                          </p>
 
-                          <ul className="list-disc ml-5 text-sm text-muted-foreground mt-1">
-                            {item.reasons.slice(0, 3).map((reason) => (
-                              <li key={reason}>{reason}</li>
-                            ))}
+                          <ul
+                            className="
+                                list-disc
+                                ml-5
+                                text-sm
+                                text-muted-foreground
+                                mt-1
+                                space-y-1
+                              "
+                          >
+                            {item.reasons
+                              .slice(0, 4)
+                              .map((reason, reasonIndex) => (
+                                <li key={`${reason}-${reasonIndex}`}>
+                                  {reason}
+                                </li>
+                              ))}
                           </ul>
                         </div>
                       )}
+
+                      {/* ========================================
+                            VIEW UNIVERSITY
+                        ========================================= */}
 
                       <div className="mt-4">
                         <Button asChild variant="outline">

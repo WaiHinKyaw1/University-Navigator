@@ -121,19 +121,44 @@ export function Layout({
      }`;
 
   // ============================================================
-  // CHECK MORE MENU ACTIVE
+  // ACTIVE ROUTES
   // ============================================================
 
-  const isMoreActive =
-    location === "/news" ||
-    location.startsWith("/news/") ||
-    location === "/chatbot" ||
-    location.startsWith("/chatbot/") ||
-    location === "/chat" ||
-    location.startsWith("/chat/");
+  const isNewsActive = location === "/news" || location.startsWith("/news/");
+
+  const isAdmissionActive =
+    location === "/admission-guide" || location.startsWith("/admission-guide/");
+
+  const isChatbotActive =
+    location === "/chatbot" || location.startsWith("/chatbot/");
+
+  /*
+   * IMPORTANT:
+   *
+   * Do NOT use:
+   *
+   * location.startsWith("/chat")
+   *
+   * because "/chatbot" also starts with "/chat".
+   *
+   * Instead use exact /chat or /chat/...
+   */
+  const isPeerChatActive =
+    location === "/chat" || location.startsWith("/chat/");
+
+  // More button should be active only when
+  // the current page belongs to one of the More items.
+  const isMoreActive = isAdmissionActive || isChatbotActive || isPeerChatActive;
 
   // ============================================================
   // DESKTOP MAIN NAVIGATION
+  //
+  // Universities
+  // Compare
+  // Score Calculator
+  // Interest Guide
+  // News
+  // More
   // ============================================================
 
   const MainNavLinks = () => (
@@ -165,18 +190,20 @@ export function Layout({
         Interest Guide
       </Link>
 
-      {/* Admission */}
-      <Link
-        href="/admission-guide"
-        className={navItemClass(location === "/admission-guide")}
-      >
-        Admission Info
+      {/* News */}
+      <Link href="/news" className={navItemClass(isNewsActive)}>
+        <Newspaper className="h-3.5 w-3.5" />
+        News
       </Link>
     </>
   );
 
   // ============================================================
   // MORE MENU
+  //
+  // Admission Info
+  // Chatbot Advisor
+  // Peer Chat
   // ============================================================
 
   const MoreMenu = () => (
@@ -187,49 +214,66 @@ export function Layout({
         <span>More</span>
 
         <ChevronDown
-          className="h-3.5 w-3.5 transition-transform duration-200
-          group-data-[state=open]:rotate-180"
+          className="
+            h-3.5 w-3.5
+            transition-transform duration-200
+            group-data-[state=open]:rotate-180
+          "
         />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="start"
         sideOffset={8}
-        className="w-56 rounded-xl border border-border/60 bg-background/95 p-1.5 shadow-lg backdrop-blur-md"
+        className="
+          w-56
+          rounded-xl
+          border border-border/60
+          bg-background/95
+          p-1.5
+          shadow-lg
+          backdrop-blur-md
+        "
       >
-        {/* News */}
+        {/* ====================================================
+            ADMISSION INFO
+        ===================================================== */}
+
         <DropdownMenuItem asChild className="cursor-pointer rounded-lg">
           <Link
-            href="/news"
+            href="/admission-guide"
             className={`flex w-full items-center gap-3 px-3 py-2.5 ${
-              location.startsWith("/news") ? "bg-primary/10 text-primary" : ""
+              isAdmissionActive ? "bg-primary/10 text-primary" : ""
             }`}
           >
-            <Newspaper className="h-4 w-4" />
+            <GraduationCap className="h-4 w-4" />
 
             <div className="flex flex-col">
-              <span className="font-medium">News</span>
+              <span className="font-medium">Admission Info</span>
+
               <span className="text-xs text-muted-foreground">
-                Latest university news
+                University admission information
               </span>
             </div>
           </Link>
         </DropdownMenuItem>
 
-        {/* Chatbot */}
+        {/* ====================================================
+            CHATBOT ADVISOR
+        ===================================================== */}
+
         <DropdownMenuItem asChild className="cursor-pointer rounded-lg">
           <Link
             href="/chatbot"
             className={`flex w-full items-center gap-3 px-3 py-2.5 ${
-              location.startsWith("/chatbot")
-                ? "bg-primary/10 text-primary"
-                : ""
+              isChatbotActive ? "bg-primary/10 text-primary" : ""
             }`}
           >
             <Bot className="h-4 w-4" />
 
             <div className="flex flex-col">
               <span className="font-medium">Chatbot Advisor</span>
+
               <span className="text-xs text-muted-foreground">
                 Ask about universities
               </span>
@@ -237,19 +281,23 @@ export function Layout({
           </Link>
         </DropdownMenuItem>
 
-        {/* Peer Chat */}
+        {/* ====================================================
+            PEER CHAT
+        ===================================================== */}
+
         {user && (
           <DropdownMenuItem asChild className="cursor-pointer rounded-lg">
             <Link
               href="/chat"
               className={`flex w-full items-center gap-3 px-3 py-2.5 ${
-                location.startsWith("/chat") ? "bg-primary/10 text-primary" : ""
+                isPeerChatActive ? "bg-primary/10 text-primary" : ""
               }`}
             >
               <MessageCircle className="h-4 w-4" />
 
               <div className="flex flex-col">
                 <span className="font-medium">Peer Chat</span>
+
                 <span className="text-xs text-muted-foreground">
                   Chat with other students
                 </span>
@@ -269,10 +317,23 @@ export function Layout({
 
   // ============================================================
   // MOBILE NAVIGATION
+  //
+  // Main:
+  // Universities
+  // Compare
+  // Score Calculator
+  // Interest Guide
+  // News
+  //
+  // More:
+  // Admission Info
+  // Chatbot Advisor
+  // Peer Chat
   // ============================================================
 
   const MobileNavLinks = () => (
     <div className="flex flex-col gap-1">
+      {/* Universities */}
       <Link
         href="/universities"
         className={navItemClass(location.startsWith("/universities"))}
@@ -280,15 +341,18 @@ export function Layout({
         Universities
       </Link>
 
+      {/* Compare */}
       <Link href="/compare" className={navItemClass(location === "/compare")}>
         <GitCompareArrows className="h-4 w-4" />
         Compare
       </Link>
 
+      {/* Score Calculator */}
       <Link href="/score" className={navItemClass(location === "/score")}>
         Score Calculator
       </Link>
 
+      {/* Interest Guide */}
       <Link
         href="/interest-guide"
         className={navItemClass(location === "/interest-guide")}
@@ -296,37 +360,34 @@ export function Layout({
         Interest Guide
       </Link>
 
-      <Link
-        href="/admission-guide"
-        className={navItemClass(location === "/admission-guide")}
-      >
-        Admission Info
-      </Link>
-
-      <div className="my-2 border-t border-border/60" />
-
-      <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        More
-      </div>
-
-      <Link href="/news" className={navItemClass(location.startsWith("/news"))}>
+      {/* News */}
+      <Link href="/news" className={navItemClass(isNewsActive)}>
         <Newspaper className="h-4 w-4" />
         News
       </Link>
 
-      <Link
-        href="/chatbot"
-        className={navItemClass(location.startsWith("/chatbot"))}
-      >
+      <div className="my-2 border-t border-border/60" />
+
+      {/* More */}
+      <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        More
+      </div>
+
+      {/* Admission Info */}
+      <Link href="/admission-guide" className={navItemClass(isAdmissionActive)}>
+        <GraduationCap className="h-4 w-4" />
+        Admission Info
+      </Link>
+
+      {/* Chatbot Advisor */}
+      <Link href="/chatbot" className={navItemClass(isChatbotActive)}>
         <Bot className="h-4 w-4" />
         Chatbot Advisor
       </Link>
 
+      {/* Peer Chat */}
       {user && (
-        <Link
-          href="/chat"
-          className={navItemClass(location.startsWith("/chat"))}
-        >
+        <Link href="/chat" className={navItemClass(isPeerChatActive)}>
           <MessageCircle className="h-4 w-4" />
           Peer Chat
         </Link>
@@ -383,7 +444,8 @@ export function Layout({
                 className="
                   inline-block max-w-[10rem]
                   truncate font-bold text-base
-                  text-primary sm:max-w-[14rem] sm:text-xl
+                  text-primary
+                  sm:max-w-[14rem] sm:text-xl
                 "
               >
                 {projectName}
@@ -405,7 +467,6 @@ export function Layout({
           ===================================================== */}
 
           <div className="flex shrink-0 items-center gap-2 md:gap-3">
-            {/* Desktop */}
             {/* Desktop User Menu */}
             <div className="hidden items-center md:flex">
               {user ? (
@@ -413,17 +474,17 @@ export function Layout({
                   <DropdownMenuTrigger asChild>
                     <button
                       className="
-            flex items-center gap-2
-            rounded-full
-            border border-transparent
-            px-2 py-1.5
-            outline-none
-            transition-all duration-200
-            hover:border-primary/20
-            hover:bg-primary/5
-            focus:ring-2
-            focus:ring-primary/20
-          "
+                        flex items-center gap-2
+                        rounded-full
+                        border border-transparent
+                        px-2 py-1.5
+                        outline-none
+                        transition-all duration-200
+                        hover:border-primary/20
+                        hover:bg-primary/5
+                        focus:ring-2
+                        focus:ring-primary/20
+                      "
                     >
                       <img
                         src={user.avatarUrl || "/default-avatar.png"}
@@ -504,10 +565,10 @@ export function Layout({
                       onClick={handleLogout}
                       disabled={logoutMutation.isPending}
                       className="
-            cursor-pointer
-            text-destructive
-            focus:text-destructive
-          "
+                        cursor-pointer
+                        text-destructive
+                        focus:text-destructive
+                      "
                     >
                       <LogOut className="mr-2 h-4 w-4" />
 
@@ -780,17 +841,17 @@ export function Layout({
               </Link>
 
               <Link
-                href="/chatbot"
-                className="transition-colors hover:text-foreground"
-              >
-                Chatbot Advisor
-              </Link>
-
-              <Link
                 href="/admission-guide"
                 className="transition-colors hover:text-foreground"
               >
                 Admission Info
+              </Link>
+
+              <Link
+                href="/chatbot"
+                className="transition-colors hover:text-foreground"
+              >
+                Chatbot Advisor
               </Link>
             </div>
           </div>

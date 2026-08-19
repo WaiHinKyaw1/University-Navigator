@@ -24,14 +24,24 @@ type InterestGuideOption = {
   updatedAt: string;
 };
 
+/**
+ * ============================================================
+ * INTEREST GUIDE CATEGORIES
+ * ============================================================
+ *
+ * Subject category has been removed.
+ *
+ * Interest Guide now uses:
+ *
+ * 1. Interests
+ * 2. Career Goal
+ * 3. Education
+ * 4. English Level
+ */
 const categories = [
   {
     value: "interests",
     label: "ဝါသနာ / Interests",
-  },
-  {
-    value: "subjects",
-    label: "အကြိုက်ဆုံးဘာသာရပ် / Subjects",
   },
   {
     value: "careers",
@@ -57,16 +67,37 @@ const EMPTY_FORM = {
 };
 
 export default function AdminInterestGuideOptions() {
+  // ============================================================
+  // DATA
+  // ============================================================
+
   const [options, setOptions] = useState<InterestGuideOption[]>([]);
 
+  // ============================================================
+  // FORM
+  // ============================================================
+
   const [category, setCategory] = useState(EMPTY_FORM.category);
+
   const [code, setCode] = useState(EMPTY_FORM.code);
+
   const [name, setName] = useState(EMPTY_FORM.name);
+
   const [description, setDescription] = useState(EMPTY_FORM.description);
+
   const [displayOrder, setDisplayOrder] = useState(EMPTY_FORM.displayOrder);
+
   const [isActive, setIsActive] = useState(EMPTY_FORM.isActive);
 
+  // ============================================================
+  // EDIT
+  // ============================================================
+
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   const [loading, setLoading] = useState(false);
 
@@ -86,9 +117,6 @@ export default function AdminInterestGuideOptions() {
     switch (value) {
       case "interests":
         return "e.g. programming";
-
-      case "subjects":
-        return "e.g. english";
 
       case "careers":
         return "e.g. programmer";
@@ -113,9 +141,6 @@ export default function AdminInterestGuideOptions() {
       case "interests":
         return "e.g. Programming";
 
-      case "subjects":
-        return "e.g. English";
-
       case "careers":
         return "e.g. Programmer";
 
@@ -139,9 +164,6 @@ export default function AdminInterestGuideOptions() {
       case "interests":
         return "Describe this interest";
 
-      case "subjects":
-        return "Describe this subject";
-
       case "careers":
         return "Describe this career goal";
 
@@ -162,11 +184,17 @@ export default function AdminInterestGuideOptions() {
 
   const resetForm = () => {
     setCategory(EMPTY_FORM.category);
+
     setCode(EMPTY_FORM.code);
+
     setName(EMPTY_FORM.name);
+
     setDescription(EMPTY_FORM.description);
+
     setDisplayOrder(EMPTY_FORM.displayOrder);
+
     setIsActive(EMPTY_FORM.isActive);
+
     setEditingId(null);
   };
 
@@ -177,29 +205,27 @@ export default function AdminInterestGuideOptions() {
   const handleCategoryChange = (value: string) => {
     setCategory(value);
 
-    /*
-     * Category ပြောင်းတဲ့အခါ
-     * Code / Name / Description ကို old data မကျန်အောင် clear လုပ်မယ်။
+    /**
+     * When creating a new option,
+     * clear old values when category changes.
      *
-     * ဥပမာ:
+     * Example:
      *
      * Interests
-     * code = programming
-     * name = Programming
+     * programming
      *
-     * ကနေ
+     * ->
      *
-     * Subjects
+     * Career
      *
-     * ပြောင်းလိုက်ရင် code/name က empty ဖြစ်သွားမယ်။
-     *
-     * ဒါကြောင့် category မတူတဲ့ data ကို မတော်တဆ
-     * update/create မလုပ်မိတော့ဘူး။
+     * code/name become empty.
      */
 
     if (!editingId) {
       setCode("");
+
       setName("");
+
       setDescription("");
     }
   };
@@ -229,7 +255,20 @@ export default function AdminInterestGuideOptions() {
         throw new Error(data.error || "Failed to load options");
       }
 
-      setOptions(data);
+      /**
+       * Only show categories currently used
+       * by Interest Guide.
+       *
+       * If old "subjects" records exist in DB,
+       * they won't appear here.
+       */
+      const filteredOptions = Array.isArray(data)
+        ? data.filter(
+            (item: InterestGuideOption) => item.category !== "subjects",
+          )
+        : [];
+
+      setOptions(filteredOptions);
     } catch (error) {
       console.error("Failed to load Interest Guide options:", error);
 
@@ -238,6 +277,10 @@ export default function AdminInterestGuideOptions() {
       );
     }
   };
+
+  // ============================================================
+  // INITIAL LOAD
+  // ============================================================
 
   useEffect(() => {
     fetchOptions();
@@ -250,20 +293,36 @@ export default function AdminInterestGuideOptions() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // ----------------------------------------------------------
+    // CATEGORY VALIDATION
+    // ----------------------------------------------------------
+
     if (!category) {
       toast.error("Please select a category");
       return;
     }
+
+    // ----------------------------------------------------------
+    // CODE VALIDATION
+    // ----------------------------------------------------------
 
     if (!code.trim()) {
       toast.error("Please enter a code");
       return;
     }
 
+    // ----------------------------------------------------------
+    // NAME VALIDATION
+    // ----------------------------------------------------------
+
     if (!name.trim()) {
       toast.error("Please enter a name");
       return;
     }
+
+    // ----------------------------------------------------------
+    // LOADING PROTECTION
+    // ----------------------------------------------------------
 
     if (loading) {
       return;
@@ -279,37 +338,69 @@ export default function AdminInterestGuideOptions() {
         return;
       }
 
+      // --------------------------------------------------------
+      // ENDPOINT
+      // --------------------------------------------------------
+
       const endpoint = editingId
         ? `/api/admin/interest-guide/options/${editingId}`
         : "/api/admin/interest-guide/options";
 
+      // --------------------------------------------------------
+      // METHOD
+      // --------------------------------------------------------
+
       const method = editingId ? "PUT" : "POST";
+
+      // --------------------------------------------------------
+      // PAYLOAD
+      // --------------------------------------------------------
 
       const payload = {
         category: category.trim(),
+
         code: code.trim(),
+
         name: name.trim(),
+
         description: description.trim() || null,
+
         displayOrder: Number(displayOrder) || 0,
+
         isActive,
       };
 
       console.log("Interest Guide payload:", payload);
 
+      // --------------------------------------------------------
+      // REQUEST
+      // --------------------------------------------------------
+
       const res = await fetch(endpoint, {
         method,
+
         headers: {
           "Content-Type": "application/json",
+
           Authorization: `Bearer ${token}`,
         },
+
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
+      // --------------------------------------------------------
+      // ERROR
+      // --------------------------------------------------------
+
       if (!res.ok) {
         throw new Error(data.error || "Failed to save option");
       }
+
+      // --------------------------------------------------------
+      // SUCCESS
+      // --------------------------------------------------------
 
       if (editingId) {
         toast.success("Interest Guide option updated successfully");
@@ -317,10 +408,10 @@ export default function AdminInterestGuideOptions() {
         toast.success("Interest Guide option created successfully");
       }
 
-      // Save ပြီးရင် form အားလုံး clear
+      // Clear form
       resetForm();
 
-      // List ကို refresh
+      // Refresh list
       await fetchOptions();
     } catch (error) {
       console.error("Save Interest Guide option error:", error);
@@ -341,10 +432,15 @@ export default function AdminInterestGuideOptions() {
     setEditingId(option.id);
 
     setCategory(option.category);
+
     setCode(option.code);
+
     setName(option.name);
+
     setDescription(option.description || "");
+
     setDisplayOrder(option.displayOrder);
+
     setIsActive(option.isActive);
 
     window.scrollTo({
@@ -376,6 +472,7 @@ export default function AdminInterestGuideOptions() {
 
       const res = await fetch(`/api/admin/interest-guide/options/${id}`, {
         method: "DELETE",
+
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -389,10 +486,12 @@ export default function AdminInterestGuideOptions() {
 
       toast.success("Interest Guide option deleted successfully");
 
+      // If deleting currently edited item
       if (editingId === id) {
         resetForm();
       }
 
+      // Refresh list
       await fetchOptions();
     } catch (error) {
       console.error("Delete Interest Guide option error:", error);
@@ -416,7 +515,12 @@ export default function AdminInterestGuideOptions() {
           <h1 className="text-3xl font-bold">Interest Guide Options</h1>
 
           <p className="text-muted-foreground mt-1">
-            Manage Interest Guide form options.
+            Manage Interest Guide options.
+          </p>
+
+          <p className="text-sm text-muted-foreground mt-2">
+            Interest Guide now searches universities using
+            <strong> Interests + Career Goal</strong>.
           </p>
         </div>
 
@@ -612,7 +716,9 @@ export default function AdminInterestGuideOptions() {
                     key={option.id}
                     className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
                   >
-                    {/* OPTION INFO */}
+                    {/* ==================================================
+                          OPTION INFO
+                      =================================================== */}
 
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -648,7 +754,9 @@ export default function AdminInterestGuideOptions() {
                       )}
                     </div>
 
-                    {/* ACTION BUTTONS */}
+                    {/* ==================================================
+                          ACTION BUTTONS
+                      =================================================== */}
 
                     <div className="flex gap-2 shrink-0">
                       <Button
