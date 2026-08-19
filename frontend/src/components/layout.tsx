@@ -632,7 +632,7 @@ export function Layout({
                 <div className="flex flex-col gap-3">
                   {/* User */}
                   <Link
-                    href={user.role === "admin" ? "/admin/profile" : "/profile"}
+                    href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
                     className="
                       flex items-center gap-3
@@ -655,7 +655,7 @@ export function Layout({
                       </p>
 
                       {user.role === "admin" && (
-                        <p className="text-xs text-primary">Admin Profile</p>
+                        <p className="text-xs text-primary">My Profile</p>
                       )}
                     </div>
                   </Link>
@@ -826,6 +826,12 @@ export function Layout({
                 Compare
               </Link>
 
+              <Link
+                href="/compare"
+                className="hover:text-foreground transition-colors"
+              >
+                Compare
+              </Link>
               <Link
                 href="/score"
                 className="transition-colors hover:text-foreground"
