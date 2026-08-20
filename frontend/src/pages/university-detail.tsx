@@ -376,7 +376,7 @@ export default function UniversityDetail() {
                     >
                       {selectedMajor.category}
                     </Badge>
-                    <SheetTitle className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                    <SheetTitle className="text-2xl md:text-3xl font-extrabold tracking-tight break-words">
                       {selectedMajor.name}
                     </SheetTitle>
                     <p className="text-sm text-muted-foreground mt-1.5 font-medium">
@@ -390,7 +390,7 @@ export default function UniversityDetail() {
                         <BookOpen className="h-3.5 w-3.5" />
                         About Major
                       </h4>
-                      <p className="text-sm text-foreground/90 leading-relaxed">
+                      <p className="text-sm text-foreground/90 leading-relaxed whitespace-normal break-words">
                         {selectedMajor.description}
                       </p>
                     </div>
@@ -436,7 +436,7 @@ export default function UniversityDetail() {
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                             <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-                              <h4 className="font-bold text-base text-foreground group-hover:text-primary transition-colors pl-0 group-hover:pl-2 duration-300">
+                              <h4 className="font-bold text-base text-foreground group-hover:text-primary transition-colors pl-0 group-hover:pl-2 duration-300 break-words">
                                 {cp.title}
                               </h4>
                               {cp.outlook && (
@@ -448,7 +448,7 @@ export default function UniversityDetail() {
                             </div>
 
                             {cp.description && (
-                              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                              <p className="text-xs text-muted-foreground leading-relaxed mb-4 whitespace-normal break-words">
                                 {cp.description}
                               </p>
                             )}
