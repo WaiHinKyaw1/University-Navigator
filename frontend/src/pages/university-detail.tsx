@@ -376,7 +376,7 @@ export default function UniversityDetail() {
                     >
                       {selectedMajor.category}
                     </Badge>
-                    <SheetTitle className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                    <SheetTitle className="text-2xl md:text-3xl font-extrabold tracking-tight break-words">
                       {selectedMajor.name}
                     </SheetTitle>
                     <p className="text-sm text-muted-foreground mt-1.5 font-medium">
@@ -390,7 +390,7 @@ export default function UniversityDetail() {
                         <BookOpen className="h-3.5 w-3.5" />
                         About Major
                       </h4>
-                      <p className="text-sm text-foreground/90 leading-relaxed">
+                      <p className="text-sm text-foreground/90 leading-relaxed whitespace-normal break-words">
                         {selectedMajor.description}
                       </p>
                     </div>
@@ -436,19 +436,19 @@ export default function UniversityDetail() {
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                             <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-                              <h4 className="font-bold text-base text-foreground group-hover:text-primary transition-colors pl-0 group-hover:pl-2 duration-300">
+                              <h4 className="font-bold text-base text-foreground group-hover:text-primary transition-colors pl-0 group-hover:pl-2 duration-300 break-words">
                                 {cp.title}
                               </h4>
                               {cp.outlook && (
-                                <Badge className="text-[10px] font-semibold py-0.5 px-2 bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/15">
-                                  <TrendingUp className="h-3 w-3 mr-1 inline" />
+                                <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg px-2 py-1 w-full break-words whitespace-normal leading-snug">
+                                  <TrendingUp className="h-3 w-3 mr-1 inline align-middle" />
                                   {cp.outlook}
-                                </Badge>
+                                </p>
                               )}
                             </div>
 
                             {cp.description && (
-                              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                              <p className="text-xs text-muted-foreground leading-relaxed mb-4 whitespace-normal break-words">
                                 {cp.description}
                               </p>
                             )}
