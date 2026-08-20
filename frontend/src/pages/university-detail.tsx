@@ -440,10 +440,10 @@ export default function UniversityDetail() {
                                 {cp.title}
                               </h4>
                               {cp.outlook && (
-                                <Badge className="text-[10px] font-semibold py-0.5 px-2 bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/15">
-                                  <TrendingUp className="h-3 w-3 mr-1 inline" />
+                                <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg px-2 py-1 w-full break-words whitespace-normal leading-snug">
+                                  <TrendingUp className="h-3 w-3 mr-1 inline align-middle" />
                                   {cp.outlook}
-                                </Badge>
+                                </p>
                               )}
                             </div>
 
