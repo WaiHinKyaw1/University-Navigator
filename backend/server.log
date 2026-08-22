@@ -1,0 +1,4 @@
+$ node --env-file=../.env --enable-source-maps ./dist/index.mjs
+SMTP is not configured; verification and reset emails will be skipped.
+[13:29:44.183] [32mINFO[39m (82484): [36mServer listening[39m
+    [35mport[39m: 5000

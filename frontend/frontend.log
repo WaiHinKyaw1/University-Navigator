@@ -1,0 +1,7 @@
+$ vite --config vite.config.ts --host 0.0.0.0 --host 0.0.0.0
+
+  VITE v7.3.5  ready in 365 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://169.254.0.21:5173/
+1:29:37 PM [vite] (client) hmr update /src/pages/interest-guide.tsx, /src/index.css
