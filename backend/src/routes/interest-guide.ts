@@ -61,9 +61,8 @@ router.post("/interest-guide/analyze", async (req, res): Promise<void> => {
     
     // 2. Prepare AI Prompt
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: process.env.GEMINI_MODEL || "gemini-2.5-pro"
-    });
+    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `
       You are a Career and University Advisor in Myanmar. 
@@ -74,8 +73,8 @@ router.post("/interest-guide/analyze", async (req, res): Promise<void> => {
       Based on this description and the list of universities and majors provided below, identify the top 10 most suitable universities for this student.
       For each university, provide a "matching score" (0-100%) and 3 specific reasons why it's a good fit.
       
-      Universities and their Majors:
-      ${universities.map(u => `- ${u.name} (${u.nameEn}): Min Score ${u.minScore}`).join("\n")}
+      Universities and their IDs:
+      ${universities.map(u => `- ID: ${u.id}, Name: ${u.name} (${u.nameEn}), Min Score: ${u.minScore}`).join("\n")}
       
       Available Majors in Myanmar:
       ${majors.map(m => `- ${m.name} (${m.nameEn})`).join("\n")}
@@ -95,20 +94,36 @@ router.post("/interest-guide/analyze", async (req, res): Promise<void> => {
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
+    console.log("AI_RAW_RESPONSE_START");
+    console.log(responseText);
+    console.log("AI_RAW_RESPONSE_END");
     
     // Extract JSON from potential markdown code blocks
     const jsonMatch = responseText.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
+      console.error("AI returned invalid format:", responseText);
       throw new Error("AI returned invalid format");
     }
     
-    const analysis = JSON.parse(jsonMatch[0]);
+    let analysis;
+    try {
+      analysis = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.error("Failed to parse AI JSON:", jsonMatch[0]);
+      throw new Error("AI returned invalid JSON");
+    }
+    
+    console.log("Parsed Analysis:", JSON.stringify(analysis, null, 2));
     
     // 3. Enrich the results with full university and major data
     const enrichedResults = await Promise.all(
       analysis.slice(0, 10).map(async (item: any) => {
-        const university = universities.find(u => u.id === item.universityId);
-        if (!university) return null;
+        const targetId = Number(item.universityId);
+        const university = universities.find(u => u.id === targetId);
+        if (!university) {
+          console.warn(`University not found in database: ${item.universityId}`);
+          return null;
+        }
         
         // Fetch majors for this university
         const uMajors = await db

@@ -76,7 +76,6 @@ app.use(express.urlencoded({
 const uploadsDir = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadsDir));
 app.use("/api/uploads", express.static(uploadsDir));
-app.use("/api", interestGuideRouter);
 app.use("/api", router);
 
 // Serve frontend static files in production

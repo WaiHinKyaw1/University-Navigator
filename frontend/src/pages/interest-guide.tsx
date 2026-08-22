@@ -286,7 +286,7 @@ export default function InterestGuide() {
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto w-full px-4 py-10 space-y-8">
+      <div className="max-w-5xl mx-auto w-full px-4 py-10 space-y-8 scrollbar-hide">
         <div className="text-center">
           <h1 className="text-3xl md:text-4xl font-bold">Interest Guide</h1>
           <p className="text-muted-foreground mt-2">

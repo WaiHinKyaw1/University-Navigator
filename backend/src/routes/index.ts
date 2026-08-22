@@ -14,6 +14,7 @@ import uploadRouter from "./upload";
 import favoritesRouter from "./favorites";
 import profileImageRouter from "./profile-image";
 import siteSettingsRouter from "./site-settings";
+import interestGuideRouter from "./interest-guide";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(uploadRouter);
 router.use(favoritesRouter);
 router.use(profileImageRouter);
 router.use(siteSettingsRouter);
+router.use(interestGuideRouter);
 
 export default router;
