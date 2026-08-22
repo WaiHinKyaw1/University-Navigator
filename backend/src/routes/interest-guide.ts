@@ -71,7 +71,8 @@ router.post("/interest-guide/analyze", async (req, res) => {
     const { text, skills = "", interests = "", workPreferences = "", careerGoals = "", experience = "" } = req.body || {};
     const combined = [text, skills, interests, workPreferences, careerGoals, experience].filter(Boolean).join(" ");
     if (normalize(combined).length < 5) { res.status(400).json({ error: "ကျေးဇူးပြု၍ သင့် skill၊ interest နှင့် career goal ကို အသေးစိတ်ရေးပါ။" }); return; }
-    const profile = { skills: String(skills), interests: String(interests), workPreferences: String(workPreferences), careerGoals: String(careerGoals), experience: String(experience) };
+    const freeText = String(text || "");
+    const profile = { skills: String(skills || freeText), interests: String(interests || freeText), workPreferences: String(workPreferences || freeText), careerGoals: String(careerGoals || freeText), experience: String(experience) };
     const ranked = CAREERS.map((career) => analyzeCareer(career, profile)).sort((a, b) => b.score - a.score || a.career.title.localeCompare(b.career.title));
     let recommendations = ranked.filter((item) => item.matchedKeywords.length > 0).slice(0, 3);
     if (!recommendations.length) {
