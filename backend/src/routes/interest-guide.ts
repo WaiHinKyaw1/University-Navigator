@@ -1,341 +1,68 @@
 import { Router, type IRouter } from "express";
-import { db, interestGuideOptionsTable, universitiesTable, majorsTable, universityMajorsTable } from "@workspace/db";
-import { eq, asc, sql } from "drizzle-orm";
+import { db, interestGuideOptionsTable } from "@workspace/db";
+import { eq, asc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-/*
- * STUDENT
- * GET /api/interest-guide/options
- */
-router.get("/interest-guide/options", async (_req, res): Promise<void> => {
-  try {
-    const options = await db
-      .select()
-      .from(interestGuideOptionsTable)
-      .where(eq(interestGuideOptionsTable.isActive, true))
-      .orderBy(
-        asc(interestGuideOptionsTable.category),
-        asc(interestGuideOptionsTable.displayOrder),
-      );
+type Career = {
+  id: string;
+  title: string;
+  titleMm: string;
+  summary: string;
+  keywords: string[];
+  requiredSkills: string[];
+  workPreferences: string[];
+  roadmap: string[];
+  path: string[];
+};
 
-    res.json(options);
-  } catch (error) {
-    console.error("Get interest guide options error:", error);
+const CAREERS: Career[] = [
+  { id: "software-developer", title: "Software Developer", titleMm: "ဆော့ဖ်ဝဲ Developer", summary: "ဆော့ဖ်ဝဲ၊ website နှင့် application များ တည်ဆောက်ခြင်း", keywords: ["programming", "coding", "software", "computer", "technology", "app", "web", "logic", "နည်းပညာ", "ကွန်ပျူတာ", "ပရိုဂရမ်", "ဆော့ဖ်ဝဲ"], requiredSkills: ["Programming", "Problem Solving", "Git", "Database", "Testing"], workPreferences: ["တစ်ဦးတည်းအာရုံစိုက်လုပ်ကိုင်ခြင်း", "Project-based", "နည်းပညာအသုံးချခြင်း"], roadmap: ["Programming fundamentals နှင့် Git ကို လေ့လာပါ", "HTML/CSS/JavaScript သို့မဟုတ် Python project သုံးခု ပြုလုပ်ပါ", "Database, API နှင့် testing ကို လေ့လာပါ", "Portfolio နှင့် internship အတွက် ပြင်ဆင်ပါ"], path: ["Junior Developer", "Mid-level Developer", "Senior Developer", "Tech Lead"] },
+  { id: "data-analyst", title: "Data Analyst", titleMm: "ဒေတာခွဲခြမ်းစိတ်ဖြာသူ", summary: "ဒေတာများမှ အဓိပ္ပာယ်ရှိသော insight နှင့် ဆုံးဖြတ်ချက်များ ထုတ်ယူခြင်း", keywords: ["data", "analysis", "statistics", "math", "excel", "research", "သင်္ချာ", "ဒေတာ", "ခွဲခြမ်း", "စာရင်း"], requiredSkills: ["Excel/Sheets", "SQL", "Statistics", "Data Visualization", "Communication"], workPreferences: ["Research", "Numbers", "တိတ်ဆိတ်စွာ ခွဲခြမ်းခြင်း"], roadmap: ["Excel/Sheets နှင့် basic statistics ကို လေ့လာပါ", "SQL ဖြင့် dataset များကို query လုပ်ပါ", "Dashboard နှင့် data visualization ပြုလုပ်ပါ", "Real-world data project ဖြင့် portfolio တည်ဆောက်ပါ"], path: ["Junior Data Analyst", "Data Analyst", "Senior Data Analyst", "Analytics Lead"] },
+  { id: "ui-ux-designer", title: "UI/UX Designer", titleMm: "UI/UX ဒီဇိုင်နာ", summary: "အသုံးပြုသူအတွက် လွယ်ကူပြီး လှပသော digital product အတွေ့အကြုံ ဒီဇိုင်းဆွဲခြင်း", keywords: ["design", "creative", "drawing", "art", "user", "figma", "visual", "ဒီဇိုင်း", "ပန်းချီ", "ဖန်တီးမှု"], requiredSkills: ["User Research", "Wireframing", "Figma", "Visual Design", "Prototyping"], workPreferences: ["Creative", "User-focused", "Team collaboration"], roadmap: ["Design principles နှင့် Figma ကို လေ့လာပါ", "User interview နှင့် wireframe လေ့ကျင့်ပါ", "Prototype နှင့် usability test ပြုလုပ်ပါ", "Case study သုံးခုပါ portfolio တည်ဆောက်ပါ"], path: ["Junior Designer", "Product Designer", "Senior UX Designer", "Design Lead"] },
+  { id: "cybersecurity-analyst", title: "Cybersecurity Analyst", titleMm: "Cybersecurity Analyst", summary: "စနစ်နှင့် network များကို လုံခြုံအောင် စောင့်ကြည့်ကာကွယ်ခြင်း", keywords: ["security", "cyber", "network", "risk", "defense", "လုံခြုံ", "ဆိုက်ဘာ", "ကွန်ရက်"], requiredSkills: ["Networking", "Linux", "Security Fundamentals", "Risk Analysis", "Incident Response"], workPreferences: ["Investigation", "Problem Solving", "စည်းမျဉ်းစနစ်တကျ"], roadmap: ["Networking နှင့် Linux အခြေခံ လေ့လာပါ", "Security principles နှင့် common attacks ကို လေ့လာပါ", "Lab environment ဖြင့် incident response လေ့ကျင့်ပါ", "Security portfolio နှင့် certification roadmap ပြုလုပ်ပါ"], path: ["SOC Analyst", "Security Analyst", "Senior Security Analyst", "Security Lead"] },
+  { id: "teacher", title: "Teacher / Education Specialist", titleMm: "ဆရာ/ဆရာမနှင့် ပညာရေးအထူးပြု", summary: "သင်ယူသူများကို နားလည်လွယ်အောင် သင်ကြားလမ်းညွှန်ခြင်း", keywords: ["teacher", "teaching", "education", "help", "communication", "ဆရာ", "သင်ကြား", "ပညာရေး", "ကူညီ"], requiredSkills: ["Communication", "Subject Knowledge", "Lesson Planning", "Empathy", "Presentation"], workPreferences: ["လူများနှင့် အလုပ်လုပ်ခြင်း", "Mentoring", "Community impact"], roadmap: ["သင်ကြားရေးနှင့် communication အခြေခံ လေ့လာပါ", "Lesson plan နှင့် presentation လေ့ကျင့်ပါ", "Volunteer tutoring ပြုလုပ်ပါ", "Teaching portfolio နှင့် classroom experience တည်ဆောက်ပါ"], path: ["Teaching Assistant", "Teacher", "Senior Teacher", "Head of Department"] },
+  { id: "business-analyst", title: "Business Analyst", titleMm: "စီးပွားရေးခွဲခြမ်းစိတ်ဖြာသူ", summary: "လုပ်ငန်းလိုအပ်ချက်များကို နားလည်ပြီး solution များ ချိတ်ဆက်ပေးခြင်း", keywords: ["business", "management", "finance", "marketing", "communication", "စီးပွား", "စီမံ", "ဘဏ္ဍာ", "ဈေးကွက်"], requiredSkills: ["Business Analysis", "Communication", "Excel", "Requirements", "Presentation"], workPreferences: ["လူများနှင့် ဆက်သွယ်ခြင်း", "Planning", "Problem Solving"], roadmap: ["Business fundamentals နှင့် Excel ကို လေ့လာပါ", "Requirement gathering နှင့် process mapping လေ့ကျင့်ပါ", "Presentation နှင့် stakeholder communication တိုးတက်ပါ", "Case study ဖြင့် portfolio ပြုလုပ်ပါ"], path: ["Business Analyst Intern", "Business Analyst", "Senior Business Analyst", "Product/Strategy Lead"] },
+];
 
-    res.status(500).json({
-      error: "Failed to load interest guide options",
-    });
-  }
+function normalize(value: unknown): string { return String(value || "").toLowerCase().replace(/[၊,.;:!?()[\]{}]/g, " ").replace(/\s+/g, " ").trim(); }
+function hasTerm(text: string, term: string): boolean { return text.includes(normalize(term)); }
+function analyzeCareer(career: Career, text: string) {
+  const normalized = normalize(text);
+  const matched = career.keywords.filter((keyword) => hasTerm(normalized, keyword));
+  const score = Math.min(96, Math.max(28, Math.round(35 + (matched.length / Math.max(1, career.keywords.length)) * 65)));
+  const reasons = matched.length ? matched.slice(0, 4).map((keyword) => `သင့်ရေးသားထားသော “${keyword}” စိတ်ဝင်စားမှု/ကျွမ်းကျင်မှုသည် ${career.titleMm} အလုပ်နှင့် တိုက်ရိုက်ကိုက်ညီပါသည်။`) : [`${career.titleMm} အတွက် လိုအပ်သော skill များကို လေ့လာပါက သင့် career goal နှင့် ချိတ်ဆက်နိုင်ပါသည်။`];
+  const currentSkills = career.requiredSkills.filter((skill) => hasTerm(normalized, skill) || hasTerm(normalized, skill.split("/")[0]));
+  const skillGaps = career.requiredSkills.filter((skill) => !currentSkills.includes(skill));
+  return { career: { id: career.id, title: career.title, titleMm: career.titleMm, summary: career.summary, requiredSkills: career.requiredSkills, workPreferences: career.workPreferences, roadmap: career.roadmap, path: career.path }, score, reasons, currentSkills, skillGaps, matchedKeywords: matched };
+}
+
+router.get("/interest-guide/options", async (_req, res) => {
+  try { res.json(await db.select().from(interestGuideOptionsTable).where(eq(interestGuideOptionsTable.isActive, true)).orderBy(asc(interestGuideOptionsTable.category), asc(interestGuideOptionsTable.displayOrder))); }
+  catch { res.status(500).json({ error: "Failed to load interest guide options" }); }
 });
 
-/*
- * STUDENT NLP ANALYSIS
- * POST /api/interest-guide/analyze
- */
-router.post("/interest-guide/analyze", async (req, res): Promise<void> => {
+router.post("/interest-guide/analyze", async (req, res) => {
   try {
-    const { text } = req.body;
-
-    if (!text || typeof text !== "string" || text.trim().length < 5) {
-      res.status(400).json({
-        error: "Please provide a more detailed description of your skills and interests.",
-      });
-      return;
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
-    if (!apiKey) {
-      res.status(500).json({
-        error: "AI service is not configured. Please contact admin.",
-      });
-      return;
-    }
-
-    // 1. Fetch all universities and majors to provide context for AI
-    const universities = await db.select().from(universitiesTable);
-    const majors = await db.select().from(majorsTable);
-    
-    // 2. Prepare AI Prompt
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-    const model = genAI.getGenerativeModel({ model: modelName });
-
-    const prompt = `
-      You are a Career and University Advisor in Myanmar. 
-      A student has provided the following description of their skills, interests, and background:
-      
-      "${text}"
-      
-      Based on this description and the list of universities and majors provided below, identify the top 10 most suitable universities for this student.
-      For each university, provide a "matching score" (0-100%) and 3 specific reasons why it's a good fit.
-      
-      Universities and their IDs:
-      ${universities.map(u => `- ID: ${u.id}, Name: ${u.name} (${u.nameEn}), Min Score: ${u.minScore}`).join("\n")}
-      
-      Available Majors in Myanmar:
-      ${majors.map(m => `- ${m.name} (${m.nameEn})`).join("\n")}
-      
-      Return ONLY a JSON array of objects with the following structure:
-      [
-        {
-          "universityId": number,
-          "score": number,
-          "reasons": string[]
-        }
-      ]
-      
-      The reasons should be in Burmese language if possible, otherwise English. 
-      Make the scoring realistic based on how well the student's interests match the university's type and majors.
-    `;
-
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    console.log("AI_RAW_RESPONSE_START");
-    console.log(responseText);
-    console.log("AI_RAW_RESPONSE_END");
-    
-    // Extract JSON from potential markdown code blocks
-    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      console.error("AI returned invalid format:", responseText);
-      throw new Error("AI returned invalid format");
-    }
-    
-    let analysis;
-    try {
-      analysis = JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      console.error("Failed to parse AI JSON:", jsonMatch[0]);
-      throw new Error("AI returned invalid JSON");
-    }
-    
-    console.log("Parsed Analysis:", JSON.stringify(analysis, null, 2));
-    
-    // 3. Enrich the results with full university and major data
-    const enrichedResults = await Promise.all(
-      analysis.slice(0, 10).map(async (item: any) => {
-        const targetId = Number(item.universityId);
-        const university = universities.find(u => u.id === targetId);
-        if (!university) {
-          console.warn(`University not found in database: ${item.universityId}`);
-          return null;
-        }
-        
-        // Fetch majors for this university
-        const uMajors = await db
-          .select({
-            id: majorsTable.id,
-            name: majorsTable.name,
-            nameEn: majorsTable.nameEn,
-            description: majorsTable.description
-          })
-          .from(universityMajorsTable)
-          .innerJoin(majorsTable, eq(universityMajorsTable.majorId, majorsTable.id))
-          .where(eq(universityMajorsTable.universityId, university.id));
-          
-        return {
-          university: {
-            ...university,
-            majors: uMajors
-          },
-          score: item.score,
-          reasons: item.reasons
-        };
-      })
-    );
-
-    res.json(enrichedResults.filter(Boolean));
-  } catch (error) {
-    logger.error({ err: error }, "Interest guide NLP analysis error");
-    res.status(500).json({
-      error: "Failed to analyze your interests. Please try again later.",
-    });
-  }
+    const { text, skills = "", interests = "", workPreferences = "", careerGoals = "", experience = "" } = req.body || {};
+    const combined = [text, skills, interests, workPreferences, careerGoals, experience].filter(Boolean).join(" ");
+    if (normalize(combined).length < 5) { res.status(400).json({ error: "ကျေးဇူးပြု၍ သင့် skill၊ interest နှင့် career goal ကို အသေးစိတ်ရေးပါ။" }); return; }
+    const recommendations = CAREERS.map((career) => analyzeCareer(career, combined)).sort((a, b) => b.score - a.score || a.career.title.localeCompare(b.career.title));
+    res.json({ mode: "rule-based-nlp", input: { skills, interests, workPreferences, careerGoals, experience }, recommendations, evaluation: { accuracy: null, precision: null, recall: null, f1Score: null, userSatisfaction: null, acceptanceRate: null, note: "အသုံးပြုသူ feedback စုဆောင်းပြီးမှ တိုင်းတာမည့် metric ဖြစ်ပါသည်။" } });
+  } catch (error) { console.error("Career NLP analysis error:", error); res.status(500).json({ error: "Career recommendation မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။" }); }
 });
 
-/*
- * ADMIN
- * GET /api/admin/interest-guide/options
- */
-router.get(
-  "/admin/interest-guide/options",
-  requireAdmin,
-  async (_req, res): Promise<void> => {
-    try {
-      const options = await db
-        .select()
-        .from(interestGuideOptionsTable)
-        .orderBy(
-          asc(interestGuideOptionsTable.category),
-          asc(interestGuideOptionsTable.displayOrder),
-          asc(interestGuideOptionsTable.id),
-        );
+router.post("/interest-guide/evaluate", async (req, res) => {
+  const { recommended = [], accepted = [], relevant = [] } = req.body || {};
+  const total = Math.max(1, recommended.length); const tp = relevant.length; const acceptedCount = accepted.length;
+  const precision = tp / total; const recall = tp / Math.max(1, relevant.length || total); const f1 = precision + recall ? (2 * precision * recall) / (precision + recall) : 0;
+  res.json({ accuracy: Math.round((acceptedCount / total) * 100), precision: Math.round(precision * 100), recall: Math.round(recall * 100), f1Score: Math.round(f1 * 100), userSatisfaction: null, acceptanceRate: Math.round((acceptedCount / total) * 100) });
+});
 
-      res.json(options);
-    } catch (error) {
-      console.error("Get admin interest guide options error:", error);
-
-      res.status(500).json({
-        error: "Failed to load interest guide options",
-      });
-    }
-  },
-);
-
-/*
- * ADMIN CREATE
- * POST /api/admin/interest-guide/options
- */
-router.post(
-  "/admin/interest-guide/options",
-  requireAdmin,
-  async (req, res): Promise<void> => {
-    try {
-      const { category, code, name, description, displayOrder, isActive } =
-        req.body;
-
-      if (!category || !code || !name) {
-        res.status(400).json({
-          error: "Category, code and name are required",
-        });
-        return;
-      }
-
-      const [created] = await db
-        .insert(interestGuideOptionsTable)
-        .values({
-          category: String(category).trim(),
-          code: String(code).trim(),
-          name: String(name).trim(),
-          description: description ? String(description).trim() : null,
-          displayOrder: displayOrder == null ? 0 : Number(displayOrder),
-          isActive: isActive == null ? true : Boolean(isActive),
-        })
-        .returning();
-
-      res.status(201).json(created);
-    } catch (error) {
-      console.error("Create interest guide option error:", error);
-
-      res.status(500).json({
-        error: "Failed to create interest guide option",
-      });
-    }
-  },
-);
-
-/*
- * ADMIN UPDATE
- * PUT /api/admin/interest-guide/options/:id
- */
-router.put(
-  "/admin/interest-guide/options/:id",
-  requireAdmin,
-  async (req, res): Promise<void> => {
-    try {
-      const raw = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-
-      const id = parseInt(raw, 10);
-
-      if (Number.isNaN(id)) {
-        res.status(400).json({
-          error: "Invalid id",
-        });
-        return;
-      }
-
-      const { category, code, name, description, displayOrder, isActive } =
-        req.body;
-
-      if (!category || !code || !name) {
-        res.status(400).json({
-          error: "Category, code and name are required",
-        });
-        return;
-      }
-
-      const [updated] = await db
-        .update(interestGuideOptionsTable)
-        .set({
-          category: String(category).trim(),
-          code: String(code).trim(),
-          name: String(name).trim(),
-          description: description ? String(description).trim() : null,
-          displayOrder: displayOrder == null ? 0 : Number(displayOrder),
-          isActive: isActive == null ? true : Boolean(isActive),
-        })
-        .where(eq(interestGuideOptionsTable.id, id))
-        .returning();
-
-      if (!updated) {
-        res.status(404).json({
-          error: "Interest guide option not found",
-        });
-        return;
-      }
-
-      res.json(updated);
-    } catch (error) {
-      console.error("Update interest guide option error:", error);
-
-      res.status(500).json({
-        error: "Failed to update interest guide option",
-      });
-    }
-  },
-);
-
-/*
- * ADMIN DELETE
- * DELETE /api/admin/interest-guide/options/:id
- */
-router.delete(
-  "/admin/interest-guide/options/:id",
-  requireAdmin,
-  async (req, res): Promise<void> => {
-    try {
-      const raw = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-
-      const id = parseInt(raw, 10);
-
-      if (Number.isNaN(id)) {
-        res.status(400).json({
-          error: "Invalid id",
-        });
-        return;
-      }
-
-      const [deleted] = await db
-        .delete(interestGuideOptionsTable)
-        .where(eq(interestGuideOptionsTable.id, id))
-        .returning();
-
-      if (!deleted) {
-        res.status(404).json({
-          error: "Interest guide option not found",
-        });
-        return;
-      }
-
-      res.json({
-        message: "Interest guide option deleted",
-      });
-    } catch (error) {
-      console.error("Delete interest guide option error:", error);
-
-      res.status(500).json({
-        error: "Failed to delete interest guide option",
-      });
-    }
-  },
-);
+router.get("/admin/interest-guide/options", requireAdmin, async (_req, res) => { try { res.json(await db.select().from(interestGuideOptionsTable).orderBy(asc(interestGuideOptionsTable.category), asc(interestGuideOptionsTable.displayOrder), asc(interestGuideOptionsTable.id))); } catch { res.status(500).json({ error: "Failed to load interest guide options" }); } });
+router.post("/admin/interest-guide/options", requireAdmin, async (req, res) => { try { const { category, code, name, description, displayOrder, isActive } = req.body; if (!category || !code || !name) { res.status(400).json({ error: "Category, code and name are required" }); return; } const [created] = await db.insert(interestGuideOptionsTable).values({ category: String(category).trim(), code: String(code).trim(), name: String(name).trim(), description: description ? String(description).trim() : null, displayOrder: displayOrder == null ? 0 : Number(displayOrder), isActive: isActive == null ? true : Boolean(isActive) }).returning(); res.status(201).json(created); } catch { res.status(500).json({ error: "Failed to create interest guide option" }); } });
+router.put("/admin/interest-guide/options/:id", requireAdmin, async (req, res) => { try { const id = Number(req.params.id); const { category, code, name, description, displayOrder, isActive } = req.body; if (!Number.isInteger(id) || !category || !code || !name) { res.status(400).json({ error: "Invalid option data" }); return; } const [updated] = await db.update(interestGuideOptionsTable).set({ category: String(category).trim(), code: String(code).trim(), name: String(name).trim(), description: description ? String(description).trim() : null, displayOrder: displayOrder == null ? 0 : Number(displayOrder), isActive: isActive == null ? true : Boolean(isActive) }).where(eq(interestGuideOptionsTable.id, id)).returning(); if (!updated) { res.status(404).json({ error: "Interest guide option not found" }); return; } res.json(updated); } catch { res.status(500).json({ error: "Failed to update interest guide option" }); } });
+router.delete("/admin/interest-guide/options/:id", requireAdmin, async (req, res) => { try { const id = Number(req.params.id); const [deleted] = await db.delete(interestGuideOptionsTable).where(eq(interestGuideOptionsTable.id, id)).returning(); if (!deleted) { res.status(404).json({ error: "Interest guide option not found" }); return; } res.json({ message: "Interest guide option deleted" }); } catch { res.status(500).json({ error: "Failed to delete interest guide option" }); } });
 
 export default router;

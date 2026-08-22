@@ -1,499 +1,66 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Link } from "wouter";
-import { Loader2, Sparkles, User, BrainCircuit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BrainCircuit, CheckCircle2, ChevronDown, ChevronUp, GitCompare, Route, Target, TrendingUp } from "lucide-react";
 
-type Option = {
-  id: number;
-  category: string;
-  code: string;
-  name: string;
-  description: string | null;
-  isActive: boolean;
-  displayOrder: number;
-};
+type CareerResult = { career: { id: string; title: string; titleMm: string; summary: string; requiredSkills: string[]; workPreferences: string[]; roadmap: string[]; path: string[] }; score: number; reasons: string[]; currentSkills: string[]; skillGaps: string[]; matchedKeywords: string[] };
+type Analysis = { recommendations: CareerResult[]; evaluation: { accuracy: number | null; precision: number | null; recall: number | null; f1Score: number | null; userSatisfaction: number | null; acceptanceRate: number | null; note: string } };
 
-type Major = {
-  id: number;
-  name: string;
-  nameEn: string;
-  description?: string | null;
-};
-
-type University = {
-  id: number;
-  name: string;
-  nameEn: string;
-  type: string;
-  state: string;
-  city: string | null;
-  minScore: number;
-  description: string | null;
-  website: string | null;
-  imageUrl: string | null;
-  majors: Major[];
-};
-
-type Recommendation = {
-  university: University;
-  score: number;
-  reasons: string[];
-};
+const emptyMetrics = ["Accuracy", "Precision", "Recall", "F1-score", "User Satisfaction", "Acceptance Rate"];
 
 export default function InterestGuide() {
-  const [options, setOptions] = useState<Option[]>([]);
-  const [universities, setUniversities] = useState<University[]>([]);
+  const [skills, setSkills] = useState("");
+  const [interests, setInterests] = useState("");
+  const [workPreferences, setWorkPreferences] = useState("");
+  const [careerGoals, setCareerGoals] = useState("");
+  const [experience, setExperience] = useState("");
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [accepted, setAccepted] = useState<string[]>([]);
 
-  const [education, setEducation] = useState("");
-  const [englishLevel, setEnglishLevel] = useState("");
-  const [interests, setInterests] = useState<string[]>([]);
-  const [subject, setSubject] = useState("");
-  const [career, setCareer] = useState("");
-  
-  // NLP State
-  const [nlpText, setNlpText] = useState("");
-  const [isNlpMode, setIsNlpMode] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const selected = useMemo(() => analysis?.recommendations.filter((item) => compareIds.includes(item.career.id)) || [], [analysis, compareIds]);
+  const toggleCompare = (id: string) => setCompareIds((items) => items.includes(id) ? items.filter((item) => item !== id) : items.length < 3 ? [...items, id] : items);
 
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [submitted, setSubmitted] = useState(false);
-
-  // ============================================================
-  // LOAD OPTIONS + UNIVERSITIES
-  // ============================================================
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [optionsResponse, universitiesResponse] = await Promise.all([
-          fetch("/api/interest-guide/options"),
-          fetch("/api/universities?limit=1000"),
-        ]);
-
-        if (!optionsResponse.ok) {
-          throw new Error("Failed to load options");
-        }
-
-        if (!universitiesResponse.ok) {
-          throw new Error("Failed to load universities");
-        }
-
-        const optionsData = await optionsResponse.json();
-        const universitiesData = await universitiesResponse.json();
-
-        setOptions(optionsData);
-
-        setUniversities(universitiesData.universities || universitiesData);
-      } catch (error) {
-        console.error("Failed to load Interest Guide data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // ============================================================
-  // OPTION GROUPS
-  // ============================================================
-
-  const educationOptions = useMemo(
-    () => options.filter((item) => item.category === "education"),
-    [options],
-  );
-
-  const englishOptions = useMemo(
-    () => options.filter((item) => item.category === "english_levels"),
-    [options],
-  );
-
-  const interestOptions = useMemo(
-    () => options.filter((item) => item.category === "interests"),
-    [options],
-  );
-
-  const subjectOptions = useMemo(
-    () => options.filter((item) => item.category === "subjects"),
-    [options],
-  );
-
-  const careerOptions = useMemo(
-    () => options.filter((item) => item.category === "careers"),
-    [options],
-  );
-
-  // ============================================================
-  // TOGGLE INTEREST
-  // ============================================================
-
-  const toggleInterest = (code: string) => {
-    setInterests((current) =>
-      current.includes(code)
-        ? current.filter((item) => item !== code)
-        : [...current, code],
-    );
-  };
-
-  // ============================================================
-  // KEYWORD MAPPING
-  // ============================================================
-
-  const interestKeywords: Record<string, string[]> = {
-    programming: ["programming", "computer science", "software", "IT", "web development", "coding"],
-    technology: ["technology", "AI", "cyber security", "data science"],
-    business: ["business", "management", "finance", "marketing", "economics"],
-    art: ["art", "design", "creative", "multimedia"],
-    music: ["music", "sound", "audio"],
-    science: ["science", "biology", "chemistry", "physics", "math"],
-  };
-
-  const careerKeywords: Record<string, string[]> = {
-    programmer: ["programmer", "software engineer", "developer", "coding"],
-    doctor: ["doctor", "medicine", "medical", "health"],
-    engineer: ["engineer", "civil", "mechanical", "electrical"],
-    teacher: ["teacher", "education", "teaching"],
-  };
-
-  const subjectKeywords: Record<string, string[]> = {
-    mathematics: ["math", "statistics", "data"],
-    physics: ["physics", "engineering"],
-    english: ["english", "language", "literature"],
-  };
-
-  const getKeywords = (
-    code: string,
-    name: string,
-    mapping: Record<string, string[]>,
-  ): string[] => {
-    const mappedKeywords = mapping[code];
-    if (mappedKeywords && mappedKeywords.length > 0) return mappedKeywords;
-    return [name.toLowerCase(), code.toLowerCase().replace(/_/g, " ")];
-  };
-
-  // ============================================================
-  // CALCULATE RECOMMENDATIONS (RULE-BASED)
-  // ============================================================
-
-  const calculateRecommendations = () => {
-    const selectedInterestOptions = interestOptions.filter((option) =>
-      interests.includes(option.code),
-    );
-    const selectedSubjectOption = subjectOptions.find((o) => o.code === subject);
-    const selectedCareerOption = careerOptions.find((o) => o.code === career);
-
-    const results: Recommendation[] = universities.map((university) => {
-      let score = 0;
-      const reasons: string[] = [];
-      const universityText = `${university.name} ${university.nameEn} ${university.description || ""} ${university.type} ${university.state} ${university.city} ${(university.majors || []).map(m => `${m.name} ${m.nameEn}`).join(" ")}`.toLowerCase();
-
-      // Interest Match
-      for (const opt of selectedInterestOptions) {
-        const keywords = getKeywords(opt.code, opt.name, interestKeywords);
-        if (keywords.find(k => universityText.includes(k.toLowerCase()))) {
-          score += 25;
-          reasons.push(`Interest match: ${opt.name}`);
-          break;
-        }
-      }
-
-      // Career Match
-      if (selectedCareerOption) {
-        const keywords = getKeywords(selectedCareerOption.code, selectedCareerOption.name, careerKeywords);
-        if (keywords.find(k => universityText.includes(k.toLowerCase()))) {
-          score += 35;
-          reasons.push(`Career match: ${selectedCareerOption.name}`);
-        }
-      }
-
-      // Subject Match
-      if (selectedSubjectOption) {
-        const keywords = getKeywords(selectedSubjectOption.code, selectedSubjectOption.name, subjectKeywords);
-        if (keywords.find(k => universityText.includes(k.toLowerCase()))) {
-          score += 10;
-          reasons.push(`Subject match: ${selectedSubjectOption.name}`);
-        }
-      }
-
-      if (university.minScore <= 400) { score += 5; reasons.push("Entry score may be suitable"); }
-      if (education) { score += 5; reasons.push("Suitable for your education level"); }
-      if (englishLevel) { score += 5; reasons.push("English level considered"); }
-
-      return { university, score: Math.min(score, 100), reasons };
-    });
-
-    results.sort((a, b) => b.score - a.score || a.university.name.localeCompare(b.university.name));
-    setRecommendations(results.slice(0, 10));
-    setSubmitted(true);
-  };
-
-  // ============================================================
-  // ANALYZE NLP (AI-BASED)
-  // ============================================================
-
-  const analyzeWithNLP = async () => {
-    if (!nlpText || nlpText.trim().length < 5) return;
-    
-    setIsAnalyzing(true);
+  const analyze = async () => {
+    setLoading(true); setError("");
     try {
-      const response = await fetch("/api/interest-guide/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: nlpText }),
-      });
-
-      if (!response.ok) throw new Error("Analysis failed");
-
+      const response = await fetch("/api/interest-guide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skills, interests, workPreferences, careerGoals, experience }) });
       const data = await response.json();
-      setRecommendations(data);
-      setSubmitted(true);
-    } catch (error) {
-      console.error("NLP Analysis error:", error);
-      alert("AI Analysis failed. Please try again or use the form mode.");
-    } finally {
-      setIsAnalyzing(false);
-    }
+      if (!response.ok) throw new Error(data.error || "Recommendation မအောင်မြင်ပါ။");
+      setAnalysis(data); setCompareIds([]); setAccepted([]); setExpanded(data.recommendations?.[0]?.career.id || null);
+    } catch (e) { setError(e instanceof Error ? e.message : "တစ်စုံတစ်ရာ မှားယွင်းနေပါသည်။"); }
+    finally { setLoading(false); }
   };
 
-  // ============================================================
-  // UI
-  // ============================================================
+  const reset = () => { setAnalysis(null); setError(""); setCompareIds([]); setAccepted([]); };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Loading...</span>
-        </div>
-      </Layout>
-    );
-  }
+  return <Layout><main className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 scrollbar-hide">
+    <header className="text-center"><div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary"><BrainCircuit /></div><h1 className="text-3xl font-bold md:text-4xl">Career Interest Guide</h1><p className="mt-2 text-muted-foreground">AI မသုံးဘဲ NLP နှင့် Rule-based Recommendation ကို အသုံးပြုပြီး သင့်အတွက် သင့်တော်သော Career လမ်းကြောင်းကို ရှာဖွေပါ။</p></header>
 
-  return (
-    <Layout>
-      <div className="max-w-5xl mx-auto w-full px-4 py-10 space-y-8 scrollbar-hide">
-        <div className="text-center">
-          <h1 className="text-3xl md:text-4xl font-bold">Interest Guide</h1>
-          <p className="text-muted-foreground mt-2">
-            သင့်ရဲ့ စိတ်ဝင်စားမှုနဲ့ ကျွမ်းကျင်မှုတွေကို အခြေခံပြီး သင့်တော်မယ့် တက္ကသိုလ်တွေကို ရှာဖွေပါ။
-          </p>
-        </div>
-
-        <div className="flex justify-center gap-4">
-          <Button 
-            variant={!isNlpMode ? "default" : "outline"}
-            onClick={() => { setIsNlpMode(false); setSubmitted(false); }}
-            className="w-48 h-12 text-base font-semibold transition-all"
-          >
-            <User className="w-5 h-5 mr-2" />
-            ရွေးချယ်မှုပုံစံ (Form)
-          </Button>
-          <Button 
-            variant={isNlpMode ? "default" : "outline"}
-            onClick={() => { setIsNlpMode(true); setSubmitted(false); }}
-            className="w-48 h-12 text-base font-semibold transition-all border-2 border-primary/20"
-          >
-            <BrainCircuit className="w-5 h-5 mr-2" />
-            AI NLP ပုံစံ
-          </Button>
-        </div>
-
-        {!submitted ? (
-          <Card className="border-2 border-primary/10 shadow-lg">
-            <CardHeader className="bg-primary/5">
-              <CardTitle className="flex items-center gap-2">
-                {isNlpMode ? <Sparkles className="w-5 h-5 text-primary" /> : <User className="w-5 h-5 text-primary" />}
-                {isNlpMode ? "AI NLP ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း" : "အချက်အလက်များ ဖြည့်စွက်ရန်"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              {isNlpMode ? (
-                <div className="space-y-4">
-                  <div className="bg-primary/5 border-l-4 border-primary p-4 rounded-r-lg mb-4">
-                    <p className="text-sm leading-relaxed">
-                      သင့်ရဲ့ <strong>Skills, Interests, Work Preferences</strong> နဲ့ <strong>Career Goals</strong> တွေကို အောက်ပါကွက်လပ်မှာ စာသားနဲ့ အလွတ်ရေးပေးပါ။ AI က သင့်ရဲ့ စာသားကို ခွဲခြမ်းစိတ်ဖြာပြီး အသင့်တော်ဆုံး တက္ကသိုလ်တွေကို ရှာဖွေပေးပါလိမ့်မယ်။
-                    </p>
-                  </div>
-                  <Textarea 
-                    placeholder="ဥပမာ- ကျွန်တော်က programming နဲ့ problem solving ကို ဝါသနာပါတယ်။ Mathematics မှာလည်း စိတ်ဝင်စားပြီး programming skill ကောင်းပါတယ်။ အနာဂတ်မှာ software developer တစ်ယောက် ဖြစ်ချင်ပါတယ်..."
-                    className="min-h-[250px] text-base leading-relaxed border-2 focus:border-primary transition-colors p-4"
-                    value={nlpText}
-                    onChange={(e) => setNlpText(e.target.value)}
-                  />
-                  <Button 
-                    className="w-full h-12 text-lg" 
-                    onClick={analyzeWithNLP}
-                    disabled={isAnalyzing || nlpText.trim().length < 5}
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Analyzing with AI...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        AI နဲ့ ရှာဖွေမည်
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm font-medium">လက်ရှိပညာရေး</label>
-                    <Select value={education} onValueChange={setEducation}>
-                      <SelectTrigger className="mt-2"><SelectValue placeholder="လက်ရှိပညာရေးရွေးပါ" /></SelectTrigger>
-                      <SelectContent>
-                        {educationOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">English Level</label>
-                    <Select value={englishLevel} onValueChange={setEnglishLevel}>
-                      <SelectTrigger className="mt-2"><SelectValue placeholder="English level ရွေးပါ" /></SelectTrigger>
-                      <SelectContent>
-                        {englishOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">ဝါသနာ / Interests</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                      {interestOptions.map((o) => (
-                        <label key={o.id} className="flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-muted">
-                          <Checkbox checked={interests.includes(o.code)} onCheckedChange={() => toggleInterest(o.code)} />
-                          <span>{o.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">အကြိုက်ဆုံးဘာသာရပ်</label>
-                    <Select value={subject} onValueChange={setSubject}>
-                      <SelectTrigger className="mt-2"><SelectValue placeholder="ဘာသာရပ်ရွေးပါ" /></SelectTrigger>
-                      <SelectContent>
-                        {subjectOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">ဖြစ်ချင်သောအလုပ်အကိုင်</label>
-                    <Select value={career} onValueChange={setCareer}>
-                      <SelectTrigger className="mt-2"><SelectValue placeholder="အလုပ်အကိုင်ရွေးပါ" /></SelectTrigger>
-                      <SelectContent>
-                        {careerOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button 
-                    className="w-full h-12 text-lg" 
-                    onClick={calculateRecommendations}
-                    disabled={!education || !englishLevel || interests.length === 0 || !subject || !career}
-                  >
-                    သင့်တော်သော တက္ကသိုလ်များ ရှာဖွေမည်
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Recommended Universities</h2>
-              <Button variant="outline" onClick={() => setSubmitted(false)}>Back to Form</Button>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6">
-              {recommendations.length === 0 ? (
-                <Card><CardContent className="p-10 text-center text-muted-foreground">No matches found. Try different options.</CardContent></Card>
-              ) : (
-                recommendations.map((item, index) => (
-                  <Card key={item.university.id} className="overflow-hidden hover:shadow-xl transition-shadow border-l-4 border-l-primary">
-                    <CardContent className="p-0">
-                      <div className="flex flex-col md:flex-row">
-                        {item.university.imageUrl && (
-                          <div className="w-full md:w-48 h-48 md:h-auto overflow-hidden">
-                            <img src={item.university.imageUrl} alt={item.university.name} className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                        <div className="p-6 flex-1">
-                          <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-primary text-primary-foreground font-bold px-3 py-1 h-8 flex items-center justify-center min-w-[40px]">#{index + 1}</Badge>
-                              <span className="text-sm font-semibold text-muted-foreground">အဆင့် {index + 1}</span>
-                            </div>
-                            <div className="flex flex-col items-end">
-                              <div className="flex items-center gap-2">
-                                <div className="text-3xl font-black text-primary">{item.score}%</div>
-                                <div className="w-16 h-2 bg-muted rounded-full overflow-hidden hidden md:block">
-                                  <div className="h-full bg-primary" style={{ width: `${item.score}%` }}></div>
-                                </div>
-                              </div>
-                              <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Matching Score</div>
-                            </div>
-                          </div>
-
-                          <h3 className="text-xl font-bold">{item.university.name}</h3>
-                          <p className="text-muted-foreground text-sm mb-4">{item.university.nameEn}</p>
-
-                          {item.reasons.length > 0 && (
-                            <div className="bg-primary/5 rounded-lg p-4 mb-4">
-                              <p className="text-sm font-bold mb-2 flex items-center gap-2">
-                                <BrainCircuit className="w-4 h-4 text-primary" />
-                                AI အကြံပြုချက် - သင့်အတွက် သင့်တော်သည့် အကြောင်းရင်းများ:
-                              </p>
-                              <ul className="space-y-2">
-                                {item.reasons.map((reason, rIdx) => (
-                                  <li key={rIdx} className="text-sm flex items-start gap-2">
-                                    <span className="text-primary mt-1">•</span>
-                                    <span>{reason}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap gap-2 mb-6">
-                            {item.university.majors?.slice(0, 5).map(m => (
-                              <Badge key={m.id} variant="outline" className="bg-background">{m.name}</Badge>
-                            ))}
-                          </div>
-
-                          <Button asChild className="w-full md:w-auto">
-                            <Link href={`/universities/${item.university.id}`}>View University Details</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </Layout>
-  );
+    {!analysis ? <Card className="mx-auto max-w-4xl border-primary/15 shadow-lg"><CardHeader><CardTitle>သင့်အကြောင်း အချက်အလက်များ ဖြည့်ပါ</CardTitle><p className="text-sm text-muted-foreground">စာကြောင်းတိုတို သို့မဟုတ် စာပိုဒ်ဖြင့် မြန်မာ/အင်္ဂလိပ်လို ရေးနိုင်ပါသည်။ NLP သည် keyword နှင့် meaning group များကို ခွဲခြမ်းစိတ်ဖြာပါမည်။</p></CardHeader><CardContent className="grid gap-5 md:grid-cols-2">
+      <Field label="လက်ရှိ Skills" placeholder="ဥပမာ - programming, problem solving, mathematics, Excel" value={skills} setValue={setSkills} />
+      <Field label="စိတ်ဝင်စားမှုများ" placeholder="ဥပမာ - technology, data, design, လူများကို ကူညီခြင်း" value={interests} setValue={setInterests} />
+      <Field label="Work Preference" placeholder="ဥပမာ - တစ်ဦးတည်းအာရုံစိုက်၊ team နဲ့လုပ်၊ research ကြိုက်" value={workPreferences} setValue={setWorkPreferences} />
+      <Field label="Career Goal" placeholder="ဥပမာ - software developer ဖြစ်ချင်တယ်" value={careerGoals} setValue={setCareerGoals} />
+      <div className="md:col-span-2"><Field label="အတွေ့အကြုံ / ပညာရေး (ရွေးချယ်နိုင်သည်)" placeholder="ဥပမာ - ကျောင်း project နှစ်ခုလုပ်ဖူးပြီး beginner အဆင့်ပါ" value={experience} setValue={setExperience} /></div>
+      {error && <div className="md:col-span-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      <Button className="h-12 text-base md:col-span-2" onClick={analyze} disabled={loading || [skills, interests, workPreferences, careerGoals, experience].join(" ").trim().length < 5}>{loading ? "NLP ခွဲခြမ်းစိတ်ဖြာနေသည်..." : "Career Recommendation ရှာမည်"}</Button>
+    </CardContent></Card> : <>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-bold">သင့်အတွက် Career Recommendations</h2><p className="text-sm text-muted-foreground">NLP analysis ရလဒ်အပေါ် အခြေခံထားသော အဆင့်သတ်မှတ်ချက်များ</p></div><Button variant="outline" onClick={reset}>ပြန်စတင်မည်</Button></div>
+      <section className="grid gap-5 lg:grid-cols-2">{analysis.recommendations.map((item, index) => { const isOpen = expanded === item.career.id; const isAccepted = accepted.includes(item.career.id); return <Card key={item.career.id} className={`overflow-hidden border-l-4 ${index === 0 ? "border-l-primary shadow-lg" : "border-l-primary/40"}`}><CardContent className="p-5"><div className="flex items-start justify-between gap-4"><div className="flex min-w-0 items-start gap-3"><Badge className="mt-1 shrink-0">#{index + 1}</Badge><div><h3 className="text-xl font-bold">{item.career.titleMm}</h3><p className="text-sm text-muted-foreground">{item.career.title}</p><p className="mt-2 text-sm">{item.career.summary}</p></div></div><div className="shrink-0 text-right"><div className="text-3xl font-black text-primary">{item.score}%</div><div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Career Match</div></div></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${item.score}%` }} /></div><div className="mt-4 flex flex-wrap gap-2"><Button size="sm" variant={compareIds.includes(item.career.id) ? "default" : "outline"} onClick={() => toggleCompare(item.career.id)}><GitCompare className="mr-1 h-4 w-4" />Compare</Button><Button size="sm" variant="ghost" onClick={() => setExpanded(isOpen ? null : item.career.id)}>{isOpen ? <ChevronUp /> : <ChevronDown />}အသေးစိတ်</Button><Button size="sm" variant={isAccepted ? "default" : "outline"} onClick={() => setAccepted((items) => isAccepted ? items.filter((id) => id !== item.career.id) : [...items, item.career.id])}><CheckCircle2 className="mr-1 h-4 w-4" />စိတ်ဝင်စားသည်</Button></div>{isOpen && <CareerDetails item={item} />}</CardContent></Card>})}</section>
+      {selected.length >= 2 && <Comparison careers={selected} />}
+      <Evaluation metrics={analysis.evaluation} accepted={accepted.length} total={analysis.recommendations.length} />
+    </>}
+  </main></Layout>;
 }
+
+function Field({ label, placeholder, value, setValue }: { label: string; placeholder: string; value: string; setValue: (value: string) => void }) { return <div className="space-y-2"><label className="text-sm font-semibold">{label}</label><Textarea value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} className="min-h-24 resize-y" /></div>; }
+function CareerDetails({ item }: { item: CareerResult }) { return <div className="mt-5 space-y-5 border-t pt-5"><div><h4 className="mb-2 flex items-center gap-2 font-bold"><Target className="h-4 w-4 text-primary" />ဘာကြောင့် ဒီ Career ကို Recommend လုပ်တာလဲ?</h4><ul className="space-y-1 text-sm text-muted-foreground">{item.reasons.map((reason, i) => <li key={i}>• {reason}</li>)}</ul></div><div><h4 className="mb-2 font-bold">Skill Gap Analysis</h4><div className="flex flex-wrap gap-2">{item.currentSkills.map((skill) => <Badge key={skill} variant="secondary">လက်ရှိ: {skill}</Badge>)}{item.skillGaps.map((skill) => <Badge key={skill} variant="outline" className="border-amber-500/50 text-amber-700">လိုအပ်: {skill}</Badge>)}</div>{!item.skillGaps.length && <p className="mt-2 text-sm text-green-600">လိုအပ်သော skill အားလုံးနှင့် ကိုက်ညီပါသည်။</p>}</div><div><h4 className="mb-2 flex items-center gap-2 font-bold"><Route className="h-4 w-4 text-primary" />Personalized Learning Roadmap</h4><ol className="space-y-2 text-sm">{item.career.roadmap.map((step, i) => <li key={step} className="flex gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{i + 1}</span>{step}</li>)}</ol></div><div><h4 className="mb-2 font-bold">Career Path Visualization</h4><div className="flex flex-wrap items-center gap-2">{item.career.path.map((step, i) => <span key={step} className="flex items-center gap-2"><Badge variant={i === 0 ? "default" : "outline"}>{step}</Badge>{i < item.career.path.length - 1 && <span className="text-muted-foreground">→</span>}</span>)}</div></div><div><h4 className="mb-2 font-bold">Personality / Interest Fit</h4><p className="text-sm text-muted-foreground">သင့်ရဲ့ work preference နှင့် interest စာသားများကို career keyword group များနှင့် နှိုင်းယှဉ်ထားပါသည်။</p></div></div>; }
+function Comparison({ careers }: { careers: CareerResult[] }) { return <Card className="border-primary/20"><CardHeader><CardTitle className="flex items-center gap-2"><GitCompare className="h-5 w-5 text-primary" />Career Comparison</CardTitle><p className="text-sm text-muted-foreground">Career နှစ်ခု သို့မဟုတ် သုံးခုကို နှိုင်းယှဉ်ကြည့်ပါ။</p></CardHeader><CardContent className="overflow-x-auto"><div className="grid min-w-[720px] gap-3" style={{ gridTemplateColumns: `repeat(${careers.length}, minmax(0, 1fr))` }}>{careers.map((item) => <div key={item.career.id} className="rounded-lg bg-muted/40 p-4"><h3 className="font-bold">{item.career.titleMm}</h3><div className="my-2 text-2xl font-black text-primary">{item.score}%</div><p className="text-sm">Skill gaps: {item.skillGaps.length}</p><p className="text-sm">Roadmap: {item.career.roadmap.length} steps</p><p className="mt-2 text-xs text-muted-foreground">{item.career.workPreferences.join(" • ")}</p></div>)}</div></CardContent></Card>; }
+function Evaluation({ metrics, accepted, total }: { metrics: Analysis["evaluation"]; accepted: number; total: number }) { const values: Record<string, number | null> = { Accuracy: metrics.accuracy, Precision: metrics.precision, Recall: metrics.recall, "F1-score": metrics.f1Score, "User Satisfaction": metrics.userSatisfaction, "Acceptance Rate": total ? Math.round((accepted / total) * 100) : metrics.acceptanceRate }; return <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" />Recommendation Evaluation</CardTitle><p className="text-sm text-muted-foreground">စနစ်၏ quality ကို user feedback နှင့် အတည်ပြုထားသော label များ စုဆောင်းပြီး တိုင်းတာရန် dashboard ဖြစ်ပါသည်။</p></CardHeader><CardContent className="grid grid-cols-2 gap-3 md:grid-cols-3">{emptyMetrics.map((label) => <div key={label} className="rounded-lg border bg-muted/20 p-3"><div className="text-xs text-muted-foreground">{label}</div><div className="mt-1 text-xl font-bold">{values[label] == null ? "မတိုင်းရသေး" : `${values[label]}%`}</div></div>)}</CardContent></Card>; }
