@@ -38,19 +38,26 @@ function simpleLabel(keyword: string): string {
   if (["business", "management", "finance", "marketing", "စီးပွား", "စီမံ", "ဘဏ္ဍာ", "ဈေးကွက်"].some((item) => value.includes(item))) return "စီးပွားရေးနဲ့ စီမံခန့်ခွဲမှု";
   return keyword;
 }
-function analyzeCareer(career: Career, text: string) {
-  const normalized = normalize(text);
-  const matched = career.keywords.filter((keyword) => hasTerm(normalized, keyword));
-  const score = Math.min(96, Math.max(28, Math.round(35 + (matched.length / Math.max(1, career.keywords.length)) * 65)));
-  const labels = [...new Set(matched.slice(0, 3).map(simpleLabel))];
-  const reasons = labels.length >= 2
-    ? [`သင်စိတ်ဝင်စားတဲ့ ${labels.join(" နဲ့ ")} တွေကြောင့် ဒီ Career နဲ့ သင့်တော်ပါတယ်။`, `${career.titleMm} မှာ ${career.requiredSkills.slice(0, 2).join(" နဲ့ ")} ကို အသုံးများပါတယ်။`]
-    : labels.length === 1
-      ? [`သင်စိတ်ဝင်စားတဲ့ ${labels[0]} က ဒီ Career အတွက် အရေးကြီးပါတယ်။`, `${career.titleMm} မှာ ${career.requiredSkills.slice(0, 2).join(" နဲ့ ")} ကို လေ့လာရပါမယ်။`]
-      : [`ဒီ Career ကို စိတ်ဝင်စားရင် ${career.requiredSkills[0]} ကနေ စတင်လေ့လာနိုင်ပါတယ်။`];
-  const currentSkills = career.requiredSkills.filter((skill) => hasTerm(normalized, skill) || hasTerm(normalized, skill.split("/")[0]));
+function analyzeCareer(career: Career, profile: { skills: string; interests: string; workPreferences: string; careerGoals: string; experience: string }) {
+  const fields = { skills: normalize(profile.skills), interests: normalize(profile.interests), workPreferences: normalize(profile.workPreferences), careerGoals: normalize(profile.careerGoals), experience: normalize(profile.experience) };
+  const allText = Object.values(fields).join(" ");
+  const matched = career.keywords.filter((keyword) => hasTerm(allText, keyword));
+  const skillMatches = career.requiredSkills.filter((skill) => hasTerm(fields.skills, skill) || hasTerm(fields.skills, skill.split("/")[0]));
+  const goalMatches = career.keywords.filter((keyword) => hasTerm(fields.careerGoals, keyword));
+  const interestMatches = career.keywords.filter((keyword) => hasTerm(fields.interests, keyword));
+  const preferenceMatches = career.workPreferences.filter((preference) => hasTerm(fields.workPreferences, preference) || fields.workPreferences.includes(normalize(preference).split(" ")[0]));
+  const weighted = skillMatches.length * 12 + interestMatches.length * 10 + goalMatches.length * 22 + preferenceMatches.length * 8;
+  const score = Math.min(96, Math.max(28, Math.round(32 + weighted)));
+  const labels = [...new Set([...goalMatches, ...interestMatches].slice(0, 3).map(simpleLabel))];
+  const reasons: string[] = [];
+  if (goalMatches.length) reasons.push(`သင်ဖြစ်ချင်တဲ့အလုပ်နဲ့ တိုက်ရိုက်ကိုက်ညီပါတယ်။`);
+  if (skillMatches.length) reasons.push(`သင့်မှာရှိတဲ့ ${skillMatches.slice(0, 2).join(" နဲ့ ")} ကို ဒီအလုပ်မှာ အသုံးချနိုင်ပါတယ်။`);
+  else if (labels.length) reasons.push(`သင်စိတ်ဝင်စားတဲ့ ${labels[0]} နဲ့ ဒီအလုပ်က နီးစပ်ပါတယ်။`);
+  if (preferenceMatches.length) reasons.push(`သင်ကြိုက်တဲ့ အလုပ်လုပ်ပုံနဲ့လည်း ကိုက်ညီပါတယ်။`);
+  if (!reasons.length) reasons.push(`${career.titleMm} ကို စိတ်ဝင်စားရင် ${career.requiredSkills[0]} ကနေ စတင်လေ့လာနိုင်ပါတယ်။`);
+  const currentSkills = skillMatches;
   const skillGaps = career.requiredSkills.filter((skill) => !currentSkills.includes(skill));
-  return { career: { id: career.id, title: career.title, titleMm: career.titleMm, summary: career.summary, requiredSkills: career.requiredSkills, workPreferences: career.workPreferences, roadmap: career.roadmap, path: career.path }, score, reasons, currentSkills, skillGaps, matchedKeywords: matched };
+  return { career: { id: career.id, title: career.title, titleMm: career.titleMm, summary: career.summary, requiredSkills: career.requiredSkills, workPreferences: career.workPreferences, roadmap: career.roadmap, path: career.path }, score, reasons: reasons.slice(0, 3), currentSkills, skillGaps, matchedKeywords: matched };
 }
 
 router.get("/interest-guide/options", async (_req, res) => {
@@ -63,8 +70,9 @@ router.post("/interest-guide/analyze", async (req, res) => {
     const { text, skills = "", interests = "", workPreferences = "", careerGoals = "", experience = "" } = req.body || {};
     const combined = [text, skills, interests, workPreferences, careerGoals, experience].filter(Boolean).join(" ");
     if (normalize(combined).length < 5) { res.status(400).json({ error: "ကျေးဇူးပြု၍ သင့် skill၊ interest နှင့် career goal ကို အသေးစိတ်ရေးပါ။" }); return; }
-    const recommendations = CAREERS.map((career) => analyzeCareer(career, combined)).sort((a, b) => b.score - a.score || a.career.title.localeCompare(b.career.title));
-    res.json({ mode: "rule-based-nlp", input: { skills, interests, workPreferences, careerGoals, experience }, recommendations, evaluation: { accuracy: null, precision: null, recall: null, f1Score: null, userSatisfaction: null, acceptanceRate: null, note: "အသုံးပြုသူ feedback စုဆောင်းပြီးမှ တိုင်းတာမည့် metric ဖြစ်ပါသည်။" } });
+    const profile = { skills: String(skills), interests: String(interests), workPreferences: String(workPreferences), careerGoals: String(careerGoals), experience: String(experience) };
+    const recommendations = CAREERS.map((career) => analyzeCareer(career, profile)).sort((a, b) => b.score - a.score || a.career.title.localeCompare(b.career.title)).slice(0, 3);
+    res.json({ mode: "rule-based-nlp", input: profile, recommendations, evaluation: { accuracy: null, precision: null, recall: null, f1Score: null, userSatisfaction: null, acceptanceRate: null, note: "အသုံးပြုသူ feedback စုဆောင်းပြီးမှ တိုင်းတာမည့် metric ဖြစ်ပါသည်။" } });
   } catch (error) { console.error("Career NLP analysis error:", error); res.status(500).json({ error: "Career recommendation မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။" }); }
 });
 
