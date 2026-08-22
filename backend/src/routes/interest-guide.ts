@@ -97,10 +97,17 @@ function localNlpSignals(text: string) {
   };
 }
 
+function geminiModelId() {
+  const configured = process.env.GEMINI_MODEL?.trim().toLowerCase() || "gemini-3.6-flash";
+  if (configured.includes("2.5") && configured.includes("flash")) return "gemini-2.5-flash";
+  if (configured.includes("3.6") && configured.includes("flash")) return "gemini-3.6-flash";
+  return configured;
+}
+
 async function answerWithAI(profile: { text: string; skills: string; interests: string; workPreferences: string; careerGoals: string; experience: string }) {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
-  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: process.env.GEMINI_MODEL?.trim() || "gemini-3.6-flash", generationConfig: { responseMimeType: "application/json", temperature: 0.35 } });
+  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: geminiModelId(), generationConfig: { responseMimeType: "application/json", temperature: 0.35 } });
   const signals = localNlpSignals(Object.values(profile).join(" "));
   const prompt = `သင်သည် ကျောင်းသားများအတွက် career advisor ဖြစ်သည်။ User ရေးထားသော မြန်မာ/အင်္ဂလိပ် free-form စာကို နားလည်ပြီး အမှန်တကယ် သင့်တော်နိုင်သော Career အများဆုံး ၃ ခုကို ရွေးပါ။ အောက်တွင်ပါတဲ့ local career list ကို မကန့်သတ်ထားပါနှင့်။ မေးခွန်းထဲက အချက်အလက်မလုံလောက်လျှင် မမှန်ကန်သော သေချာပြောဆိုမှုမလုပ်ဘဲ score ကို လျှော့ပါ။ Career တစ်ခုချင်းစီ၏ reason သည် သီးခြားဖြစ်ပြီး User input ထဲက အကြောင်းအရာကို တိုက်ရိုက်ကိုးကားရမည်။ Score 0-100 ဖြစ်ရမည်။ JSON array သာ ပြန်ပါ။\nUser profile: ${JSON.stringify(profile)}\nNLP signals (internal only): ${JSON.stringify(signals)}\nSchema: [{"title":"English career title","titleMm":"မြန်မာ career title","summary":"မြန်မာလို အတိုချုံးရှင်းပြချက်","score":number,"reason":"မြန်မာလို ထူးခြားသော reason တစ်ကြောင်း သို့မဟုတ် နှစ်ကြောင်း","requiredSkills":["skill"],"currentSkills":["skill"],"skillGaps":["skill"],"roadmap":["step"],"path":["Junior","Mid","Senior","Lead"],"workPreferences":["preference"]}]`;
   const result = await model.generateContent(prompt);
