@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, interestGuideOptionsTable } from "@workspace/db";
 import { eq, asc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router: IRouter = Router();
 
@@ -61,6 +62,24 @@ function analyzeCareer(career: Career, profile: { skills: string; interests: str
   return { career: { id: career.id, title: career.title, titleMm: career.titleMm, summary: career.summary, requiredSkills: career.requiredSkills, workPreferences: career.workPreferences, roadmap: career.roadmap, path: career.path }, score, reasons: reasons.slice(0, 3), currentSkills, skillGaps, matchedKeywords: matched };
 }
 
+async function refineWithAI(profile: { skills: string; interests: string; workPreferences: string; careerGoals: string; experience: string }, candidates: ReturnType<typeof analyzeCareer>[]) {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!apiKey || !candidates.length) return candidates;
+  try {
+    const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json", temperature: 0.2 } });
+    const allowed = candidates.map((item) => ({ id: item.career.id, title: item.career.titleMm, localScore: item.score, matched: item.matchedKeywords }));
+    const prompt = `သင်သည် Myanmar career advisor ဖြစ်သည်။ Local NLP က ရွေးထားသော အောက်ပါ Career များထဲမှသာ အကောင်းဆုံး ၃ ခုအထိ ရွေးပါ။ Career အသစ် မဖန်တီးရ။ User profile ကို နားလည်ပြီး တစ်ခုချင်းစီအတွက် မတူညီသော မြန်မာလို reason တစ်ကြောင်း သို့မဟုတ် နှစ်ကြောင်းရေးပါ။ Score သည် localScore ကို အခြေခံပြီး 0-100 အတွင်းသာ ဖြစ်ရမည်။ ထပ်နေသော reason မရေးရ။\nProfile: ${JSON.stringify(profile)}\nAllowed careers: ${JSON.stringify(allowed)}\nJSON array သာ ပြန်ပါ: [{"id":"allowed id","score":number,"reason":"ရိုးရှင်းသော မြန်မာစာ"}]`;
+    const result = await model.generateContent(prompt);
+    const raw = result.response.text().match(/\[[\s\S]*\]/)?.[0];
+    if (!raw) return candidates;
+    const aiItems = JSON.parse(raw) as Array<{ id?: string; score?: number; reason?: string }>;
+    const byId = new Map(candidates.map((item) => [item.career.id, item]));
+    const used = new Set<string>();
+    const refined = aiItems.map((item) => { const base = item.id ? byId.get(item.id) : undefined; if (!base || used.has(base.career.id)) return null; used.add(base.career.id); const requestedScore = Number(item.score); const safeScore = Number.isFinite(requestedScore) ? Math.max(base.score - 8, Math.min(base.score + 8, requestedScore)) : base.score; return { ...base, score: Math.max(0, Math.min(100, Math.round(safeScore))), reasons: item.reason?.trim() ? [item.reason.trim()] : base.reasons }; }).filter((item): item is NonNullable<typeof item> => Boolean(item));
+    return refined.length ? refined.slice(0, 3) : candidates;
+  } catch (error) { console.error("Career AI refinement unavailable; using local NLP results:", error); return candidates; }
+}
+
 router.get("/interest-guide/options", async (_req, res) => {
   try { res.json(await db.select().from(interestGuideOptionsTable).where(eq(interestGuideOptionsTable.isActive, true)).orderBy(asc(interestGuideOptionsTable.category), asc(interestGuideOptionsTable.displayOrder))); }
   catch { res.status(500).json({ error: "Failed to load interest guide options" }); }
@@ -75,11 +94,12 @@ router.post("/interest-guide/analyze", async (req, res) => {
     const profile = { skills: String(skills || freeText), interests: String(interests || freeText), workPreferences: String(workPreferences || freeText), careerGoals: String(careerGoals || freeText), experience: String(experience) };
     const ranked = CAREERS.map((career) => analyzeCareer(career, profile)).sort((a, b) => b.score - a.score || a.career.title.localeCompare(b.career.title));
     let recommendations = ranked.filter((item) => item.matchedKeywords.length > 0).slice(0, 3);
+    if (recommendations.length) recommendations = await refineWithAI(profile, recommendations);
     if (!recommendations.length) {
       const requestedGoal = profile.careerGoals.trim() || profile.interests.trim();
       recommendations = ranked.slice(0, 3).map((item) => ({ ...item, score: 20, reasons: [`သင်ရေးထားတဲ့ “${requestedGoal || "Career goal"}” ကို ဒီစနစ်မှာ တိတိကျကျ မတွေ့သေးပါ။`, `အနီးစပ်ဆုံးလမ်းကြောင်းကို ရွေးပြီး ${item.career.requiredSkills[0]} ကနေ စတင်လေ့လာနိုင်ပါတယ်။`] }));
     }
-    res.json({ mode: "rule-based-nlp", input: profile, recommendations, evaluation: { accuracy: null, precision: null, recall: null, f1Score: null, userSatisfaction: null, acceptanceRate: null, note: "အသုံးပြုသူ feedback စုဆောင်းပြီးမှ တိုင်းတာမည့် metric ဖြစ်ပါသည်။" } });
+    res.json({ mode: "hybrid-nlp-ai", input: profile, recommendations, evaluation: { accuracy: null, precision: null, recall: null, f1Score: null, userSatisfaction: null, acceptanceRate: null, note: "အသုံးပြုသူ feedback စုဆောင်းပြီးမှ တိုင်းတာမည့် metric ဖြစ်ပါသည်။" } });
   } catch (error) { console.error("Career NLP analysis error:", error); res.status(500).json({ error: "Career recommendation မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။" }); }
 });
 
