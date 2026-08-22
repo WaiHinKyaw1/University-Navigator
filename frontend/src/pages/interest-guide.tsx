@@ -296,20 +296,20 @@ export default function InterestGuide() {
 
         <div className="flex justify-center gap-4">
           <Button 
-            variant={isNlpMode ? "outline" : "default"}
+            variant={!isNlpMode ? "default" : "outline"}
             onClick={() => { setIsNlpMode(false); setSubmitted(false); }}
-            className="w-40"
+            className="w-48 h-12 text-base font-semibold transition-all"
           >
-            <User className="w-4 hide mr-2" />
-            Form Mode
+            <User className="w-5 h-5 mr-2" />
+            ရွေးချယ်မှုပုံစံ (Form)
           </Button>
           <Button 
             variant={isNlpMode ? "default" : "outline"}
             onClick={() => { setIsNlpMode(true); setSubmitted(false); }}
-            className="w-40"
+            className="w-48 h-12 text-base font-semibold transition-all border-2 border-primary/20"
           >
-            <BrainCircuit className="w-4 h-4 mr-2" />
-            AI NLP Mode
+            <BrainCircuit className="w-5 h-5 mr-2" />
+            AI NLP ပုံစံ
           </Button>
         </div>
 
@@ -318,18 +318,20 @@ export default function InterestGuide() {
             <CardHeader className="bg-primary/5">
               <CardTitle className="flex items-center gap-2">
                 {isNlpMode ? <Sparkles className="w-5 h-5 text-primary" /> : <User className="w-5 h-5 text-primary" />}
-                {isNlpMode ? "AI NLP Analysis" : "Your Information"}
+                {isNlpMode ? "AI NLP ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း" : "အချက်အလက်များ ဖြည့်စွက်ရန်"}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               {isNlpMode ? (
                 <div className="space-y-4">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    သင့်ရဲ့ Skills, Interests, Work Preferences နဲ့ Career Goals တွေကို စာသားနဲ့ အလွတ်ရေးပေးပါ။ AI က သင့်အတွက် အကောင်းဆုံး တက္ကသိုလ်တွေကို ရှာပေးပါလိမ့်မယ်။
-                  </p>
+                  <div className="bg-primary/5 border-l-4 border-primary p-4 rounded-r-lg mb-4">
+                    <p className="text-sm leading-relaxed">
+                      သင့်ရဲ့ <strong>Skills, Interests, Work Preferences</strong> နဲ့ <strong>Career Goals</strong> တွေကို အောက်ပါကွက်လပ်မှာ စာသားနဲ့ အလွတ်ရေးပေးပါ။ AI က သင့်ရဲ့ စာသားကို ခွဲခြမ်းစိတ်ဖြာပြီး အသင့်တော်ဆုံး တက္ကသိုလ်တွေကို ရှာဖွေပေးပါလိမ့်မယ်။
+                    </p>
+                  </div>
                   <Textarea 
                     placeholder="ဥပမာ- ကျွန်တော်က programming နဲ့ problem solving ကို ဝါသနာပါတယ်။ Mathematics မှာလည်း စိတ်ဝင်စားပြီး programming skill ကောင်းပါတယ်။ အနာဂတ်မှာ software developer တစ်ယောက် ဖြစ်ချင်ပါတယ်..."
-                    className="min-h-[200px] text-base leading-relaxed"
+                    className="min-h-[250px] text-base leading-relaxed border-2 focus:border-primary transition-colors p-4"
                     value={nlpText}
                     onChange={(e) => setNlpText(e.target.value)}
                   />
@@ -437,11 +439,19 @@ export default function InterestGuide() {
                           </div>
                         )}
                         <div className="p-6 flex-1">
-                          <div className="flex justify-between items-start mb-2">
-                            <Badge className="bg-primary text-primary-foreground font-bold px-3 py-1">#{index + 1}</Badge>
-                            <div className="text-right">
-                              <div className="text-2xl font-bold text-primary">{item.score}%</div>
-                              <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Matching Score</div>
+                          <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-primary text-primary-foreground font-bold px-3 py-1 h-8 flex items-center justify-center min-w-[40px]">#{index + 1}</Badge>
+                              <span className="text-sm font-semibold text-muted-foreground">အဆင့် {index + 1}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <div className="flex items-center gap-2">
+                                <div className="text-3xl font-black text-primary">{item.score}%</div>
+                                <div className="w-16 h-2 bg-muted rounded-full overflow-hidden hidden md:block">
+                                  <div className="h-full bg-primary" style={{ width: `${item.score}%` }}></div>
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Matching Score</div>
                             </div>
                           </div>
 
@@ -451,8 +461,8 @@ export default function InterestGuide() {
                           {item.reasons.length > 0 && (
                             <div className="bg-primary/5 rounded-lg p-4 mb-4">
                               <p className="text-sm font-bold mb-2 flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-primary" />
-                                Why this may suit you:
+                                <BrainCircuit className="w-4 h-4 text-primary" />
+                                AI အကြံပြုချက် - သင့်အတွက် သင့်တော်သည့် အကြောင်းရင်းများ:
                               </p>
                               <ul className="space-y-2">
                                 {item.reasons.map((reason, rIdx) => (
