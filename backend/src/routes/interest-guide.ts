@@ -28,11 +28,26 @@ const CAREERS: Career[] = [
 
 function normalize(value: unknown): string { return String(value || "").toLowerCase().replace(/[၊,.;:!?()[\]{}]/g, " ").replace(/\s+/g, " ").trim(); }
 function hasTerm(text: string, term: string): boolean { return text.includes(normalize(term)); }
+function simpleLabel(keyword: string): string {
+  const value = normalize(keyword);
+  if (["programming", "coding", "software", "computer", "technology", "app", "web", "နည်းပညာ", "ကွန်ပျူတာ", "ပရိုဂရမ်", "ဆော့ဖ်ဝဲ"].some((item) => value.includes(item))) return "နည်းပညာနဲ့ Programming";
+  if (["data", "analysis", "statistics", "math", "သင်္ချာ", "ဒေတာ", "ခွဲခြမ်း"].some((item) => value.includes(item))) return "ဒေတာနဲ့ သင်္ချာ";
+  if (["design", "creative", "drawing", "art", "ဒီဇိုင်း", "ပန်းချီ", "ဖန်တီးမှု"].some((item) => value.includes(item))) return "ဒီဇိုင်းနဲ့ ဖန်တီးမှု";
+  if (["security", "cyber", "network", "လုံခြုံ", "ဆိုက်ဘာ", "ကွန်ရက်"].some((item) => value.includes(item))) return "အွန်လိုင်းလုံခြုံရေး";
+  if (["teacher", "teaching", "education", "ဆရာ", "သင်ကြား", "ပညာရေး"].some((item) => value.includes(item))) return "သင်ကြားရေးနဲ့ လူတွေကို ကူညီခြင်း";
+  if (["business", "management", "finance", "marketing", "စီးပွား", "စီမံ", "ဘဏ္ဍာ", "ဈေးကွက်"].some((item) => value.includes(item))) return "စီးပွားရေးနဲ့ စီမံခန့်ခွဲမှု";
+  return keyword;
+}
 function analyzeCareer(career: Career, text: string) {
   const normalized = normalize(text);
   const matched = career.keywords.filter((keyword) => hasTerm(normalized, keyword));
   const score = Math.min(96, Math.max(28, Math.round(35 + (matched.length / Math.max(1, career.keywords.length)) * 65)));
-  const reasons = matched.length ? matched.slice(0, 4).map((keyword) => `သင့်ရေးသားထားသော “${keyword}” စိတ်ဝင်စားမှု/ကျွမ်းကျင်မှုသည် ${career.titleMm} အလုပ်နှင့် တိုက်ရိုက်ကိုက်ညီပါသည်။`) : [`${career.titleMm} အတွက် လိုအပ်သော skill များကို လေ့လာပါက သင့် career goal နှင့် ချိတ်ဆက်နိုင်ပါသည်။`];
+  const labels = [...new Set(matched.slice(0, 3).map(simpleLabel))];
+  const reasons = labels.length >= 2
+    ? [`သင်စိတ်ဝင်စားတဲ့ ${labels.join(" နဲ့ ")} တွေကြောင့် ဒီ Career နဲ့ သင့်တော်ပါတယ်။`, `${career.titleMm} မှာ ${career.requiredSkills.slice(0, 2).join(" နဲ့ ")} ကို အသုံးများပါတယ်။`]
+    : labels.length === 1
+      ? [`သင်စိတ်ဝင်စားတဲ့ ${labels[0]} က ဒီ Career အတွက် အရေးကြီးပါတယ်။`, `${career.titleMm} မှာ ${career.requiredSkills.slice(0, 2).join(" နဲ့ ")} ကို လေ့လာရပါမယ်။`]
+      : [`ဒီ Career ကို စိတ်ဝင်စားရင် ${career.requiredSkills[0]} ကနေ စတင်လေ့လာနိုင်ပါတယ်။`];
   const currentSkills = career.requiredSkills.filter((skill) => hasTerm(normalized, skill) || hasTerm(normalized, skill.split("/")[0]));
   const skillGaps = career.requiredSkills.filter((skill) => !currentSkills.includes(skill));
   return { career: { id: career.id, title: career.title, titleMm: career.titleMm, summary: career.summary, requiredSkills: career.requiredSkills, workPreferences: career.workPreferences, roadmap: career.roadmap, path: career.path }, score, reasons, currentSkills, skillGaps, matchedKeywords: matched };
