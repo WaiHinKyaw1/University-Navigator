@@ -10,7 +10,7 @@ type CareerResult = { career: { id: string; title: string; titleMm: string; summ
 type Analysis = { recommendations: CareerResult[]; evaluation: { accuracy: number | null; precision: number | null; recall: number | null; f1Score: number | null; userSatisfaction: number | null; acceptanceRate: number | null; note: string } };
 
 const emptyMetrics = ["Accuracy", "Precision", "Recall", "F1-score", "User Satisfaction", "Acceptance Rate"];
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/api\/?$/i, "").replace(/\/+$/, "");
 
 export default function InterestGuide() {
   const [skills, setSkills] = useState("");
