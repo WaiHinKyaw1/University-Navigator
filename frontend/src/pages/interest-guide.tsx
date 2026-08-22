@@ -10,6 +10,7 @@ type CareerResult = { career: { id: string; title: string; titleMm: string; summ
 type Analysis = { recommendations: CareerResult[]; evaluation: { accuracy: number | null; precision: number | null; recall: number | null; f1Score: number | null; userSatisfaction: number | null; acceptanceRate: number | null; note: string } };
 
 const emptyMetrics = ["Accuracy", "Precision", "Recall", "F1-score", "User Satisfaction", "Acceptance Rate"];
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 export default function InterestGuide() {
   const [skills, setSkills] = useState("");
@@ -31,9 +32,11 @@ export default function InterestGuide() {
   const analyze = async () => {
     setLoading(true); setError("");
     try {
-      const response = await fetch("/api/interest-guide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: question, skills, interests, workPreferences, careerGoals, experience }) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Recommendation မအောင်မြင်ပါ။");
+      const response = await fetch(`${API_BASE_URL}/api/interest-guide/analyze`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: question, skills, interests, workPreferences, careerGoals, experience }) });
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json") ? await response.json() : null;
+      if (!response.ok) throw new Error(data?.error || "AI အဖြေ မရသေးပါ။ Backend URL နဲ့ server status ကို စစ်ပြီး ထပ်ကြိုးစားပါ။");
+      if (!data?.recommendations?.length) throw new Error("AI က Career recommendation ပြန်မပေးနိုင်သေးပါ။ ထပ်မံကြိုးစားပါ။");
       setAnalysis(data); setCompareIds([]); setAccepted([]); setExpanded(data.recommendations?.[0]?.career.id || null);
     } catch (e) { setError(e instanceof Error ? e.message : "တစ်စုံတစ်ရာ မှားယွင်းနေပါသည်။"); }
     finally { setLoading(false); }
