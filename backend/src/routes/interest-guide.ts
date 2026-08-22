@@ -71,7 +71,8 @@ router.post("/interest-guide/analyze", async (req, res) => {
     const combined = [text, skills, interests, workPreferences, careerGoals, experience].filter(Boolean).join(" ");
     if (normalize(combined).length < 5) { res.status(400).json({ error: "ကျေးဇူးပြု၍ သင့် skill၊ interest နှင့် career goal ကို အသေးစိတ်ရေးပါ။" }); return; }
     const profile = { skills: String(skills), interests: String(interests), workPreferences: String(workPreferences), careerGoals: String(careerGoals), experience: String(experience) };
-    const recommendations = CAREERS.map((career) => analyzeCareer(career, profile)).sort((a, b) => b.score - a.score || a.career.title.localeCompare(b.career.title)).slice(0, 3);
+    const ranked = CAREERS.map((career) => analyzeCareer(career, profile)).sort((a, b) => b.score - a.score || a.career.title.localeCompare(b.career.title));
+    const recommendations = ranked.filter((item) => item.matchedKeywords.length > 0).slice(0, 3);
     res.json({ mode: "rule-based-nlp", input: profile, recommendations, evaluation: { accuracy: null, precision: null, recall: null, f1Score: null, userSatisfaction: null, acceptanceRate: null, note: "အသုံးပြုသူ feedback စုဆောင်းပြီးမှ တိုင်းတာမည့် metric ဖြစ်ပါသည်။" } });
   } catch (error) { console.error("Career NLP analysis error:", error); res.status(500).json({ error: "Career recommendation မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။" }); }
 });
