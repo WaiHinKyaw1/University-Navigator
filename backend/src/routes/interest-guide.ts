@@ -1,7 +1,9 @@
 import { Router, type IRouter } from "express";
-import { db, interestGuideOptionsTable } from "@workspace/db";
-import { eq, asc } from "drizzle-orm";
+import { db, interestGuideOptionsTable, universitiesTable, majorsTable, universityMajorsTable } from "@workspace/db";
+import { eq, asc, sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -26,6 +28,116 @@ router.get("/interest-guide/options", async (_req, res): Promise<void> => {
 
     res.status(500).json({
       error: "Failed to load interest guide options",
+    });
+  }
+});
+
+/*
+ * STUDENT NLP ANALYSIS
+ * POST /api/interest-guide/analyze
+ */
+router.post("/interest-guide/analyze", async (req, res): Promise<void> => {
+  try {
+    const { text } = req.body;
+
+    if (!text || typeof text !== "string" || text.trim().length < 5) {
+      res.status(400).json({
+        error: "Please provide a more detailed description of your skills and interests.",
+      });
+      return;
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey) {
+      res.status(500).json({
+        error: "AI service is not configured. Please contact admin.",
+      });
+      return;
+    }
+
+    // 1. Fetch all universities and majors to provide context for AI
+    const universities = await db.select().from(universitiesTable);
+    const majors = await db.select().from(majorsTable);
+    
+    // 2. Prepare AI Prompt
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: process.env.GEMINI_MODEL || "gemini-2.5-pro"
+    });
+
+    const prompt = `
+      You are a Career and University Advisor in Myanmar. 
+      A student has provided the following description of their skills, interests, and background:
+      
+      "${text}"
+      
+      Based on this description and the list of universities and majors provided below, identify the top 10 most suitable universities for this student.
+      For each university, provide a "matching score" (0-100%) and 3 specific reasons why it's a good fit.
+      
+      Universities and their Majors:
+      ${universities.map(u => `- ${u.name} (${u.nameEn}): Min Score ${u.minScore}`).join("\n")}
+      
+      Available Majors in Myanmar:
+      ${majors.map(m => `- ${m.name} (${m.nameEn})`).join("\n")}
+      
+      Return ONLY a JSON array of objects with the following structure:
+      [
+        {
+          "universityId": number,
+          "score": number,
+          "reasons": string[]
+        }
+      ]
+      
+      The reasons should be in Burmese language if possible, otherwise English. 
+      Make the scoring realistic based on how well the student's interests match the university's type and majors.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    // Extract JSON from potential markdown code blocks
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error("AI returned invalid format");
+    }
+    
+    const analysis = JSON.parse(jsonMatch[0]);
+    
+    // 3. Enrich the results with full university and major data
+    const enrichedResults = await Promise.all(
+      analysis.slice(0, 10).map(async (item: any) => {
+        const university = universities.find(u => u.id === item.universityId);
+        if (!university) return null;
+        
+        // Fetch majors for this university
+        const uMajors = await db
+          .select({
+            id: majorsTable.id,
+            name: majorsTable.name,
+            nameEn: majorsTable.nameEn,
+            description: majorsTable.description
+          })
+          .from(universityMajorsTable)
+          .innerJoin(majorsTable, eq(universityMajorsTable.majorId, majorsTable.id))
+          .where(eq(universityMajorsTable.universityId, university.id));
+          
+        return {
+          university: {
+            ...university,
+            majors: uMajors
+          },
+          score: item.score,
+          reasons: item.reasons
+        };
+      })
+    );
+
+    res.json(enrichedResults.filter(Boolean));
+  } catch (error) {
+    logger.error({ err: error }, "Interest guide NLP analysis error");
+    res.status(500).json({
+      error: "Failed to analyze your interests. Please try again later.",
     });
   }
 });

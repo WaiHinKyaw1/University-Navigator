@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Link } from "wouter";
+import { Loader2, Sparkles, User, BrainCircuit } from "lucide-react";
 
 type Option = {
   id: number;
@@ -59,6 +61,11 @@ export default function InterestGuide() {
   const [interests, setInterests] = useState<string[]>([]);
   const [subject, setSubject] = useState("");
   const [career, setCareer] = useState("");
+  
+  // NLP State
+  const [nlpText, setNlpText] = useState("");
+  const [isNlpMode, setIsNlpMode] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
@@ -146,263 +153,27 @@ export default function InterestGuide() {
   // KEYWORD MAPPING
   // ============================================================
 
-  /**
-   * Interest related keywords
-   *
-   * Example:
-   * Programming
-   *   -> programming
-   *   -> computer science
-   *   -> software
-   *   -> IT
-   *   -> software engineering
-   */
   const interestKeywords: Record<string, string[]> = {
-    programming: [
-      "programming",
-      "computer science",
-      "software",
-      "information technology",
-      "information systems",
-      "computer engineering",
-      "software engineering",
-      "web development",
-      "app development",
-      "application development",
-      "developer",
-      "coding",
-    ],
-
-    technology: [
-      "technology",
-      "computer science",
-      "information technology",
-      "information systems",
-      "software",
-      "computer engineering",
-      "data science",
-      "artificial intelligence",
-      "cyber security",
-      "cybersecurity",
-    ],
-
-    business: [
-      "business",
-      "business administration",
-      "management",
-      "commerce",
-      "accounting",
-      "finance",
-      "marketing",
-      "economics",
-      "entrepreneurship",
-    ],
-
-    art: [
-      "art",
-      "design",
-      "graphic design",
-      "fine arts",
-      "visual arts",
-      "creative",
-      "multimedia",
-    ],
-
-    music: ["music", "musical", "performing arts", "sound", "audio"],
-
-    science: [
-      "science",
-      "biology",
-      "chemistry",
-      "physics",
-      "mathematics",
-      "environmental science",
-      "laboratory",
-    ],
+    programming: ["programming", "computer science", "software", "IT", "web development", "coding"],
+    technology: ["technology", "AI", "cyber security", "data science"],
+    business: ["business", "management", "finance", "marketing", "economics"],
+    art: ["art", "design", "creative", "multimedia"],
+    music: ["music", "sound", "audio"],
+    science: ["science", "biology", "chemistry", "physics", "math"],
   };
 
-  /**
-   * Career related keywords
-   *
-   * Career is given the highest weight.
-   */
   const careerKeywords: Record<string, string[]> = {
-    programmer: [
-      "programmer",
-      "programming",
-      "computer science",
-      "software",
-      "software engineering",
-      "information technology",
-      "information systems",
-      "computer engineering",
-      "developer",
-      "web development",
-      "application development",
-      "coding",
-    ],
-
-    software_developer: [
-      "software developer",
-      "software development",
-      "software engineering",
-      "computer science",
-      "programming",
-      "information technology",
-      "developer",
-    ],
-
-    web_developer: [
-      "web developer",
-      "web development",
-      "computer science",
-      "software engineering",
-      "information technology",
-      "programming",
-    ],
-
-    data_scientist: [
-      "data science",
-      "data scientist",
-      "computer science",
-      "statistics",
-      "mathematics",
-      "artificial intelligence",
-      "machine learning",
-    ],
-
-    engineer: [
-      "engineering",
-      "computer engineering",
-      "electrical engineering",
-      "mechanical engineering",
-      "civil engineering",
-      "software engineering",
-    ],
-
-    accountant: [
-      "accounting",
-      "accountancy",
-      "finance",
-      "business",
-      "business administration",
-      "commerce",
-    ],
-
-    business_manager: [
-      "business",
-      "business administration",
-      "management",
-      "commerce",
-      "marketing",
-      "finance",
-      "economics",
-    ],
-
-    teacher: [
-      "education",
-      "teaching",
-      "teacher",
-      "english",
-      "mathematics",
-      "science",
-      "education studies",
-    ],
-
-    doctor: [
-      "medicine",
-      "medical",
-      "health science",
-      "health sciences",
-      "medicine and surgery",
-    ],
-
-    nurse: ["nursing", "health science", "health sciences", "medical"],
-
-    designer: [
-      "design",
-      "graphic design",
-      "visual design",
-      "fine arts",
-      "multimedia",
-      "creative arts",
-    ],
+    programmer: ["programmer", "software engineer", "developer", "coding"],
+    doctor: ["doctor", "medicine", "medical", "health"],
+    engineer: ["engineer", "civil", "mechanical", "electrical"],
+    teacher: ["teacher", "education", "teaching"],
   };
 
-  /**
-   * Favorite subject related keywords.
-   *
-   * Subject has lower weight than Career + Interest.
-   */
   const subjectKeywords: Record<string, string[]> = {
-    english: [
-      "english",
-      "english language",
-      "english literature",
-      "linguistics",
-      "language studies",
-    ],
-
-    mathematics: [
-      "mathematics",
-      "mathematical",
-      "statistics",
-      "data science",
-      "computer science",
-      "engineering",
-      "economics",
-    ],
-
-    physics: [
-      "physics",
-      "engineering",
-      "computer engineering",
-      "electrical engineering",
-      "mechanical engineering",
-    ],
-
-    chemistry: [
-      "chemistry",
-      "chemical engineering",
-      "pharmacy",
-      "biochemistry",
-      "science",
-    ],
-
-    biology: [
-      "biology",
-      "biological science",
-      "medicine",
-      "medical",
-      "nursing",
-      "pharmacy",
-      "health science",
-      "life science",
-    ],
-
-    computer_science: [
-      "computer science",
-      "programming",
-      "software",
-      "information technology",
-      "information systems",
-      "computer engineering",
-      "software engineering",
-    ],
-
-    economics: [
-      "economics",
-      "business",
-      "finance",
-      "accounting",
-      "commerce",
-      "management",
-    ],
+    mathematics: ["math", "statistics", "data"],
+    physics: ["physics", "engineering"],
+    english: ["english", "language", "literature"],
   };
-
-  // ============================================================
-  // GET KEYWORDS
-  // ============================================================
 
   const getKeywords = (
     code: string,
@@ -410,478 +181,307 @@ export default function InterestGuide() {
     mapping: Record<string, string[]>,
   ): string[] => {
     const mappedKeywords = mapping[code];
-
-    if (mappedKeywords && mappedKeywords.length > 0) {
-      return mappedKeywords;
-    }
-
+    if (mappedKeywords && mappedKeywords.length > 0) return mappedKeywords;
     return [name.toLowerCase(), code.toLowerCase().replace(/_/g, " ")];
   };
 
   // ============================================================
-  // CALCULATE RECOMMENDATIONS
+  // CALCULATE RECOMMENDATIONS (RULE-BASED)
   // ============================================================
 
   const calculateRecommendations = () => {
     const selectedInterestOptions = interestOptions.filter((option) =>
       interests.includes(option.code),
     );
-
-    const selectedSubjectOption = subjectOptions.find(
-      (option) => option.code === subject,
-    );
-
-    const selectedCareerOption = careerOptions.find(
-      (option) => option.code === career,
-    );
+    const selectedSubjectOption = subjectOptions.find((o) => o.code === subject);
+    const selectedCareerOption = careerOptions.find((o) => o.code === career);
 
     const results: Recommendation[] = universities.map((university) => {
       let score = 0;
-
       const reasons: string[] = [];
+      const universityText = `${university.name} ${university.nameEn} ${university.description || ""} ${university.type} ${university.state} ${university.city} ${(university.majors || []).map(m => `${m.name} ${m.nameEn}`).join(" ")}`.toLowerCase();
 
-      // ========================================================
-      // UNIVERSITY SEARCH TEXT
-      // ========================================================
-
-      const universityText = `
-        ${university.name}
-        ${university.nameEn}
-        ${university.description || ""}
-        ${university.type || ""}
-        ${university.state || ""}
-        ${university.city || ""}
-
-        ${(university.majors || [])
-          .map(
-            (major) => `
-              ${major.name}
-              ${major.nameEn}
-              ${major.description || ""}
-            `,
-          )
-          .join(" ")}
-      `.toLowerCase();
-
-      // ========================================================
-      // INTEREST MATCH
-      // ========================================================
-
-      for (const interestOption of selectedInterestOptions) {
-        const keywords = getKeywords(
-          interestOption.code,
-          interestOption.name,
-          interestKeywords,
-        );
-
-        const matchedKeyword = keywords.find((keyword) =>
-          universityText.includes(keyword.toLowerCase()),
-        );
-
-        if (matchedKeyword) {
+      // Interest Match
+      for (const opt of selectedInterestOptions) {
+        const keywords = getKeywords(opt.code, opt.name, interestKeywords);
+        if (keywords.find(k => universityText.includes(k.toLowerCase()))) {
           score += 25;
-
-          reasons.push(`Interest match: ${interestOption.name}`);
-
+          reasons.push(`Interest match: ${opt.name}`);
           break;
         }
       }
 
-      // ========================================================
-      // CAREER MATCH
-      // ========================================================
-
+      // Career Match
       if (selectedCareerOption) {
-        const keywords = getKeywords(
-          selectedCareerOption.code,
-          selectedCareerOption.name,
-          careerKeywords,
-        );
-
-        const matchedKeyword = keywords.find((keyword) =>
-          universityText.includes(keyword.toLowerCase()),
-        );
-
-        if (matchedKeyword) {
+        const keywords = getKeywords(selectedCareerOption.code, selectedCareerOption.name, careerKeywords);
+        if (keywords.find(k => universityText.includes(k.toLowerCase()))) {
           score += 35;
-
           reasons.push(`Career match: ${selectedCareerOption.name}`);
         }
       }
 
-      // ========================================================
-      // SUBJECT MATCH
-      // ========================================================
-
+      // Subject Match
       if (selectedSubjectOption) {
-        const keywords = getKeywords(
-          selectedSubjectOption.code,
-          selectedSubjectOption.name,
-          subjectKeywords,
-        );
-
-        const matchedKeyword = keywords.find((keyword) =>
-          universityText.includes(keyword.toLowerCase()),
-        );
-
-        if (matchedKeyword) {
+        const keywords = getKeywords(selectedSubjectOption.code, selectedSubjectOption.name, subjectKeywords);
+        if (keywords.find(k => universityText.includes(k.toLowerCase()))) {
           score += 10;
-
           reasons.push(`Subject match: ${selectedSubjectOption.name}`);
         }
       }
 
-      // ========================================================
-      // MINIMUM SCORE
-      // ========================================================
+      if (university.minScore <= 400) { score += 5; reasons.push("Entry score may be suitable"); }
+      if (education) { score += 5; reasons.push("Suitable for your education level"); }
+      if (englishLevel) { score += 5; reasons.push("English level considered"); }
 
-      if (university.minScore <= 400) {
-        score += 5;
-
-        reasons.push("Entry score may be suitable");
-      }
-
-      // ========================================================
-      // EDUCATION
-      // ========================================================
-
-      if (education) {
-        score += 5;
-
-        reasons.push("Suitable for your education level");
-      }
-
-      // ========================================================
-      // ENGLISH LEVEL
-      // ========================================================
-
-      if (englishLevel) {
-        score += 5;
-
-        reasons.push("English level considered");
-      }
-
-      // ========================================================
-      // RETURN RESULT
-      // ========================================================
-
-      return {
-        university,
-        score: Math.min(score, 100),
-        reasons,
-      };
+      return { university, score: Math.min(score, 100), reasons };
     });
 
-    // ==========================================================
-    // SORT HIGH SCORE FIRST
-    // ==========================================================
-
-    results.sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
-
-      return a.university.name.localeCompare(b.university.name);
-    });
-
-    // ==========================================================
-    // TOP 10
-    // ==========================================================
-
+    results.sort((a, b) => b.score - a.score || a.university.name.localeCompare(b.university.name));
     setRecommendations(results.slice(0, 10));
-
     setSubmitted(true);
   };
 
   // ============================================================
-  // SUBMIT VALIDATION
+  // ANALYZE NLP (AI-BASED)
   // ============================================================
 
-  const canSubmit =
-    education && englishLevel && interests.length > 0 && subject && career;
+  const analyzeWithNLP = async () => {
+    if (!nlpText || nlpText.trim().length < 5) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch("/api/interest-guide/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: nlpText }),
+      });
+
+      if (!response.ok) throw new Error("Analysis failed");
+
+      const data = await response.json();
+      setRecommendations(data);
+      setSubmitted(true);
+    } catch (error) {
+      console.error("NLP Analysis error:", error);
+      alert("AI Analysis failed. Please try again or use the form mode.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   // ============================================================
-  // LOADING
+  // UI
   // ============================================================
 
   if (loading) {
     return (
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center">
-          Loading...
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading...</span>
         </div>
       </Layout>
     );
   }
 
-  // ============================================================
-  // UI
-  // ============================================================
-
   return (
     <Layout>
       <div className="max-w-5xl mx-auto w-full px-4 py-10 space-y-8">
-        {/* =====================================================
-            HEADER
-        ====================================================== */}
-
         <div className="text-center">
           <h1 className="text-3xl md:text-4xl font-bold">Interest Guide</h1>
-
           <p className="text-muted-foreground mt-2">
-            ဖြေဆိုပြီး သင့်အတွက် သင့်တော်နိုင်သော Universities တွေကို ရှာဖွေပါ။
+            သင့်ရဲ့ စိတ်ဝင်စားမှုနဲ့ ကျွမ်းကျင်မှုတွေကို အခြေခံပြီး သင့်တော်မယ့် တက္ကသိုလ်တွေကို ရှာဖွေပါ။
           </p>
         </div>
 
-        {/* =====================================================
-            FORM
-        ====================================================== */}
+        <div className="flex justify-center gap-4">
+          <Button 
+            variant={isNlpMode ? "outline" : "default"}
+            onClick={() => { setIsNlpMode(false); setSubmitted(false); }}
+            className="w-40"
+          >
+            <User className="w-4 hide mr-2" />
+            Form Mode
+          </Button>
+          <Button 
+            variant={isNlpMode ? "default" : "outline"}
+            onClick={() => { setIsNlpMode(true); setSubmitted(false); }}
+            className="w-40"
+          >
+            <BrainCircuit className="w-4 h-4 mr-2" />
+            AI NLP Mode
+          </Button>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Information</CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            {/* =================================================
-                EDUCATION
-            ================================================== */}
-
-            <div>
-              <label className="text-sm font-medium">လက်ရှိပညာရေး</label>
-
-              <Select value={education} onValueChange={setEducation}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="လက်ရှိပညာရေးရွေးပါ" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {educationOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.code}>
-                      {option.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* =================================================
-                ENGLISH LEVEL
-            ================================================== */}
-
-            <div>
-              <label className="text-sm font-medium">English Level</label>
-
-              <Select value={englishLevel} onValueChange={setEnglishLevel}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="English level ရွေးပါ" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {englishOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.code}>
-                      {option.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* =================================================
-                INTERESTS
-            ================================================== */}
-
-            <div>
-              <label className="text-sm font-medium">ဝါသနာ / Interests</label>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                {interestOptions.map((option) => (
-                  <label
-                    key={option.id}
-                    className="flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-muted"
-                  >
-                    <Checkbox
-                      checked={interests.includes(option.code)}
-                      onCheckedChange={() => toggleInterest(option.code)}
-                    />
-
-                    <span>{option.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* =================================================
-                SUBJECT
-            ================================================== */}
-
-            <div>
-              <label className="text-sm font-medium">အကြိုက်ဆုံးဘာသာရပ်</label>
-
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="ဘာသာရပ်ရွေးပါ" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {subjectOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.code}>
-                      {option.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* =================================================
-                CAREER
-            ================================================== */}
-
-            <div>
-              <label className="text-sm font-medium">Career Goal</label>
-
-              <Select value={career} onValueChange={setCareer}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Career goal ရွေးပါ" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {careerOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.code}>
-                      {option.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* =================================================
-                SUBMIT
-            ================================================== */}
-
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={!canSubmit}
-              onClick={calculateRecommendations}
-            >
-              Find Suitable Universities
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* =====================================================
-            RESULTS
-        ====================================================== */}
-
-        {submitted && (
-          <Card>
-            <CardHeader>
-              <CardTitle>သင့်အတွက် သင့်တော်နိုင်သော Universities</CardTitle>
+        {!submitted ? (
+          <Card className="border-2 border-primary/10 shadow-lg">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="flex items-center gap-2">
+                {isNlpMode ? <Sparkles className="w-5 h-5 text-primary" /> : <User className="w-5 h-5 text-primary" />}
+                {isNlpMode ? "AI NLP Analysis" : "Your Information"}
+              </CardTitle>
             </CardHeader>
-
-            <CardContent>
-              {recommendations.length === 0 ? (
-                <p className="text-muted-foreground">No universities found.</p>
-              ) : (
+            <CardContent className="p-6">
+              {isNlpMode ? (
                 <div className="space-y-4">
-                  {recommendations.map((item, index) => (
-                    <div
-                      key={item.university.id}
-                      className="border rounded-xl p-5"
-                    >
-                      {/* =======================================
-                          UNIVERSITY HEADER
-                      ======================================== */}
+                  <p className="text-sm font-medium text-muted-foreground">
+                    သင့်ရဲ့ Skills, Interests, Work Preferences နဲ့ Career Goals တွေကို စာသားနဲ့ အလွတ်ရေးပေးပါ။ AI က သင့်အတွက် အကောင်းဆုံး တက္ကသိုလ်တွေကို ရှာပေးပါလိမ့်မယ်။
+                  </p>
+                  <Textarea 
+                    placeholder="ဥပမာ- ကျွန်တော်က programming နဲ့ problem solving ကို ဝါသနာပါတယ်။ Mathematics မှာလည်း စိတ်ဝင်စားပြီး programming skill ကောင်းပါတယ်။ အနာဂတ်မှာ software developer တစ်ယောက် ဖြစ်ချင်ပါတယ်..."
+                    className="min-h-[200px] text-base leading-relaxed"
+                    value={nlpText}
+                    onChange={(e) => setNlpText(e.target.value)}
+                  />
+                  <Button 
+                    className="w-full h-12 text-lg" 
+                    onClick={analyzeWithNLP}
+                    disabled={isAnalyzing || nlpText.trim().length < 5}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Analyzing with AI...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        AI နဲ့ ရှာဖွေမည်
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-sm font-medium">လက်ရှိပညာရေး</label>
+                    <Select value={education} onValueChange={setEducation}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="လက်ရှိပညာရေးရွေးပါ" /></SelectTrigger>
+                      <SelectContent>
+                        {educationOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge>#{index + 1}</Badge>
+                  <div>
+                    <label className="text-sm font-medium">English Level</label>
+                    <Select value={englishLevel} onValueChange={setEnglishLevel}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="English level ရွေးပါ" /></SelectTrigger>
+                      <SelectContent>
+                        {englishOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                            <Badge variant="secondary">
-                              Match {item.score}%
-                            </Badge>
-                          </div>
-
-                          <h3 className="text-xl font-bold mt-3">
-                            {item.university.name}
-                          </h3>
-
-                          <p className="text-muted-foreground">
-                            {item.university.nameEn}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* =======================================
-                          DESCRIPTION
-                      ======================================== */}
-
-                      {item.university.description && (
-                        <p className="mt-3 text-sm">
-                          {item.university.description}
-                        </p>
-                      )}
-
-                      {/* =======================================
-                          WHY THIS UNIVERSITY
-                      ======================================== */}
-
-                      {item.reasons.length > 0 && (
-                        <div className="mt-4">
-                          <p className="font-medium">Why this may suit you:</p>
-
-                          <ul className="list-disc ml-5 text-sm text-muted-foreground mt-1">
-                            {item.reasons
-                              .slice(0, 4)
-                              .map((reason, reasonIndex) => (
-                                <li key={`${reason}-${reasonIndex}`}>
-                                  {reason}
-                                </li>
-                              ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* =======================================
-                          MAJORS
-                      ======================================== */}
-
-                      {item.university.majors &&
-                        item.university.majors.length > 0 && (
-                          <div className="mt-4">
-                            <p className="font-medium">Available Majors:</p>
-
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {item.university.majors
-                                .slice(0, 6)
-                                .map((major) => (
-                                  <Badge key={major.id} variant="outline">
-                                    {major.name}
-                                  </Badge>
-                                ))}
-                            </div>
-                          </div>
-                        )}
-
-                      {/* =======================================
-                          VIEW UNIVERSITY
-                      ======================================== */}
-
-                      <div className="mt-4">
-                        <Button asChild variant="outline">
-                          <Link href={`/universities/${item.university.id}`}>
-                            View University
-                          </Link>
-                        </Button>
-                      </div>
+                  <div>
+                    <label className="text-sm font-medium">ဝါသနာ / Interests</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                      {interestOptions.map((o) => (
+                        <label key={o.id} className="flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-muted">
+                          <Checkbox checked={interests.includes(o.code)} onCheckedChange={() => toggleInterest(o.code)} />
+                          <span>{o.name}</span>
+                        </label>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">အကြိုက်ဆုံးဘာသာရပ်</label>
+                    <Select value={subject} onValueChange={setSubject}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="ဘာသာရပ်ရွေးပါ" /></SelectTrigger>
+                      <SelectContent>
+                        {subjectOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">ဖြစ်ချင်သောအလုပ်အကိုင်</label>
+                    <Select value={career} onValueChange={setCareer}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="အလုပ်အကိုင်ရွေးပါ" /></SelectTrigger>
+                      <SelectContent>
+                        {careerOptions.map((o) => <SelectItem key={o.id} value={o.code}>{o.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button 
+                    className="w-full h-12 text-lg" 
+                    onClick={calculateRecommendations}
+                    disabled={!education || !englishLevel || interests.length === 0 || !subject || !career}
+                  >
+                    သင့်တော်သော တက္ကသိုလ်များ ရှာဖွေမည်
+                  </Button>
                 </div>
               )}
             </CardContent>
           </Card>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Recommended Universities</h2>
+              <Button variant="outline" onClick={() => setSubmitted(false)}>Back to Form</Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {recommendations.length === 0 ? (
+                <Card><CardContent className="p-10 text-center text-muted-foreground">No matches found. Try different options.</CardContent></Card>
+              ) : (
+                recommendations.map((item, index) => (
+                  <Card key={item.university.id} className="overflow-hidden hover:shadow-xl transition-shadow border-l-4 border-l-primary">
+                    <CardContent className="p-0">
+                      <div className="flex flex-col md:flex-row">
+                        {item.university.imageUrl && (
+                          <div className="w-full md:w-48 h-48 md:h-auto overflow-hidden">
+                            <img src={item.university.imageUrl} alt={item.university.name} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="p-6 flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <Badge className="bg-primary text-primary-foreground font-bold px-3 py-1">#{index + 1}</Badge>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-primary">{item.score}%</div>
+                              <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Matching Score</div>
+                            </div>
+                          </div>
+
+                          <h3 className="text-xl font-bold">{item.university.name}</h3>
+                          <p className="text-muted-foreground text-sm mb-4">{item.university.nameEn}</p>
+
+                          {item.reasons.length > 0 && (
+                            <div className="bg-primary/5 rounded-lg p-4 mb-4">
+                              <p className="text-sm font-bold mb-2 flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-primary" />
+                                Why this may suit you:
+                              </p>
+                              <ul className="space-y-2">
+                                {item.reasons.map((reason, rIdx) => (
+                                  <li key={rIdx} className="text-sm flex items-start gap-2">
+                                    <span className="text-primary mt-1">•</span>
+                                    <span>{reason}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap gap-2 mb-6">
+                            {item.university.majors?.slice(0, 5).map(m => (
+                              <Badge key={m.id} variant="outline" className="bg-background">{m.name}</Badge>
+                            ))}
+                          </div>
+
+                          <Button asChild className="w-full md:w-auto">
+                            <Link href={`/universities/${item.university.id}`}>View University Details</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
         )}
       </div>
     </Layout>
