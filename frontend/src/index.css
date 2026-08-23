@@ -192,11 +192,11 @@
   }
 
   /* Keep the text caret compact and consistent across every form field. */
-  input:not([type="file"]),
+  input:not([type="file"]):not([type="range"]):not([type="number"]),
   textarea,
   [contenteditable="true"] {
     caret-color: hsl(var(--primary));
-    line-height: 1.25rem;
+    line-height: 1rem !important;
   }
 }
 
