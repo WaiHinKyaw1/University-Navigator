@@ -65,8 +65,8 @@ function getCaretPosition(element: TextControl): CaretPosition | null {
   mirror.style.boxSizing = styles.boxSizing;
   mirror.style.width = `${element.clientWidth}px`;
   mirror.style.lineHeight = styles.lineHeight;
-  mirror.style.left = `${rect.left}px`;
-  mirror.style.top = `${rect.top}px`;
+  mirror.style.left = `${rect.left - element.scrollLeft}px`;
+  mirror.style.top = `${rect.top - element.scrollTop}px`;
 
   const text = document.createTextNode(valueWithMarker);
   mirror.append(text, marker);
