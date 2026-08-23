@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { useLogin } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
-import { GraduationCap } from "lucide-react";
+import { Eye, EyeOff, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
@@ -30,6 +30,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function Login() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -74,7 +75,7 @@ export default function Login() {
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-[calc(100vh-16rem)] px-4 py-12">
-        <Card className="w-full max-w-md shadow-lg border-primary/10">
+          <Card className="w-full max-w-sm shadow-lg border-primary/10">
           <CardHeader className="space-y-2 text-center pb-6">
             <div className="flex justify-center mb-4">
               <div className="bg-primary/10 p-3 rounded-full">
@@ -87,7 +88,10 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="mx-auto w-full max-w-xs space-y-4"
+            >
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -106,11 +110,27 @@ export default function Login() {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  {...form.register("password")}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    className="pr-10"
+                    {...form.register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
                 {form.formState.errors.password && (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.password.message}
