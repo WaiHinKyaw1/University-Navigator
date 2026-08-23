@@ -12,6 +12,18 @@
   }
 }
 
+@keyframes compactCaretBlink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -192,15 +204,19 @@
   }
 
   /* Keep the text caret compact and consistent across every form field. */
-  input:not([type="file"]):not([type="range"]):not([type="number"]),
+  input:not([type="file"]):not([type="range"]),
   textarea,
   [contenteditable="true"] {
-    caret-color: hsl(var(--primary));
+    caret-color: transparent !important;
     line-height: 1rem !important;
   }
 }
 
 @layer utilities {
+  .compact-caret {
+    animation: compactCaretBlink 1s step-end infinite;
+  }
+
   .safe-area-pb {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
