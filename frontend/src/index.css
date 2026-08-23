@@ -190,6 +190,14 @@
     font-family: 'Noto Sans Myanmar', 'Myanmar Text', 'Segoe UI', 'Pyidaungsu', sans-serif;
     line-height: 1.7;
   }
+
+  /* Keep the text caret compact and consistent across every form field. */
+  input:not([type="file"]),
+  textarea,
+  [contenteditable="true"] {
+    caret-color: hsl(var(--primary));
+    line-height: 1.25rem;
+  }
 }
 
 @layer utilities {
