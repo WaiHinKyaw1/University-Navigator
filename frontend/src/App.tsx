@@ -5,7 +5,6 @@ import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CompareProvider } from "@/hooks/use-compare";
-import { CompactCaret } from "@/components/compact-caret";
 import NotFound from "@/pages/not-found";
 
 const Home = lazy(() => import("@/pages/home"));
@@ -106,7 +105,6 @@ function App() {
                 <Router />
               </WouterRouter>
             </Suspense>
-            <CompactCaret />
             <Toaster />
           </TooltipProvider>
         </CompareProvider>
