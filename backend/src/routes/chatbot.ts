@@ -54,7 +54,7 @@ type LlmProvider = "gemini" | "openrouter";
 function getGeminiModel(): string {
   return (
     process.env.GEMINI_MODEL?.trim() ||
-    "gemini-2.5-pro"
+    "gemini-3.6-flash"
   );
 }
 
@@ -65,11 +65,42 @@ function getOpenRouterPaidModel(): string {
   );
 }
 
-function getOpenRouterFreeModel(): string {
-  return (
+function uniqueStrings(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function geminiModelCandidates(): string[] {
+  const fromEnv = process.env.GEMINI_MODELS
+    ?.split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
+  if (fromEnv && fromEnv.length > 0) return uniqueStrings(fromEnv);
+
+  return uniqueStrings([
+    process.env.GEMINI_PAID_MODEL?.trim() || "gemini-3.6-flash",
+    process.env.GEMINI_FREE_MODEL?.trim() || "gemini-3.6-flash",
+    "gemini-3.6-flash",
+    "gemini-3.1-pro-preview",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+  ]);
+}
+
+function openRouterModelCandidates(): string[] {
+  const fromEnv = process.env.OPENROUTER_MODELS
+    ?.split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
+  if (fromEnv && fromEnv.length > 0) return uniqueStrings(fromEnv);
+
+  return uniqueStrings([
+    process.env.OPENROUTER_PAID_MODEL?.trim() || "anthropic/claude-3.5-sonnet",
     process.env.OPENROUTER_FREE_MODEL?.trim() ||
-    "openrouter/free"
-  );
+      "meta-llama/llama-3.3-70b-instruct:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen2.5-72b-instruct:free",
+    "deepseek/deepseek-r1:free",
+  ]);
 }
 
 function parseHistory(raw: unknown): HistoryMessage[] {
@@ -89,24 +120,6 @@ function parseHistory(raw: unknown): HistoryMessage[] {
     .slice(-10);
 }
 
-
-function isProviderFallbackError(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  const msg = error.message.toLowerCase();
-
-  return (
-    msg.includes("429") ||
-    msg.includes("quota") ||
-    msg.includes("rate limit") ||
-    msg.includes("rate_limit") ||
-    msg.includes("402") ||
-    msg.includes("credit") ||
-    msg.includes("insufficient")
-  );
-}
 
 function getChatErrorMessage(
   error: unknown,
@@ -245,39 +258,15 @@ async function completeChat(
     model: string;
   }[] = [];
 
-  if (hasOpenRouter) {
-    strategies.push({
-      provider: "openrouter",
-      model:
-        process.env.OPENROUTER_PAID_MODEL?.trim() ||
-        "anthropic/claude-sonnet-5",
-    });
+  const geminiModels = hasGemini ? geminiModelCandidates() : [];
+  const openRouterModels = hasOpenRouter ? openRouterModelCandidates() : [];
+
+  for (const model of geminiModels) {
+    strategies.push({ provider: "gemini", model });
   }
 
-  if (hasGemini) {
-    strategies.push({
-      provider: "gemini",
-      model:
-        process.env.GEMINI_PAID_MODEL?.trim() ||
-        "gemini-2.5-pro",
-    });
-  }
-  if (hasGemini) {
-    strategies.push({
-      provider: "gemini",
-      model:
-        process.env.GEMINI_FREE_MODEL?.trim() ||
-        "gemini-3.6-flash",
-    });
-  }
-
-  if (hasOpenRouter) {
-    strategies.push({
-      provider: "openrouter",
-      model:
-        process.env.OPENROUTER_FREE_MODEL?.trim() ||
-        "openrouter/free",
-    });
+  for (const model of openRouterModels) {
+    strategies.push({ provider: "openrouter", model });
   }
 
   let lastError: unknown;
@@ -312,13 +301,13 @@ async function completeChat(
 
       const hasNext = i < strategies.length - 1;
 
-      if (hasNext && isProviderFallbackError(error)) {
+      if (hasNext) {
         logger.warn(
           {
             err: error,
             strategy,
           },
-          "LLM limit/quota/credit reached, trying fallback",
+          "LLM request failed, trying next fallback strategy",
         );
 
         continue;
