@@ -195,7 +195,7 @@ export default function News() {
                   <img
                     src={activeArticle.imageUrl}
                     alt={activeArticle.title}
-                    className="h-48 w-full object-cover sm:h-64"
+                    className="w-full h-auto object-contain bg-muted"
                   />
                 )}
                 <div className="p-4 sm:p-5 md:p-7">

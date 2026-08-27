@@ -6,7 +6,15 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AdminLayout } from "@/components/admin-layout";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function AdminProfile() {
   const { user, updateUser } = useAuth();
@@ -14,6 +22,8 @@ export default function AdminProfile() {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [loading, setLoading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -25,6 +35,7 @@ export default function AdminProfile() {
   if (!user || user.role !== "admin") {
     return <Redirect to="/" />;
   }
+
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -49,10 +60,9 @@ export default function AdminProfile() {
         throw new Error(data.error);
       }
 
-      // Update navbar immediately
       updateUser(data);
-
       toast.success("Profile updated");
+      setEditOpen(false);
     } catch (err: any) {
       toast.error(err.message || "Update failed");
     } finally {
@@ -62,31 +72,93 @@ export default function AdminProfile() {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto max-w-xl py-10">
-        <h1 className="text-3xl font-bold mb-6">Admin Profile</h1>
+      <div className="container mx-auto max-w-3xl px-4 py-10">
+        {/* Profile card */}
+        <div className="overflow-hidden rounded-3xl border bg-card shadow-sm">
+          <div className="h-32 bg-gradient-to-r from-primary via-primary/80 to-secondary sm:h-40" />
+          <div className="px-6 pb-6">
+            <div className="-mt-14 flex flex-col items-center text-center">
+              <ProfileImageUpload avatarUrl={user.avatarUrl} onUploaded={() => {}} />
+              <h2 className="mt-3 text-2xl font-bold">{user.name}</h2>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <span className="mt-2 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium capitalize text-primary">
+                {user.role}
+              </span>
+            </div>
 
-        <ProfileImageUpload avatarUrl={user.avatarUrl} onUploaded={() => {}} />
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-left">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Name
+                </p>
+                <p className="mt-1 font-medium">{user.name}</p>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-left">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Email
+                </p>
+                <p className="mt-1 break-all font-medium">{user.email}</p>
+              </div>
+            </div>
 
-        <div className="space-y-5 border rounded-xl p-6">
-          <div>
-            <label>Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button className="flex-1" onClick={() => setEditOpen(true)}>
+                Edit Profile
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPwOpen(true)}
+              >
+                Change Password
+              </Button>
+            </div>
           </div>
-
-          <div>
-            <label>Email</label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
-
-        <div className="mt-6">
-          <ChangePassword />
         </div>
       </div>
+
+      {/* Edit Profile modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password modal */}
+      <Dialog open={pwOpen} onOpenChange={setPwOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <ChangePassword compact />
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

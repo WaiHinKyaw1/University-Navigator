@@ -1119,6 +1119,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuditLogListResponse"
 
+  /admin/audit-logs/{id}:
+    delete:
+      operationId: deleteAuditLog
+      tags: [admin]
+      summary: Delete a single audit log (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit log deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "400":
+          description: Invalid id
+
   # ── SITE SETTINGS ─────────────────────────────────────────────────────────
   /settings:
     get:

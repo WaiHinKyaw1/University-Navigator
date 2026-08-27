@@ -297,4 +297,20 @@ router.get(
   },
 );
 
+router.delete(
+  "/admin/audit-logs/:id",
+  requireAdmin,
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) {
+      res.status(400).json({ error: "Invalid audit log id" });
+      return;
+    }
+
+    await db.delete(auditLogsTable).where(eq(auditLogsTable.id, id));
+
+    res.json({ success: true });
+  },
+);
+
 export default router;

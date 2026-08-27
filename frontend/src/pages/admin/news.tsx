@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { uploadImage } from "@/lib/upload-image-api";
 
 type NewsForm = {
   title: string;
@@ -42,6 +43,8 @@ export default function AdminNews() {
   } | null>(null);
   const queryClient = useQueryClient();
   const { data: response, isLoading } = useListNews({ limit: 50 });
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["/api/news"] });
 
@@ -83,6 +86,7 @@ export default function AdminNews() {
   const openCreate = () => {
     setEditingArticle(null);
     setForm(emptyForm);
+    setLocalPreview(null);
     setModalOpen(true);
   };
 
@@ -95,7 +99,68 @@ export default function AdminNews() {
       imageUrl: article.imageUrl || "",
       published: article.published !== false,
     });
+    setLocalPreview(null);
     setModalOpen(true);
+  };
+
+  // Compress/resize an image client-side so large photos upload quickly
+  // and stay within the server's size limit.
+  const compressImage = async (file: File, targetMaxBytes = 1024 * 1024): Promise<Blob> => {
+    const bitmap = await createImageBitmap(file);
+    const maxDim = 1280;
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    for (const quality of [0.8, 0.7, 0.6, 0.5, 0.4, 0.3]) {
+      const blob = await new Promise<Blob>((resolve) =>
+        canvas.toBlob((b) => resolve(b ?? new Blob()), "image/jpeg", quality),
+      );
+      if (blob.size <= targetMaxBytes) return blob;
+    }
+    return await new Promise<Blob>((resolve) =>
+      canvas.toBlob((b) => resolve(b ?? new Blob()), "image/jpeg", 0.3),
+    );
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show an instant local preview so the UI feels responsive.
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreview(objectUrl);
+
+    try {
+      setIsUploadingImage(true);
+      let toUpload: File = file;
+      try {
+        const blob = await compressImage(file);
+        toUpload = new File(
+          [blob],
+          file.name.replace(/\.[^.]+$/, "") + ".jpg",
+          { type: "image/jpeg" },
+        );
+      } catch {
+        // If compression fails, fall back to the original file.
+        toUpload = file;
+      }
+      const url = await uploadImage(toUpload);
+      setForm((prev) => ({ ...prev, imageUrl: url }));
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
+      setLocalPreview(null);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = "";
+    }
   };
 
   const handleSubmit = () => {
@@ -226,8 +291,58 @@ export default function AdminNews() {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="news-image">Image URL</Label>
-                <Input id="news-image" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
+                <Label>Article Image</Label>
+                <div className="flex flex-col gap-4">
+                  {(localPreview || form.imageUrl) && (
+                    <div className="relative w-full h-40 rounded-md overflow-hidden border">
+                      <img
+                        src={localPreview || form.imageUrl}
+                        alt="Article"
+                        className="w-full h-full object-cover"
+                      />
+                      {isUploadingImage && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                          <Loader2 className="h-6 w-6 animate-spin text-white" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="relative overflow-hidden shrink-0"
+                      disabled={isUploadingImage}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {isUploadingImage
+                        ? "Uploading..."
+                        : form.imageUrl
+                          ? "Change Image"
+                          : "Upload Image"}
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploadingImage}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </Button>
+                    {form.imageUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="text-destructive shrink-0"
+                        onClick={() => {
+                          setForm({ ...form, imageUrl: "" });
+                          setLocalPreview(null);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="news-content">Content</Label>
