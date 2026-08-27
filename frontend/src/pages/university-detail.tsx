@@ -23,7 +23,9 @@ import {
   TrendingUp,
   ExternalLink,
   Map,
+  Heart,
 } from "lucide-react";
+import FavoriteButton from "@/components/favorite-button";
 
 export default function UniversityDetail() {
   const [, params] = useRoute("/universities/:id");
@@ -338,6 +340,19 @@ export default function UniversityDetail() {
                         <span className="text-sm font-medium capitalize">
                           {uni.type}
                         </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="bg-primary/10 p-2 rounded shrink-0">
+                        <Heart className="h-4 w-4 text-primary" />
+                      </div>
+
+                      <div className="flex-1">
+                        <span className="text-xs text-muted-foreground block mb-2">
+                          University
+                        </span>
+
+                        <FavoriteButton universityId={uni.id} />
                       </div>
                     </div>
                     {uni.duration && (
