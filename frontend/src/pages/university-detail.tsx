@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useGetUniversity, getGetUniversityQueryKey } from "@workspace/api-client-react";
+import {
+  useGetUniversity,
+  getGetUniversityQueryKey,
+} from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,9 +86,13 @@ export default function UniversityDetail() {
     const digits = "၀၁၂၃၄၅၆၇၈၉";
     return number.toString().replace(/\d/g, (d) => digits[Number(d)]);
   };
-  const mapSearch = [uni.city, uni.state, "Myanmar"].filter(Boolean).join(", ");
-  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapSearch)}`;
+  const mapSearch = [uni.name, uni.city, uni.state, "Myanmar"]
+    .filter(Boolean)
+    .join(", ");
 
+  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    mapSearch,
+  )}`;
   return (
     <Layout>
       <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">

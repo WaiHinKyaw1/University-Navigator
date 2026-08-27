@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
-import FavoriteButton from "@/components/favorite-button";
+// import FavoriteButton from "@/components/favorite-button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -114,7 +114,7 @@ function UniversityCard({
 
       <div className="relative h-32 overflow-hidden bg-muted/30">
         {university.imageUrl ? (
-            <img
+          <img
             src={university.imageUrl}
             alt={university.name}
             loading="lazy"
@@ -132,7 +132,7 @@ function UniversityCard({
           >
             {TYPE_LABEL[university.type] ?? university.type}
           </span>
-          <FavoriteButton universityId={university.id} compact />
+          {/* <FavoriteButton universityId={university.id} compact /> */}
         </div>
         {university.abbreviation && (
           <div className="absolute bottom-2 left-2">
@@ -306,8 +306,13 @@ export default function Universities() {
     }),
     [activeCategory, activeState, page, search],
   );
-  const { data: response, isLoading, isFetching, isError, refetch } =
-    useListUniversities(listParams);
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useListUniversities(listParams);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -329,7 +334,13 @@ export default function Universities() {
     void queryClient.prefetchQuery(
       getListUniversitiesQueryOptions({ ...listParams, page: page + 1 }),
     );
-  }, [getListUniversitiesQueryOptions, listParams, page, queryClient, totalPages]);
+  }, [
+    getListUniversitiesQueryOptions,
+    listParams,
+    page,
+    queryClient,
+    totalPages,
+  ]);
 
   const resetFilters = () => {
     setSearchInput("");
@@ -360,11 +371,14 @@ export default function Universities() {
         <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:space-y-6 sm:py-8">
           <div className="space-y-2 text-center">
             <div className="flex items-center justify-center gap-2">
-              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">တက္ကသိုလ်များ</h1>
+              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+                တက္ကသိုလ်များ
+              </h1>
               {!isLoading && <Badge variant="secondary">{total} ခု</Badge>}
             </div>
             <p className="text-sm text-muted-foreground">
-              မြန်မာနိုင်ငံရှိ တက္ကသိုလ်များကို အမည်၊ နေရာဒေသ၊ အမျိုးအစားအလိုက် ရှာဖွေကြည့်ရှုပါ — {academicYear}
+              မြန်မာနိုင်ငံရှိ တက္ကသိုလ်များကို အမည်၊ နေရာဒေသ၊ အမျိုးအစားအလိုက်
+              ရှာဖွေကြည့်ရှုပါ — {academicYear}
             </p>
           </div>
 
@@ -445,19 +459,21 @@ export default function Universities() {
             {isFetching && !isLoading && <span>ရှာဖွေနေသည်...</span>}
             {!isLoading && !isFetching && total > 0 && (
               <span>
-                {total} ခု တွေ့ရှိသည် — စာမျက်နှာ {page}/{Math.ceil(total / PAGE_SIZE)}
+                {total} ခု တွေ့ရှိသည် — စာမျက်နှာ {page}/
+                {Math.ceil(total / PAGE_SIZE)}
               </span>
             )}
-            {(search || activeCategory !== "all" || activeState !== "all") && !isLoading && (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex items-center gap-1 text-primary hover:underline"
-              >
-                <RotateCcw className="h-3 w-3" />
-                Filter ပြန်စမယ်
-              </button>
-            )}
+            {(search || activeCategory !== "all" || activeState !== "all") &&
+              !isLoading && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Filter ပြန်စမယ်
+                </button>
+              )}
           </div>
 
           {compareUniversities.length > 0 && (
@@ -468,7 +484,10 @@ export default function Universities() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-foreground">
-                    Compare စာရင်း <Badge variant="secondary" className="ml-1">{compareUniversities.length}/4</Badge>
+                    Compare စာရင်း{" "}
+                    <Badge variant="secondary" className="ml-1">
+                      {compareUniversities.length}/4
+                    </Badge>
                   </p>
                   <div className="mt-1 flex max-w-full gap-1.5 overflow-x-auto">
                     {compareUniversities.map((university) => (
@@ -487,10 +506,21 @@ export default function Universities() {
                 </div>
               </div>
               <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
-                <Button type="button" variant="ghost" size="sm" className="flex-1 sm:flex-none" onClick={clearUniversities}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                  onClick={clearUniversities}
+                >
                   အားလုံးဖယ်မယ်
                 </Button>
-                <Button asChild size="sm" className="flex-1 sm:flex-none" disabled={compareUniversities.length < 2}>
+                <Button
+                  asChild
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                  disabled={compareUniversities.length < 2}
+                >
                   <Link href="/compare">
                     <GitCompareArrows className="mr-1.5 h-4 w-4" />
                     Compare ကြည့်မယ်
@@ -503,7 +533,10 @@ export default function Universities() {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((index) => (
-                <Card key={index} className="overflow-hidden rounded-2xl border-gray-100">
+                <Card
+                  key={index}
+                  className="overflow-hidden rounded-2xl border-gray-100"
+                >
                   <Skeleton className="h-32 rounded-none" />
                   <div className="space-y-3 p-4">
                     <Skeleton className="h-4 w-3/4" />
@@ -518,8 +551,14 @@ export default function Universities() {
             <div className="rounded-2xl border border-red-200/60 bg-card px-4 py-16 text-center">
               <Building2 className="mx-auto mb-3 h-12 w-12 text-red-200" />
               <p className="font-semibold text-gray-700">Data ရယူ၍ မရပါ</p>
-              <p className="mt-1 text-sm text-gray-400">ကွန်ယက်ချိတ်ဆက်မှု စစ်ပြီး ပြန်လည် ကြိုးစားပါ</p>
-              <Button variant="outline" className="mt-5" onClick={() => void refetch()}>
+              <p className="mt-1 text-sm text-gray-400">
+                ကွန်ယက်ချိတ်ဆက်မှု စစ်ပြီး ပြန်လည် ကြိုးစားပါ
+              </p>
+              <Button
+                variant="outline"
+                className="mt-5"
+                onClick={() => void refetch()}
+              >
                 ပြန်လည်ကြိုးစားမယ်
               </Button>
             </div>
@@ -527,14 +566,18 @@ export default function Universities() {
             <div className="rounded-2xl border border-border bg-card px-4 py-16 text-center">
               <Building2 className="mx-auto mb-3 h-12 w-12 text-gray-200" />
               <p className="font-medium text-gray-600">တက္ကသိုလ် မတွေ့ပါ</p>
-              <p className="mt-1 text-sm text-gray-400">ရှာဖွေမှု သို့မဟုတ် Filter ပြောင်းကြည့်ပါ</p>
+              <p className="mt-1 text-sm text-gray-400">
+                ရှာဖွေမှု သို့မဟုတ် Filter ပြောင်းကြည့်ပါ
+              </p>
               <Button variant="outline" className="mt-5" onClick={resetFilters}>
                 Filter ပြန်စမယ်
               </Button>
             </div>
           ) : (
             <>
-              <div className={`grid grid-cols-1 gap-5 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? "opacity-60" : "opacity-100"}`}>
+              <div
+                className={`grid grid-cols-1 gap-5 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? "opacity-60" : "opacity-100"}`}
+              >
                 {universities.map((university) => (
                   <UniversityCard
                     key={university.id}
