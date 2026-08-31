@@ -249,7 +249,7 @@ export default function InterestGuide() {
                         </ul>
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
-                        <Button
+                        {/* <Button
                           size="sm"
                           variant={
                             compareIds.includes(item.career.id)
@@ -260,7 +260,7 @@ export default function InterestGuide() {
                         >
                           <GitCompare className="mr-1 h-4 w-4" />
                           Compare
-                        </Button>
+                        </Button> */}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -270,7 +270,7 @@ export default function InterestGuide() {
                         >
                           {isOpen ? <ChevronUp /> : <ChevronDown />}အသေးစိတ်
                         </Button>
-                        <Button
+                        {/* <Button
                           size="sm"
                           variant={isAccepted ? "default" : "outline"}
                           onClick={() =>
@@ -283,7 +283,7 @@ export default function InterestGuide() {
                         >
                           <CheckCircle2 className="mr-1 h-4 w-4" />
                           စိတ်ဝင်စားသည်
-                        </Button>
+                        </Button> */}
                       </div>
                       {isOpen && <CareerDetails item={item} />}
                     </CardContent>
@@ -378,13 +378,13 @@ function CareerDetails({ item }: { item: CareerResult }) {
           ))}
         </div>
       </div>
-      <div>
+      {/* <div>
         <h4 className="mb-2 font-bold">Personality / Interest Fit</h4>
         <p className="text-sm text-muted-foreground">
           သင့်စိတ်ဝင်စားမှုနဲ့ အလုပ်လုပ်ချင်တဲ့ပုံစံကို ဒီအလုပ်နဲ့ ကိုက်ညီအောင်
           စစ်ထားပါတယ်။
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }

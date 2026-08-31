@@ -41,7 +41,8 @@ export function Layout({
 
   const { data: siteSettings } = useGetSiteSettings();
 
-  const projectName = siteSettings?.projectName || "MM Uni Finder";
+  const projectName =
+    siteSettings?.projectName || "University and Career Pathway Advisor";
 
   const tagline =
     siteSettings?.tagline || "Guiding Myanmar students to their future.";
@@ -262,7 +263,7 @@ export function Layout({
             CHATBOT ADVISOR
         ===================================================== */}
 
-        <DropdownMenuItem asChild className="cursor-pointer rounded-lg">
+        {/* <DropdownMenuItem asChild className="cursor-pointer rounded-lg">
           <Link
             href="/chatbot"
             className={`flex w-full items-center gap-3 px-3 py-2.5 ${
@@ -279,7 +280,7 @@ export function Layout({
               </span>
             </div>
           </Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
 
         {/* ====================================================
             PEER CHAT
@@ -380,10 +381,10 @@ export function Layout({
       </Link>
 
       {/* Chatbot Advisor */}
-      <Link href="/chatbot" className={navItemClass(isChatbotActive)}>
+      {/* <Link href="/chatbot" className={navItemClass(isChatbotActive)}>
         <Bot className="h-4 w-4" />
         Chatbot Advisor
-      </Link>
+      </Link> */}
 
       {/* Peer Chat */}
       {user && (
@@ -853,12 +854,12 @@ export function Layout({
                 Admission Info
               </Link>
 
-              <Link
+              {/* <Link
                 href="/chatbot"
                 className="transition-colors hover:text-foreground"
               >
                 Chatbot Advisor
-              </Link>
+              </Link> */}
             </div>
           </div>
         </footer>

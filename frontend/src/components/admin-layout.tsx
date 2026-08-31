@@ -90,7 +90,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="h-4" />
       )}
-      <NavItem href="/admin" icon={Activity} label="Dashboard" collapsed={collapsed} />
+      <NavItem
+        href="/admin"
+        icon={Activity}
+        label="Dashboard"
+        collapsed={collapsed}
+      />
 
       {!collapsed ? (
         <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
@@ -99,13 +104,43 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="my-4 border-b border-border/50" />
       )}
-      <NavItem href="/admin/users" icon={Users} label="Users" collapsed={collapsed} />
-      <NavItem href="/admin/universities" icon={Building2} label="Universities" collapsed={collapsed} />
-      <NavItem href="/admin/majors" icon={BookOpen} label="Majors" collapsed={collapsed} />
-      <NavItem href="/admin/categories" icon={Tag} label="Categories" collapsed={collapsed} />
-      <NavItem href="/admin/interest-guide" icon={Heart} label="Interest Guide" collapsed={collapsed} />
-      <NavItem href="/admin/news" icon={FileText} label="News" collapsed={collapsed} />
-      <NavItem href="/admin/admission-guide" icon={FileUp} label="Admission PDF" collapsed={collapsed} />
+      <NavItem
+        href="/admin/users"
+        icon={Users}
+        label="Users"
+        collapsed={collapsed}
+      />
+      <NavItem
+        href="/admin/universities"
+        icon={Building2}
+        label="Universities"
+        collapsed={collapsed}
+      />
+      <NavItem
+        href="/admin/majors"
+        icon={BookOpen}
+        label="Majors"
+        collapsed={collapsed}
+      />
+      <NavItem
+        href="/admin/categories"
+        icon={Tag}
+        label="Categories"
+        collapsed={collapsed}
+      />
+      {/* <NavItem href="/admin/interest-guide" icon={Heart} label="Interest Guide" collapsed={collapsed} /> */}
+      <NavItem
+        href="/admin/news"
+        icon={FileText}
+        label="News"
+        collapsed={collapsed}
+      />
+      <NavItem
+        href="/admin/admission-guide"
+        icon={FileUp}
+        label="Admission PDF"
+        collapsed={collapsed}
+      />
 
       {!collapsed ? (
         <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
@@ -114,8 +149,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="my-4 border-b border-border/50" />
       )}
-      <NavItem href="/admin/chat-monitor" icon={MessageSquare} label="Chat Monitor" collapsed={collapsed} />
-      <NavItem href="/admin/audit" icon={Activity} label="Audit Logs" collapsed={collapsed} />
+      <NavItem
+        href="/admin/chat-monitor"
+        icon={MessageSquare}
+        label="Chat Monitor"
+        collapsed={collapsed}
+      />
+      <NavItem
+        href="/admin/audit"
+        icon={Activity}
+        label="Audit Logs"
+        collapsed={collapsed}
+      />
 
       {!collapsed ? (
         <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">
@@ -124,8 +169,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="my-4 border-b border-border/50" />
       )}
-      <NavItem href="/admin/settings" icon={Settings} label="Settings" collapsed={collapsed} />
-      <NavItem href="/admin/profile" icon={UserCog} label="Admin Profile" collapsed={collapsed} />
+      <NavItem
+        href="/admin/settings"
+        icon={Settings}
+        label="Settings"
+        collapsed={collapsed}
+      />
+      <NavItem
+        href="/admin/profile"
+        icon={UserCog}
+        label="Admin Profile"
+        collapsed={collapsed}
+      />
     </>
   );
 
