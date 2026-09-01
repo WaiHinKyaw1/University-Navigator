@@ -441,14 +441,7 @@ export function Layout({
                 )}
               </div>
 
-              <span
-                className="
-                  inline-block max-w-[10rem]
-                  truncate font-bold text-base
-                  text-primary
-                  sm:max-w-[14rem] sm:text-xl
-                "
-              >
+              <span className="inline-block whitespace-nowrap font-bold text-sm leading-tight text-primary sm:text-lg">
                 {projectName}
               </span>
             </Link>
