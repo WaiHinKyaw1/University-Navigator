@@ -43,7 +43,9 @@ export default function Home() {
                 {siteSettings?.welcomeIntro || (
                   <>
                     Your pathway to{" "}
-                    <span className="text-secondary">Myanmar's universities</span>{" "}
+                    <span className="text-secondary">
+                      Myanmar's universities
+                    </span>{" "}
                     begins here.
                   </>
                 )}
@@ -148,11 +150,12 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold mb-3">Interest Guide</h3>
                 <p className="text-muted-foreground mb-6">
-                  Not sure what to study? Chat with our advisor about your hobbies
-                  and strengths to get personalized major recommendations.
+                  Not sure what to study? Chat with our advisor about your
+                  hobbies and strengths to get personalized major
+                  recommendations.
                 </p>
                 <Link
-                  href="/chatbot"
+                  href="/interest-guide"
                   className="text-primary font-medium flex items-center hover:underline"
                 >
                   Get Advice <ArrowRight className="ml-1 h-4 w-4" />
