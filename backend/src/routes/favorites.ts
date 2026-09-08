@@ -19,6 +19,7 @@ router.get("/favorites", requireAuth, async (req, res): Promise<void> => {
         state: universitiesTable.state,
         city: universitiesTable.city,
         minScore: universitiesTable.minScore,
+        note: universitiesTable.minScore,
         description: universitiesTable.description,
         website: universitiesTable.website,
         imageUrl: universitiesTable.imageUrl,

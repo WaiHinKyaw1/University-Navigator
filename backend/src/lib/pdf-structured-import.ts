@@ -25,6 +25,7 @@ type ExtractedUniversity = {
   state?: string | null;
   city?: string | null;
   minScore?: number | null;
+  note?: string | null;
   description?: string | null;
   admissionRequirements?: string | null;
   applicationProcess?: string | null;
@@ -38,7 +39,13 @@ type ExtractedAdmissionData = {
   majors?: ExtractedMajor[];
 };
 
-const VALID_UNIVERSITY_TYPES = new Set(["government", "private", "technical", "medical", "education"]);
+const VALID_UNIVERSITY_TYPES = new Set([
+  "government",
+  "private",
+  "technical",
+  "medical",
+  "education",
+]);
 const VALID_MAJOR_CATEGORIES = new Set([
   "science",
   "arts",
@@ -86,29 +93,48 @@ function parseJsonObject(text: string): ExtractedAdmissionData {
   return JSON.parse(candidate.slice(start, end + 1)) as ExtractedAdmissionData;
 }
 
-function extractContextSnippet(rawText: string, searchText: string, radius = 500): string | null {
+function extractContextSnippet(
+  rawText: string,
+  searchText: string,
+  radius = 500,
+): string | null {
   const normalizedText = rawText.replace(/\s+/g, " ").trim();
   const normalizedSearch = searchText.replace(/\s+/g, " ").trim();
   if (!normalizedText || !normalizedSearch) return null;
 
-  const index = normalizedText.toLowerCase().indexOf(normalizedSearch.toLowerCase());
+  const index = normalizedText
+    .toLowerCase()
+    .indexOf(normalizedSearch.toLowerCase());
   if (index === -1) return null;
 
   const start = Math.max(0, index - radius);
-  const end = Math.min(normalizedText.length, index + normalizedSearch.length + radius);
+  const end = Math.min(
+    normalizedText.length,
+    index + normalizedSearch.length + radius,
+  );
   const snippet = normalizedText.slice(start, end).trim();
   return snippet.length > 80 ? snippet : null;
 }
 
-function enrichUniversityWithContext(university: ExtractedUniversity, rawText: string): ExtractedUniversity {
+function enrichUniversityWithContext(
+  university: ExtractedUniversity,
+  rawText: string,
+): ExtractedUniversity {
   const name = textOrNull(university.name) ?? textOrNull(university.nameEn);
   const context = name ? extractContextSnippet(rawText, name) : null;
 
-  const description = textOrNull(university.description) ?? (context ? context.slice(0, 280) : null);
+  const description =
+    textOrNull(university.description) ??
+    (context ? context.slice(0, 280) : null);
   const admissionRequirements =
     textOrNull(university.admissionRequirements) ??
-    (context && /score|requirement|admission|entrance|eligible|minimum/i.test(context) ? context.slice(0, 280) : null);
-  const applicationProcess = textOrNull(university.applicationProcess) ?? (context ? context.slice(0, 220) : null);
+    (context &&
+    /score|requirement|admission|entrance|eligible|minimum/i.test(context)
+      ? context.slice(0, 280)
+      : null);
+  const applicationProcess =
+    textOrNull(university.applicationProcess) ??
+    (context ? context.slice(0, 220) : null);
 
   return {
     ...university,
@@ -140,7 +166,9 @@ function chunkTextForExtraction(text: string, maxChars = 30_000): string[] {
   return chunks.filter((chunk) => chunk.length > 80);
 }
 
-function dedupeByName<T extends { name?: string | null; nameEn?: string | null }>(items: T[]): T[] {
+function dedupeByName<
+  T extends { name?: string | null; nameEn?: string | null },
+>(items: T[]): T[] {
   const seen = new Set<string>();
   const unique: T[] = [];
   for (const item of items) {
@@ -152,9 +180,15 @@ function dedupeByName<T extends { name?: string | null; nameEn?: string | null }
   return unique;
 }
 
-function mergeExtractedData(left: ExtractedAdmissionData, right: ExtractedAdmissionData): ExtractedAdmissionData {
+function mergeExtractedData(
+  left: ExtractedAdmissionData,
+  right: ExtractedAdmissionData,
+): ExtractedAdmissionData {
   return {
-    universities: dedupeByName([...(left.universities ?? []), ...(right.universities ?? [])]),
+    universities: dedupeByName([
+      ...(left.universities ?? []),
+      ...(right.universities ?? []),
+    ]),
     majors: dedupeByName([...(left.majors ?? []), ...(right.majors ?? [])]),
   };
 }
@@ -186,7 +220,9 @@ function buildClient(): { client: OpenAI; model: string } | null {
   return null;
 }
 
-async function extractStructuredData(rawText: string): Promise<ExtractedAdmissionData> {
+async function extractStructuredData(
+  rawText: string,
+): Promise<ExtractedAdmissionData> {
   const config = buildClient();
   if (!config || !rawText.trim()) return {};
 
@@ -247,14 +283,19 @@ ${chunk}`,
     combined = mergeExtractedData(combined, parseJsonObject(content));
   }
 
-  const enrichedUniversities = (combined.universities ?? []).map((university) => enrichUniversityWithContext(university, rawText));
+  const enrichedUniversities = (combined.universities ?? []).map((university) =>
+    enrichUniversityWithContext(university, rawText),
+  );
   return {
     universities: enrichedUniversities,
     majors: combined.majors ?? [],
   };
 }
 
-async function upsertMajor(major: ExtractedMajor, sourceGuideId: number): Promise<number | null> {
+async function upsertMajor(
+  major: ExtractedMajor,
+  sourceGuideId: number,
+): Promise<number | null> {
   const name = textOrNull(major.name) ?? textOrNull(major.nameEn);
   const nameEn = textOrNull(major.nameEn) ?? name;
   if (!name || !nameEn) return null;
@@ -277,7 +318,11 @@ async function upsertMajor(major: ExtractedMajor, sourceGuideId: number): Promis
   };
 
   if (existing) {
-    const [updated] = await db.update(majorsTable).set(values).where(eq(majorsTable.id, existing.id)).returning();
+    const [updated] = await db
+      .update(majorsTable)
+      .set(values)
+      .where(eq(majorsTable.id, existing.id))
+      .returning();
     return updated.id;
   }
 
@@ -285,7 +330,10 @@ async function upsertMajor(major: ExtractedMajor, sourceGuideId: number): Promis
   return inserted.id;
 }
 
-async function upsertUniversity(university: ExtractedUniversity, sourceGuideId: number): Promise<number | null> {
+async function upsertUniversity(
+  university: ExtractedUniversity,
+  sourceGuideId: number,
+): Promise<number | null> {
   const name = textOrNull(university.name) ?? textOrNull(university.nameEn);
   const nameEn = textOrNull(university.nameEn) ?? name;
   if (!name || !nameEn) return null;
@@ -293,7 +341,12 @@ async function upsertUniversity(university: ExtractedUniversity, sourceGuideId: 
   const [existing] = await db
     .select()
     .from(universitiesTable)
-    .where(or(eq(universitiesTable.name, name), eq(universitiesTable.nameEn, nameEn)))
+    .where(
+      or(
+        eq(universitiesTable.name, name),
+        eq(universitiesTable.nameEn, nameEn),
+      ),
+    )
     .limit(1);
 
   const values = {
@@ -304,6 +357,7 @@ async function upsertUniversity(university: ExtractedUniversity, sourceGuideId: 
     state: textOrNull(university.state) ?? "Myanmar",
     city: textOrNull(university.city),
     minScore: typeof university.minScore === "number" ? university.minScore : 0,
+    note: textOrNull(university.note),
     description: textOrNull(university.description),
     admissionRequirements: textOrNull(university.admissionRequirements),
     applicationProcess: textOrNull(university.applicationProcess),
@@ -313,21 +367,33 @@ async function upsertUniversity(university: ExtractedUniversity, sourceGuideId: 
   };
 
   if (existing) {
-    const [updated] = await db.update(universitiesTable).set(values).where(eq(universitiesTable.id, existing.id)).returning();
+    const [updated] = await db
+      .update(universitiesTable)
+      .set(values)
+      .where(eq(universitiesTable.id, existing.id))
+      .returning();
     return updated.id;
   }
 
-  const [inserted] = await db.insert(universitiesTable).values(values).returning();
+  const [inserted] = await db
+    .insert(universitiesTable)
+    .values(values)
+    .returning();
   return inserted.id;
 }
 
-export async function importAdmissionDataFromPdfText(rawText: string, sourceGuideId: number): Promise<{
+export async function importAdmissionDataFromPdfText(
+  rawText: string,
+  sourceGuideId: number,
+): Promise<{
   universitiesImported: number;
   majorsImported: number;
 }> {
   const data = await extractStructuredData(rawText);
   const standaloneMajors = Array.isArray(data.majors) ? data.majors : [];
-  const universities = Array.isArray(data.universities) ? data.universities : [];
+  const universities = Array.isArray(data.universities)
+    ? data.universities
+    : [];
   let universitiesImported = 0;
   let majorsImported = 0;
 
@@ -349,11 +415,18 @@ export async function importAdmissionDataFromPdfText(rawText: string, sourceGuid
       const [existingLink] = await db
         .select()
         .from(universityMajorsTable)
-        .where(and(eq(universityMajorsTable.universityId, universityId), eq(universityMajorsTable.majorId, majorId)))
+        .where(
+          and(
+            eq(universityMajorsTable.universityId, universityId),
+            eq(universityMajorsTable.majorId, majorId),
+          ),
+        )
         .limit(1);
 
       if (!existingLink) {
-        await db.insert(universityMajorsTable).values({ universityId, majorId });
+        await db
+          .insert(universityMajorsTable)
+          .values({ universityId, majorId });
       }
     }
   }

@@ -10,6 +10,7 @@ export type FavoriteUniversity = {
   state: string;
   city: string | null;
   minScore: number;
+  note: string | null;
   description: string | null;
   website: string | null;
   imageUrl: string | null;

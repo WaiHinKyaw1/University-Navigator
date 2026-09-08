@@ -16,6 +16,7 @@ export interface UniversityInput {
   /** @nullable */
   city?: string | null;
   minScore: number;
+  note: string;
   /** @nullable */
   description?: string | null;
   /** @nullable */

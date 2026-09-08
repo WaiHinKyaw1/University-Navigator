@@ -72,13 +72,16 @@ const compactUniversityColumns = {
   state: universitiesTable.state,
   city: universitiesTable.city,
   minScore: universitiesTable.minScore,
+  note: universitiesTable.note,
   description: universitiesTable.description,
   website: universitiesTable.website,
   imageUrl: universitiesTable.imageUrl,
   createdAt: universitiesTable.createdAt,
 };
 
-async function attachMajorSummaries<T extends { id: number }>(universities: T[]) {
+async function attachMajorSummaries<T extends { id: number }>(
+  universities: T[],
+) {
   if (universities.length === 0) return [];
 
   const universityIds = universities.map((u) => u.id);
@@ -96,7 +99,10 @@ async function attachMajorSummaries<T extends { id: number }>(universities: T[])
     .innerJoin(majorsTable, eq(universityMajorsTable.majorId, majorsTable.id))
     .where(inArray(universityMajorsTable.universityId, universityIds));
 
-  const majorsByUniversity = new Map<number, typeof rows[number]["major"][]>();
+  const majorsByUniversity = new Map<
+    number,
+    (typeof rows)[number]["major"][]
+  >();
   for (const row of rows) {
     const majors = majorsByUniversity.get(row.universityId) ?? [];
     majors.push(row.major);
@@ -121,7 +127,9 @@ router.get(
       })
       .from(universityMajorsTable)
       .groupBy(universityMajorsTable.universityId);
-    const counts = new Map(majorCounts.map((row) => [row.universityId, Number(row.count)]));
+    const counts = new Map(
+      majorCounts.map((row) => [row.universityId, Number(row.count)]),
+    );
     res.json(getUniversityQualityIssues(universities, counts));
   },
 );
@@ -130,14 +138,21 @@ router.get(
   "/admin/universities/export.csv",
   requireAdmin,
   async (_req, res): Promise<void> => {
-    const universities = await db.select().from(universitiesTable).orderBy(asc(universitiesTable.name));
+    const universities = await db
+      .select()
+      .from(universitiesTable)
+      .orderBy(asc(universitiesTable.name));
     const universityIds = universities.map((university) => university.id);
-    const links = universityIds.length > 0
-      ? await db
-          .select({ universityId: universityMajorsTable.universityId, majorId: universityMajorsTable.majorId })
-          .from(universityMajorsTable)
-          .where(inArray(universityMajorsTable.universityId, universityIds))
-      : [];
+    const links =
+      universityIds.length > 0
+        ? await db
+            .select({
+              universityId: universityMajorsTable.universityId,
+              majorId: universityMajorsTable.majorId,
+            })
+            .from(universityMajorsTable)
+            .where(inArray(universityMajorsTable.universityId, universityIds))
+        : [];
     const majorIdsByUniversity = new Map<number, number[]>();
     for (const link of links) {
       const ids = majorIdsByUniversity.get(link.universityId) ?? [];
@@ -151,7 +166,10 @@ router.get(
       })),
     );
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename=universities-${new Date().toISOString().slice(0, 10)}.csv`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=universities-${new Date().toISOString().slice(0, 10)}.csv`,
+    );
     res.send(csv);
   },
 );
@@ -166,24 +184,42 @@ router.post(
       return;
     }
     if (Buffer.byteLength(csv, "utf8") > 2_000_000) {
-      res.status(413).json({ error: "CSV file is too large; maximum size is 2 MB" });
+      res
+        .status(413)
+        .json({ error: "CSV file is too large; maximum size is 2 MB" });
       return;
     }
     try {
       const rows = parseUniversityCsv(csv);
       const existing = await db
-        .select({ id: universitiesTable.id, name: universitiesTable.name, nameEn: universitiesTable.nameEn, abbreviation: universitiesTable.abbreviation })
+        .select({
+          id: universitiesTable.id,
+          name: universitiesTable.name,
+          nameEn: universitiesTable.nameEn,
+          abbreviation: universitiesTable.abbreviation,
+        })
         .from(universitiesTable);
       const validatedRows = validateImportRows(rows, existing);
       res.json({
         totalRows: validatedRows.length,
-        validRows: validatedRows.filter((row) => row.missingRequired.length === 0 && row.invalidFields.length === 0 && !row.duplicateOf).length,
-        duplicateRows: validatedRows.filter((row) => Boolean(row.duplicateOf)).length,
-        invalidRows: validatedRows.filter((row) => row.missingRequired.length > 0 || row.invalidFields.length > 0).length,
+        validRows: validatedRows.filter(
+          (row) =>
+            row.missingRequired.length === 0 &&
+            row.invalidFields.length === 0 &&
+            !row.duplicateOf,
+        ).length,
+        duplicateRows: validatedRows.filter((row) => Boolean(row.duplicateOf))
+          .length,
+        invalidRows: validatedRows.filter(
+          (row) =>
+            row.missingRequired.length > 0 || row.invalidFields.length > 0,
+        ).length,
         rows: validatedRows,
       });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid CSV" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid CSV",
+      });
     }
   },
 );
@@ -198,34 +234,58 @@ router.post(
       return;
     }
     if (Buffer.byteLength(csv, "utf8") > 2_000_000) {
-      res.status(413).json({ error: "CSV file is too large; maximum size is 2 MB" });
+      res
+        .status(413)
+        .json({ error: "CSV file is too large; maximum size is 2 MB" });
       return;
     }
     try {
       const rows = parseUniversityCsv(csv);
       const existing = await db
-        .select({ id: universitiesTable.id, name: universitiesTable.name, nameEn: universitiesTable.nameEn, abbreviation: universitiesTable.abbreviation })
+        .select({
+          id: universitiesTable.id,
+          name: universitiesTable.name,
+          nameEn: universitiesTable.nameEn,
+          abbreviation: universitiesTable.abbreviation,
+        })
         .from(universitiesTable);
       const validatedRows = validateImportRows(rows, existing);
       const importableRows = validatedRows.filter(
-        (row) => row.missingRequired.length === 0 && row.invalidFields.length === 0 && !row.duplicateOf,
+        (row) =>
+          row.missingRequired.length === 0 &&
+          row.invalidFields.length === 0 &&
+          !row.duplicateOf,
       );
       const allMajorIds = Array.from(
         new Set(
-          importableRows.flatMap((row) => row.values.majorIds.split("|").map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0)),
+          importableRows.flatMap((row) =>
+            row.values.majorIds
+              .split("|")
+              .map((value) => Number(value))
+              .filter((value) => Number.isInteger(value) && value > 0),
+          ),
         ),
       );
-      const existingMajors = allMajorIds.length > 0
-        ? await db.select({ id: majorsTable.id }).from(majorsTable).where(inArray(majorsTable.id, allMajorIds))
-        : [];
+      const existingMajors =
+        allMajorIds.length > 0
+          ? await db
+              .select({ id: majorsTable.id })
+              .from(majorsTable)
+              .where(inArray(majorsTable.id, allMajorIds))
+          : [];
       const majorIdSet = new Set(existingMajors.map((major) => major.id));
       for (const row of importableRows) {
-        const requestedMajorIds = row.values.majorIds.split("|").map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0);
+        const requestedMajorIds = row.values.majorIds
+          .split("|")
+          .map((value) => Number(value))
+          .filter((value) => Number.isInteger(value) && value > 0);
         if (requestedMajorIds.some((majorId) => !majorIdSet.has(majorId))) {
           row.invalidFields.push("majorIds");
         }
       }
-      const safeRows = importableRows.filter((row) => row.invalidFields.length === 0);
+      const safeRows = importableRows.filter(
+        (row) => row.invalidFields.length === 0,
+      );
       const insertedIds = await db.transaction(async (tx) => {
         const ids: number[] = [];
         for (const row of safeRows) {
@@ -239,9 +299,12 @@ router.post(
               state: row.values.state.trim(),
               city: row.values.city.trim(),
               minScore: Number(row.values.minScore),
+              note: row.values.note.trim() || undefined,
               description: row.values.description.trim() || undefined,
-              admissionRequirements: row.values.admissionRequirements.trim() || undefined,
-              applicationProcess: row.values.applicationProcess.trim() || undefined,
+              admissionRequirements:
+                row.values.admissionRequirements.trim() || undefined,
+              applicationProcess:
+                row.values.applicationProcess.trim() || undefined,
               duration: row.values.duration.trim() || undefined,
               careerOutcomes: row.values.careerOutcomes.trim() || undefined,
               website: row.values.website.trim() || undefined,
@@ -249,9 +312,17 @@ router.post(
             })
             .returning({ id: universitiesTable.id });
           ids.push(inserted.id);
-          const majorIds = row.values.majorIds.split("|").map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0);
+          const majorIds = row.values.majorIds
+            .split("|")
+            .map((value) => Number(value))
+            .filter((value) => Number.isInteger(value) && value > 0);
           if (majorIds.length > 0) {
-            await tx.insert(universityMajorsTable).values(majorIds.map((majorId) => ({ universityId: inserted.id, majorId })));
+            await tx.insert(universityMajorsTable).values(
+              majorIds.map((majorId) => ({
+                universityId: inserted.id,
+                majorId,
+              })),
+            );
           }
         }
         return ids;
@@ -262,7 +333,9 @@ router.post(
         skippedRows: validatedRows.filter((row) => !safeRows.includes(row)),
       });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Import failed" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Import failed",
+      });
     }
   },
 );
@@ -329,7 +402,9 @@ router.get("/universities", optionalAuth, async (req, res): Promise<void> => {
         .where(whereClause);
       total = Number(countResult.count);
     }
-    const universities = compactRows.map(({ totalCount: _totalCount, ...uni }) => uni);
+    const universities = compactRows.map(
+      ({ totalCount: _totalCount, ...uni }) => uni,
+    );
     const withMajorSummaries = await attachMajorSummaries(universities);
 
     res.json({
@@ -393,6 +468,7 @@ router.post("/universities", requireAdmin, async (req, res): Promise<void> => {
     state,
     city,
     minScore,
+    note,
     description,
     website,
     imageUrl,
@@ -413,6 +489,7 @@ router.post("/universities", requireAdmin, async (req, res): Promise<void> => {
       state,
       city,
       minScore,
+      note,
       description,
       website,
       imageUrl,
@@ -450,6 +527,7 @@ router.put(
       state,
       city,
       minScore,
+      note,
       description,
       website,
       imageUrl,
@@ -466,6 +544,7 @@ router.put(
         state,
         city,
         minScore,
+        note,
         description,
         website,
         imageUrl,

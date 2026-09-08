@@ -9,20 +9,20 @@ export interface HealthStatus {
   status: string;
 }
 
-export type ReadinessStatusStatus = typeof ReadinessStatusStatus[keyof typeof ReadinessStatusStatus];
-
+export type ReadinessStatusStatus =
+  (typeof ReadinessStatusStatus)[keyof typeof ReadinessStatusStatus];
 
 export const ReadinessStatusStatus = {
-  ready: 'ready',
-  not_ready: 'not_ready',
+  ready: "ready",
+  not_ready: "not_ready",
 } as const;
 
-export type ReadinessStatusDatabase = typeof ReadinessStatusDatabase[keyof typeof ReadinessStatusDatabase];
-
+export type ReadinessStatusDatabase =
+  (typeof ReadinessStatusDatabase)[keyof typeof ReadinessStatusDatabase];
 
 export const ReadinessStatusDatabase = {
-  ok: 'ok',
-  error: 'error',
+  ok: "ok",
+  error: "error",
 } as const;
 
 export interface ReadinessStatus {
@@ -106,9 +106,9 @@ export interface User {
   /** @nullable */
   avatarUrl?: string | null;
   /**
-     * Base64-encoded image data URL stored in the database
-     * @nullable
-     */
+   * Base64-encoded image data URL stored in the database
+   * @nullable
+   */
   avatarData?: string | null;
   createdAt: string;
 }
@@ -148,27 +148,29 @@ export interface University {
   city?: string | null;
   /** Minimum total score required for admission */
   minScore: number;
+
+  note: string;
   /** @nullable */
   description?: string | null;
   /**
-     * Detailed admission requirements when available
-     * @nullable
-     */
+   * Detailed admission requirements when available
+   * @nullable
+   */
   admissionRequirements?: string | null;
   /**
-     * Application steps when available
-     * @nullable
-     */
+   * Application steps when available
+   * @nullable
+   */
   applicationProcess?: string | null;
   /**
-     * Typical program duration when available
-     * @nullable
-     */
+   * Typical program duration when available
+   * @nullable
+   */
   duration?: string | null;
   /**
-     * Career outcome information when available
-     * @nullable
-     */
+   * Career outcome information when available
+   * @nullable
+   */
   careerOutcomes?: string | null;
   /** @nullable */
   website?: string | null;
@@ -188,6 +190,7 @@ export interface UniversityInput {
   /** @nullable */
   city?: string | null;
   minScore: number;
+  note: string;
   /** @nullable */
   description?: string | null;
   /** @nullable */
@@ -204,12 +207,12 @@ export interface UniversityListResponse {
   limit: number;
 }
 
-export type UniversityQualityIssueSeverity = typeof UniversityQualityIssueSeverity[keyof typeof UniversityQualityIssueSeverity];
-
+export type UniversityQualityIssueSeverity =
+  (typeof UniversityQualityIssueSeverity)[keyof typeof UniversityQualityIssueSeverity];
 
 export const UniversityQualityIssueSeverity = {
-  error: 'error',
-  warning: 'warning',
+  error: "error",
+  warning: "warning",
 } as const;
 
 export interface UniversityQualityIssue {
@@ -238,7 +241,7 @@ export interface UniversityCsvInput {
   csv: string;
 }
 
-export type UniversityImportPreviewRowValues = {[key: string]: string};
+export type UniversityImportPreviewRowValues = { [key: string]: string };
 
 export interface UniversityImportPreviewRow {
   rowNumber: number;
@@ -288,9 +291,9 @@ export interface Category {
   /** Display name, e.g. Engineering */
   name: string;
   /**
-     * Optional badge color hex, e.g. \"#3b82f6\"
-     * @nullable
-     */
+   * Optional badge color hex, e.g. \"#3b82f6\"
+   * @nullable
+   */
   color?: string | null;
   /** @nullable */
   description?: string | null;
@@ -334,14 +337,14 @@ export interface ScoreInput {
 /**
  * Explainable recommendation category
  */
-export type ScoreMatchRecommendationTier = typeof ScoreMatchRecommendationTier[keyof typeof ScoreMatchRecommendationTier];
-
+export type ScoreMatchRecommendationTier =
+  (typeof ScoreMatchRecommendationTier)[keyof typeof ScoreMatchRecommendationTier];
 
 export const ScoreMatchRecommendationTier = {
-  strong: 'strong',
-  eligible: 'eligible',
-  near: 'near',
-  stretch: 'stretch',
+  strong: "strong",
+  eligible: "eligible",
+  near: "near",
+  stretch: "stretch",
 } as const;
 
 export interface ScoreMatch {
@@ -350,9 +353,9 @@ export interface ScoreMatch {
   matchScore: number;
   eligible: boolean;
   /**
-     * Score gap if not eligible (positive means eligible, negative means gap)
-     * @nullable
-     */
+   * Score gap if not eligible (positive means eligible, negative means gap)
+   * @nullable
+   */
   gap?: number | null;
   /** Whether one or more selected preferred majors are offered */
   majorMatch?: boolean;
@@ -362,12 +365,12 @@ export interface ScoreMatch {
   recommendationReasons?: string[];
 }
 
-export type ChatbotHistoryMessageRole = typeof ChatbotHistoryMessageRole[keyof typeof ChatbotHistoryMessageRole];
-
+export type ChatbotHistoryMessageRole =
+  (typeof ChatbotHistoryMessageRole)[keyof typeof ChatbotHistoryMessageRole];
 
 export const ChatbotHistoryMessageRole = {
-  user: 'user',
-  assistant: 'assistant',
+  user: "user",
+  assistant: "assistant",
 } as const;
 
 export interface ChatbotHistoryMessage {
@@ -547,9 +550,9 @@ export interface RecentUserStat {
   /** @nullable */
   avatarUrl?: string | null;
   /**
-     * Base64-encoded image data URL stored in the database
-     * @nullable
-     */
+   * Base64-encoded image data URL stored in the database
+   * @nullable
+   */
   avatarData?: string | null;
   createdAt: string;
 }
@@ -579,56 +582,55 @@ export interface TrendPoint {
 }
 
 export type ListUniversitiesParams = {
-search?: string;
-type?: string;
-state?: string;
-majorId?: number;
-page?: number;
-limit?: number;
-/**
- * Return only fields needed for list cards and lightweight selectors
- */
-compact?: boolean;
-sortBy?: ListUniversitiesSortBy;
-sortOrder?: ListUniversitiesSortOrder;
+  search?: string;
+  type?: string;
+  state?: string;
+  majorId?: number;
+  page?: number;
+  limit?: number;
+  /**
+   * Return only fields needed for list cards and lightweight selectors
+   */
+  compact?: boolean;
+  sortBy?: ListUniversitiesSortBy;
+  sortOrder?: ListUniversitiesSortOrder;
 };
 
-export type ListUniversitiesSortBy = typeof ListUniversitiesSortBy[keyof typeof ListUniversitiesSortBy];
-
+export type ListUniversitiesSortBy =
+  (typeof ListUniversitiesSortBy)[keyof typeof ListUniversitiesSortBy];
 
 export const ListUniversitiesSortBy = {
-  name: 'name',
-  minScore: 'minScore',
-  type: 'type',
-  state: 'state',
+  name: "name",
+  minScore: "minScore",
+  type: "type",
+  state: "state",
 } as const;
 
-export type ListUniversitiesSortOrder = typeof ListUniversitiesSortOrder[keyof typeof ListUniversitiesSortOrder];
-
+export type ListUniversitiesSortOrder =
+  (typeof ListUniversitiesSortOrder)[keyof typeof ListUniversitiesSortOrder];
 
 export const ListUniversitiesSortOrder = {
-  asc: 'asc',
-  desc: 'desc',
+  asc: "asc",
+  desc: "desc",
 } as const;
 
 export type ListNewsParams = {
-page?: number;
-limit?: number;
+  page?: number;
+  limit?: number;
 };
 
 export type ListUsersParams = {
-search?: string;
-status?: string;
-page?: number;
-limit?: number;
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
 };
 
 export type ListAuditLogsParams = {
-page?: number;
-limit?: number;
+  page?: number;
+  limit?: number;
 };
 
 export type ListStudentsParams = {
-search?: string;
+  search?: string;
 };
-

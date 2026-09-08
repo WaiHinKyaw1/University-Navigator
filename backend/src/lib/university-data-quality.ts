@@ -8,6 +8,7 @@ export const UNIVERSITY_CSV_HEADERS = [
   "state",
   "city",
   "minScore",
+  "note",
   "description",
   "admissionRequirements",
   "applicationProcess",
@@ -18,7 +19,10 @@ export const UNIVERSITY_CSV_HEADERS = [
   "majorIds",
 ] as const;
 
-export type UniversityCsvRow = Record<(typeof UNIVERSITY_CSV_HEADERS)[number], string>;
+export type UniversityCsvRow = Record<
+  (typeof UNIVERSITY_CSV_HEADERS)[number],
+  string
+>;
 
 export type UniversityQualityIssue = {
   universityId: number;
@@ -75,11 +79,25 @@ export function normalizeIdentity(value: string | null | undefined): string {
     .replace(/[\s\-–—_.(),/]+/g, "");
 }
 
-export function duplicateKeyValues(university: Pick<University, "name" | "nameEn" | "abbreviation">) {
+export function duplicateKeyValues(
+  university: Pick<University, "name" | "nameEn" | "abbreviation">,
+) {
   return [
-    { key: "name", value: normalizeIdentity(university.name), label: "Myanmar name" },
-    { key: "nameEn", value: normalizeIdentity(university.nameEn), label: "English name" },
-    { key: "abbreviation", value: normalizeIdentity(university.abbreviation), label: "abbreviation" },
+    {
+      key: "name",
+      value: normalizeIdentity(university.name),
+      label: "Myanmar name",
+    },
+    {
+      key: "nameEn",
+      value: normalizeIdentity(university.nameEn),
+      label: "English name",
+    },
+    {
+      key: "abbreviation",
+      value: normalizeIdentity(university.abbreviation),
+      label: "abbreviation",
+    },
   ].filter((entry) => entry.value.length > 0);
 }
 
@@ -90,7 +108,9 @@ export function findDuplicate(
   const candidateKeys = duplicateKeyValues(candidate);
   for (const current of existing) {
     for (const candidateKey of candidateKeys) {
-      const currentKey = duplicateKeyValues(current).find((entry) => entry.key === candidateKey.key);
+      const currentKey = duplicateKeyValues(current).find(
+        (entry) => entry.key === candidateKey.key,
+      );
       if (currentKey && currentKey.value === candidateKey.value) {
         return { id: current.id, reason: candidateKey.label };
       }
@@ -100,11 +120,34 @@ export function findDuplicate(
 }
 
 export function getUniversityQualityIssues(
-  universities: Array<Pick<University, "id" | "name" | "nameEn" | "abbreviation" | "type" | "state" | "city" | "minScore" | "description" | "admissionRequirements" | "applicationProcess" | "duration" | "careerOutcomes" | "website" | "imageUrl">>,
+  universities: Array<
+    Pick<
+      University,
+      | "id"
+      | "name"
+      | "nameEn"
+      | "abbreviation"
+      | "type"
+      | "state"
+      | "city"
+      | "minScore"
+      | "note"
+      | "description"
+      | "admissionRequirements"
+      | "applicationProcess"
+      | "duration"
+      | "careerOutcomes"
+      | "website"
+      | "imageUrl"
+    >
+  >,
   majorCounts: Map<number, number>,
 ): UniversityQualitySummary {
   const issues: UniversityQualityIssue[] = [];
-  const identityGroups = new Map<string, Array<(typeof universities)[number]>>();
+  const identityGroups = new Map<
+    string,
+    Array<(typeof universities)[number]>
+  >();
 
   for (const university of universities) {
     for (const entry of duplicateKeyValues(university)) {
@@ -145,7 +188,10 @@ export function getUniversityQualityIssues(
       ["city", university.city],
       ["minScore", university.minScore],
     ]
-      .filter(([, value]) => value === null || value === undefined || String(value).trim() === "")
+      .filter(
+        ([, value]) =>
+          value === null || value === undefined || String(value).trim() === "",
+      )
       .map(([field]) => String(field));
 
     if (missingRequired.length > 0) {
@@ -162,7 +208,9 @@ export function getUniversityQualityIssues(
 
     const missingRecommended = RECOMMENDED_FIELDS.filter((field) => {
       const value = university[field];
-      return value === null || value === undefined || String(value).trim() === "";
+      return (
+        value === null || value === undefined || String(value).trim() === ""
+      );
     });
     if (missingRecommended.length > 0) {
       issues.push({
@@ -190,8 +238,12 @@ export function getUniversityQualityIssues(
   }
 
   const issueByUniversity = new Set(issues.map((issue) => issue.universityId));
-  const errorCount = issues.filter((issue) => issue.severity === "error").length;
-  const warningCount = issues.filter((issue) => issue.severity === "warning").length;
+  const errorCount = issues.filter(
+    (issue) => issue.severity === "error",
+  ).length;
+  const warningCount = issues.filter(
+    (issue) => issue.severity === "warning",
+  ).length;
   return {
     total: universities.length,
     complete: universities.length - issueByUniversity.size,
@@ -229,11 +281,18 @@ function parseCsvLine(line: string): string[] {
 }
 
 export function parseUniversityCsv(csv: string): UniversityCsvRow[] {
-  const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/).filter((line) => line.trim().length > 0);
+  const lines = csv
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0);
   if (lines.length === 0) return [];
   const headers = parseCsvLine(lines[0]);
-  const headerIndex = new Map(headers.map((header, index) => [header.trim(), index]));
-  const missingHeaders = UNIVERSITY_CSV_HEADERS.filter((header) => !headerIndex.has(header));
+  const headerIndex = new Map(
+    headers.map((header, index) => [header.trim(), index]),
+  );
+  const missingHeaders = UNIVERSITY_CSV_HEADERS.filter(
+    (header) => !headerIndex.has(header),
+  );
   if (missingHeaders.length > 0) {
     throw new Error(`CSV header is missing: ${missingHeaders.join(", ")}`);
   }
@@ -241,7 +300,10 @@ export function parseUniversityCsv(csv: string): UniversityCsvRow[] {
   return lines.slice(1).map((line) => {
     const columns = parseCsvLine(line);
     return Object.fromEntries(
-      UNIVERSITY_CSV_HEADERS.map((header) => [header, columns[headerIndex.get(header) ?? -1] ?? ""]),
+      UNIVERSITY_CSV_HEADERS.map((header) => [
+        header,
+        columns[headerIndex.get(header) ?? -1] ?? "",
+      ]),
     ) as UniversityCsvRow;
   });
 }
@@ -250,12 +312,17 @@ export function validateImportRows(
   rows: UniversityCsvRow[],
   existing: Array<Pick<University, "id" | "name" | "nameEn" | "abbreviation">>,
 ): UniversityImportRow[] {
-  const seen: Array<Pick<University, "id" | "name" | "nameEn" | "abbreviation">> = [...existing];
+  const seen: Array<
+    Pick<University, "id" | "name" | "nameEn" | "abbreviation">
+  > = [...existing];
   return rows.map((values, index) => {
-    const missingRequired = REQUIRED_IMPORT_FIELDS.filter((field) => !values[field].trim());
+    const missingRequired = REQUIRED_IMPORT_FIELDS.filter(
+      (field) => !values[field].trim(),
+    );
     const invalidFields: string[] = [];
     const score = Number(values.minScore);
-    if (values.minScore.trim() && (!Number.isFinite(score) || score < 0)) invalidFields.push("minScore");
+    if (values.minScore.trim() && (!Number.isFinite(score) || score < 0))
+      invalidFields.push("minScore");
     if (values.website.trim()) {
       try {
         new URL(values.website.trim());
@@ -264,8 +331,17 @@ export function validateImportRows(
       }
     }
     const duplicate = findDuplicate(values, seen);
-    if (!missingRequired.includes("name") && !missingRequired.includes("nameEn") && !duplicate) {
-      seen.push({ id: -(index + 1), name: values.name, nameEn: values.nameEn, abbreviation: values.abbreviation });
+    if (
+      !missingRequired.includes("name") &&
+      !missingRequired.includes("nameEn") &&
+      !duplicate
+    ) {
+      seen.push({
+        id: -(index + 1),
+        name: values.name,
+        nameEn: values.nameEn,
+        abbreviation: values.abbreviation,
+      });
     }
     return {
       rowNumber: index + 2,
@@ -288,23 +364,28 @@ export function serializeUniversitiesCsv(
 ): string {
   const rows = [UNIVERSITY_CSV_HEADERS.join(",")];
   for (const university of universities) {
-    rows.push([
-      university.name,
-      university.nameEn,
-      university.abbreviation,
-      university.type,
-      university.state,
-      university.city,
-      university.minScore,
-      university.description,
-      university.admissionRequirements,
-      university.applicationProcess,
-      university.duration,
-      university.careerOutcomes,
-      university.website,
-      university.imageUrl,
-      university.majorIds?.join("|") ?? "",
-    ].map(csvEscape).join(","));
+    rows.push(
+      [
+        university.name,
+        university.nameEn,
+        university.abbreviation,
+        university.type,
+        university.state,
+        university.city,
+        university.minScore,
+        university.note,
+        university.description,
+        university.admissionRequirements,
+        university.applicationProcess,
+        university.duration,
+        university.careerOutcomes,
+        university.website,
+        university.imageUrl,
+        university.majorIds?.join("|") ?? "",
+      ]
+        .map(csvEscape)
+        .join(","),
+    );
   }
   return `${rows.join("\n")}\n`;
 }

@@ -5,7 +5,7 @@
  * Myanmar University Finder API
  * OpenAPI spec version: 0.1.0
  */
-import type { Major } from './major';
+import type { Major } from "./major";
 
 export interface University {
   id: number;
@@ -23,27 +23,28 @@ export interface University {
   city?: string | null;
   /** Minimum total score required for admission */
   minScore: number;
+  note: string;
   /** @nullable */
   description?: string | null;
   /**
-     * Detailed admission requirements when available
-     * @nullable
-     */
+   * Detailed admission requirements when available
+   * @nullable
+   */
   admissionRequirements?: string | null;
   /**
-     * Application steps when available
-     * @nullable
-     */
+   * Application steps when available
+   * @nullable
+   */
   applicationProcess?: string | null;
   /**
-     * Typical program duration when available
-     * @nullable
-     */
+   * Typical program duration when available
+   * @nullable
+   */
   duration?: string | null;
   /**
-     * Career outcome information when available
-     * @nullable
-     */
+   * Career outcome information when available
+   * @nullable
+   */
   careerOutcomes?: string | null;
   /** @nullable */
   website?: string | null;

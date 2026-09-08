@@ -270,8 +270,19 @@ export default function UniversityDetail() {
                       Entrance Requirement
                     </span>
                     <div className="text-3xl font-bold text-primary">
-                      {uni.minScore}
+                      {uni.minScore} <small>marks</small>
                     </div>
+                    {uni.note && (
+                      <div className="mt-4 pt-4 border-t border-border/50">
+                        <span className="text-sm font-medium text-muted-foreground block mb-1">
+                          မှတ်ချက်
+                        </span>
+
+                        <p className="text-sm text-red-600 leading-relaxed whitespace-pre-wrap">
+                          {uni.note}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <Button className="w-full" asChild>
                     <Link href="/score">

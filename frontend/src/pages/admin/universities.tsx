@@ -79,6 +79,7 @@ type UniversityForm = {
   state: string;
   city: string;
   minScore: string;
+  note: string;
   description: string;
   website: string;
   imageUrl: string;
@@ -93,6 +94,7 @@ const emptyForm: UniversityForm = {
   state: "",
   city: "",
   minScore: "",
+  note: "",
   description: "",
   website: "",
   imageUrl: "",
@@ -184,7 +186,9 @@ export default function AdminUniversities() {
     null,
   );
   const [form, setForm] = useState<UniversityForm>(emptyForm);
-  const [formErrors, setFormErrors] = useState<Partial<Record<keyof UniversityForm, string>>>({});
+  const [formErrors, setFormErrors] = useState<
+    Partial<Record<keyof UniversityForm, string>>
+  >({});
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
@@ -195,7 +199,9 @@ export default function AdminUniversities() {
   const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [csvName, setCsvName] = useState("");
   const [csvText, setCsvText] = useState("");
-  const [csvPreview, setCsvPreview] = useState<UniversityImportPreview | null>(null);
+  const [csvPreview, setCsvPreview] = useState<UniversityImportPreview | null>(
+    null,
+  );
   const queryClient = useQueryClient();
 
   const { data: response, isLoading } = useListUniversities({
@@ -273,6 +279,7 @@ export default function AdminUniversities() {
       state: uni.state || "",
       city: uni.city || "",
       minScore: String(uni.minScore ?? ""),
+      note: uni.note || "",
       description: uni.description || "",
       website: uni.website || "",
       imageUrl: uni.imageUrl || "",
@@ -337,7 +344,9 @@ export default function AdminUniversities() {
       const preview = await previewUniversityCsv(await file.text());
       setCsvPreview(preview);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not preview CSV");
+      toast.error(
+        error instanceof Error ? error.message : "Could not preview CSV",
+      );
       setCsvName("");
       setCsvText("");
     } finally {
@@ -350,7 +359,9 @@ export default function AdminUniversities() {
     try {
       setIsImportingCsv(true);
       const result = await importUniversityCsv(csvText);
-      toast.success(`${result.inserted} new universit${result.inserted === 1 ? "y" : "ies"} imported; existing records were not changed`);
+      toast.success(
+        `${result.inserted} new universit${result.inserted === 1 ? "y" : "ies"} imported; existing records were not changed`,
+      );
       setCsvPreview(null);
       setCsvName("");
       setCsvText("");
@@ -410,6 +421,7 @@ export default function AdminUniversities() {
       state: form.state.trim(),
       city: form.city.trim() || undefined,
       minScore,
+      note: form.note.trim(),
       description: form.description.trim() || undefined,
       website: form.website.trim() || undefined,
       imageUrl: form.imageUrl.trim() || undefined,
@@ -434,23 +446,39 @@ export default function AdminUniversities() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Universities</h1>
-                <Badge variant="secondary">{response?.total ?? 0} universities</Badge>
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                  Universities
+                </h1>
+                <Badge variant="secondary">
+                  {response?.total ?? 0} universities
+                </Badge>
               </div>
               <p className="text-muted-foreground">
                 Manage the directory of universities.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <Button onClick={openCreate} className="min-h-10 w-full cursor-pointer sm:w-auto">
+              <Button
+                onClick={openCreate}
+                className="min-h-10 w-full cursor-pointer sm:w-auto"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add University
               </Button>
-              <Button type="button" variant="outline" className="min-h-10 w-full cursor-pointer sm:w-auto" onClick={() => void handleCsvExport()}>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-10 w-full cursor-pointer sm:w-auto"
+                onClick={() => void handleCsvExport()}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
-              <Button type="button" variant="outline" className="relative min-h-10 w-full cursor-pointer overflow-hidden sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                className="relative min-h-10 w-full cursor-pointer overflow-hidden sm:w-auto"
+              >
                 <FileUp className="h-4 w-4 mr-2" />
                 Import CSV
                 <Input
@@ -544,7 +572,10 @@ export default function AdminUniversities() {
                   setPage(1);
                 }}
               >
-                <SelectTrigger aria-label="Sort universities by" className="flex-1">
+                <SelectTrigger
+                  aria-label="Sort universities by"
+                  className="flex-1"
+                >
                   <SlidersHorizontal className="mr-2 h-4 w-4 text-muted-foreground" />
                   <SelectValue />
                 </SelectTrigger>
@@ -563,7 +594,9 @@ export default function AdminUniversities() {
                 aria-label={`Sort ${sortOrder === "asc" ? "descending" : "ascending"}`}
                 title={`Sort ${sortOrder === "asc" ? "descending" : "ascending"}`}
                 onClick={() => {
-                  setSortOrder((current) => (current === "asc" ? "desc" : "asc"));
+                  setSortOrder((current) =>
+                    current === "asc" ? "desc" : "asc",
+                  );
                   setPage(1);
                 }}
               >
@@ -583,7 +616,9 @@ export default function AdminUniversities() {
               <div>
                 <p className="text-sm font-medium">Preview: {csvName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {csvPreview.validRows} safe new rows · {csvPreview.duplicateRows} duplicates · {csvPreview.invalidRows} invalid rows
+                  {csvPreview.validRows} safe new rows ·{" "}
+                  {csvPreview.duplicateRows} duplicates ·{" "}
+                  {csvPreview.invalidRows} invalid rows
                 </p>
               </div>
               <Button
@@ -592,11 +627,14 @@ export default function AdminUniversities() {
                 onClick={() => void handleCsvImport()}
                 disabled={isImportingCsv || csvPreview.validRows === 0}
               >
-                {isImportingCsv ? "Importing…" : `Add ${csvPreview.validRows} safe rows`}
+                {isImportingCsv
+                  ? "Importing…"
+                  : `Add ${csvPreview.validRows} safe rows`}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Import is additive only: duplicate or invalid rows are skipped, and existing records are never updated or deleted.
+              Import is additive only: duplicate or invalid rows are skipped,
+              and existing records are never updated or deleted.
             </p>
           </div>
         )}
@@ -623,10 +661,18 @@ export default function AdminUniversities() {
                           <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
                         </div>
                       </TableCell>
-                      <TableCell><div className="h-6 w-20 animate-pulse rounded-full bg-muted" /></TableCell>
-                      <TableCell><div className="h-4 w-32 animate-pulse rounded bg-muted" /></TableCell>
-                      <TableCell><div className="h-4 w-12 animate-pulse rounded bg-muted" /></TableCell>
-                      <TableCell><div className="ml-auto h-8 w-20 animate-pulse rounded bg-muted" /></TableCell>
+                      <TableCell>
+                        <div className="h-6 w-20 animate-pulse rounded-full bg-muted" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 w-12 animate-pulse rounded bg-muted" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="ml-auto h-8 w-20 animate-pulse rounded bg-muted" />
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : response?.universities.length === 0 ? (
@@ -709,35 +755,49 @@ export default function AdminUniversities() {
             </DialogHeader>
             <div className="scrollbar-hide grid flex-1 gap-4 overflow-y-auto overflow-x-hidden px-6 py-2">
               <div className="grid gap-2">
-                <Label htmlFor="uni-name">Name (Myanmar) <span className="text-destructive">*</span></Label>
+                <Label htmlFor="uni-name">
+                  Name (Myanmar) <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="uni-name"
                   value={form.name}
                   aria-invalid={Boolean(formErrors.name)}
                   onChange={(e) => updateFormField("name", e.target.value)}
                 />
-                {formErrors.name && <p className="text-xs text-destructive">{formErrors.name}</p>}
+                {formErrors.name && (
+                  <p className="text-xs text-destructive">{formErrors.name}</p>
+                )}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="uni-name-en">English Name <span className="text-destructive">*</span></Label>
+                <Label htmlFor="uni-name-en">
+                  English Name <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="uni-name-en"
                   value={form.nameEn}
                   aria-invalid={Boolean(formErrors.nameEn)}
                   onChange={(e) => updateFormField("nameEn", e.target.value)}
                 />
-                {formErrors.nameEn && <p className="text-xs text-destructive">{formErrors.nameEn}</p>}
+                {formErrors.nameEn && (
+                  <p className="text-xs text-destructive">
+                    {formErrors.nameEn}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="uni-abbreviation">Abbreviation</Label>
                 <Input
                   id="uni-abbreviation"
                   value={form.abbreviation}
-                  onChange={(e) => updateFormField("abbreviation", e.target.value)}
+                  onChange={(e) =>
+                    updateFormField("abbreviation", e.target.value)
+                  }
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Type <span className="text-destructive">*</span></Label>
+                <Label>
+                  Type <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={form.type}
                   onValueChange={(type) => updateFormField("type", type)}
@@ -757,11 +817,15 @@ export default function AdminUniversities() {
                     ))}
                   </SelectContent>
                 </Select>
-                {formErrors.type && <p className="text-xs text-destructive">{formErrors.type}</p>}
+                {formErrors.type && (
+                  <p className="text-xs text-destructive">{formErrors.type}</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                  <Label>State/Region <span className="text-destructive">*</span></Label>
+                <div className="grid gap-2">
+                  <Label>
+                    State/Region <span className="text-destructive">*</span>
+                  </Label>
                   <Select
                     value={form.state}
                     onValueChange={(state) => {
@@ -799,11 +863,17 @@ export default function AdminUniversities() {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  {formErrors.state && <p className="text-xs text-destructive">{formErrors.state}</p>}
+                  {formErrors.state && (
+                    <p className="text-xs text-destructive">
+                      {formErrors.state}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>City <span className="text-destructive">*</span></Label>
+                  <Label>
+                    City <span className="text-destructive">*</span>
+                  </Label>
                   <Select
                     value={form.city}
                     onValueChange={(city) => updateFormField("city", city)}
@@ -824,11 +894,17 @@ export default function AdminUniversities() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {formErrors.city && <p className="text-xs text-destructive">{formErrors.city}</p>}
+                  {formErrors.city && (
+                    <p className="text-xs text-destructive">
+                      {formErrors.city}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="uni-min-score">Min Score <span className="text-destructive">*</span></Label>
+                <Label htmlFor="uni-min-score">
+                  Min Score <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="uni-min-score"
                   type="number"
@@ -837,7 +913,22 @@ export default function AdminUniversities() {
                   aria-invalid={Boolean(formErrors.minScore)}
                   onChange={(e) => updateFormField("minScore", e.target.value)}
                 />
-                {formErrors.minScore && <p className="text-xs text-destructive">{formErrors.minScore}</p>}
+                {formErrors.minScore && (
+                  <p className="text-xs text-destructive">
+                    {formErrors.minScore}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="uni-note">မှတ်ချက်</Label>
+
+                <Textarea
+                  id="uni-note"
+                  value={form.note}
+                  placeholder="ဥပမာ - ရုပ၊ ဇီဝ၊ အင်္ဂလိပ်၊ သချာ် လေးဘာသာပေါင်း ၂၄၀ ရရမည်။"
+                  className="min-h-24"
+                  onChange={(e) => updateFormField("note", e.target.value)}
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="uni-description">Description</Label>
@@ -845,7 +936,9 @@ export default function AdminUniversities() {
                   id="uni-description"
                   value={form.description}
                   className="h-36"
-                  onChange={(e) => updateFormField("description", e.target.value)}
+                  onChange={(e) =>
+                    updateFormField("description", e.target.value)
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -858,7 +951,11 @@ export default function AdminUniversities() {
                   aria-invalid={Boolean(formErrors.website)}
                   onChange={(e) => updateFormField("website", e.target.value)}
                 />
-                {formErrors.website && <p className="text-xs text-destructive">{formErrors.website}</p>}
+                {formErrors.website && (
+                  <p className="text-xs text-destructive">
+                    {formErrors.website}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>University Image</Label>

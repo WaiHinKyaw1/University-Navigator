@@ -487,6 +487,29 @@ function isMedicalUniversity(uni: any): boolean {
   );
 }
 
+function isBusinessUniversity(uni: any): boolean {
+  const text = getUniversitySearchText(uni);
+
+  const businessKeywords = [
+    "စီးပွားရေးတက္ကသိုလ်",
+    "စီးပွားရေး",
+    "ကုန်သွယ်ရေး",
+    "စီးပွားရေးစီမံခန့်ခွဲမှု",
+    "business university",
+    "business",
+    "economics university",
+    "economics",
+    "commerce university",
+    "commerce",
+    "management university",
+    "management",
+  ];
+
+  return businessKeywords.some((keyword) =>
+    text.includes(keyword.toLowerCase()),
+  );
+}
+
 /**
  * Stream အလိုက် university eligibility
  */
@@ -502,6 +525,14 @@ function isAllowedForStream(
    */
   if (stream === "science" && scienceSixth === "economics") {
     return !isMedicalUniversity(uni);
+  }
+
+  if (stream === "science" && scienceSixth === "biology") {
+    if (isBusinessUniversity(uni)) {
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -1236,11 +1267,15 @@ export default function ScoreCalculator() {
                       ဘောဂ (Economics)
                     </button>
                   </div>
-
-                  {scienceSixth === "economics" && (
-                    <p className="px-1 text-[12px] text-muted-foreground">
+                  {scienceSixth === "biology" ? (
+                    <p className="px-1 text-[12px] text-orange-600">
+                      မှတ်ချက်: ဇီဝဗေဒ ရွေးထားပါက <b>စီးပွားရေးတက္ကသိုလ်</b>{" "}
+                      များကို ဝင်ခွင့်ရလဒ်တွင် မပြပါ။
+                    </p>
+                  ) : (
+                    <p className="px-1 text-[12px] text-orange-600">
                       မှတ်ချက်: ဘောဂ ရွေးထားပါက <b>ဆေးတက္ကသိုလ်</b> နှင့်
-                      ဆေးဘက်ဆိုင်ရာ တက္ကသိုလ်များကို ရလဒ်တွင် မပြပါ။
+                      ဆေးဘက်ဆိုင်ရာ တက္ကသိုလ်များကို ဝင်ခွင့်ရလဒ်တွင် မပြပါ။
                     </p>
                   )}
                 </div>
