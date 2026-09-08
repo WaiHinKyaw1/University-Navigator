@@ -925,7 +925,7 @@ export default function AdminUniversities() {
                 <Textarea
                   id="uni-note"
                   value={form.note}
-                  placeholder="ဥပမာ - ရုပ၊ ဇီဝ၊ အင်္ဂလိပ်၊ သချာ် လေးဘာသာပေါင်း ၂၄၀ ရရမည်။"
+                  placeholder="ဥပမာ - ရူပဗေဒ၊ ဓာတုဗေဒ၊ သင်္ချာ၊ အင်္ဂလိပ်စာ (၄)ဘာသာပေါင်းရမှတ် ၂၄၀ နှင့်အထက်"
                   className="min-h-24"
                   onChange={(e) => updateFormField("note", e.target.value)}
                 />

@@ -270,7 +270,7 @@ export default function UniversityDetail() {
                       Entrance Requirement
                     </span>
                     <div className="text-3xl font-bold text-primary">
-                      {uni.minScore} <small>marks</small>
+                      {uni.minScore} <small>မှတ်</small>
                     </div>
                     {uni.note && (
                       <div className="mt-4 pt-4 border-t border-border/50">
